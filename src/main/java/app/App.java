@@ -25,6 +25,7 @@ public class App {
         while (true) {
             System.out.println("\n=== LMS SMK NUSANTARA ===");
             System.out.println("1. Login");
+            System.out.println("2. Registrasi");
             System.out.println("0. Keluar");
 
             int pilih = InputUtil.inputInt("Pilih menu: ");
@@ -37,13 +38,56 @@ public class App {
                     User u = loginView.login();
                     if (u == null) continue;
 
-                    if (u instanceof Admin a) adminView.menu();
-                    else if (u instanceof Guru g) guruView.menu();
+                    if (u instanceof Admin) adminView.menu();
+                    else if (u instanceof Guru) guruView.menu();
                     else if (u instanceof Siswa s) siswaView.menu(s);
                 }
+
+                case 2 -> registrasi(userRepo);
+
+                default -> System.out.println("Menu tidak tersedia!");
             }
         }
 
         System.out.println("Terima kasih menggunakan LMS!");
+    }
+
+    // ================= REGISTRASI ===================
+    private static void registrasi(UserRepository userRepo) {
+        System.out.println("\n=== REGISTRASI AKUN ===");
+        System.out.println("Pilih tipe akun:");
+        System.out.println("1. Guru");
+        System.out.println("2. Siswa");
+        System.out.println("0. Batal");
+
+        int tipe = InputUtil.inputInt("Pilih: ");
+
+        if (tipe == 0) return;
+
+        String id = InputUtil.inputString("ID User: ");
+        String username = InputUtil.inputString("Username: ");
+        String password = InputUtil.inputString("Password: ");
+        String nama = InputUtil.inputString("Nama Lengkap: ");
+        String email = InputUtil.inputString("Email: ");
+
+        if (tipe == 1) { // Registrasi Guru
+            String nip = InputUtil.inputString("NIP: ");
+            String spes = InputUtil.inputString("Spesialisasi: ");
+
+            Guru g = new Guru(id, username, password, nama, email, nip, spes);
+            userRepo.addUser(g);
+            System.out.println("Registrasi Guru berhasil!");
+
+        } else if (tipe == 2) { // Registrasi Siswa
+            String nis = InputUtil.inputString("NIS: ");
+            String angkatan = InputUtil.inputString("Angkatan: ");
+
+            Siswa s = new Siswa(id, username, password, nama, email, nis, angkatan);
+            userRepo.addUser(s);
+            System.out.println("Registrasi Siswa berhasil!");
+
+        } else {
+            System.out.println("Pilihan tidak valid!");
+        }
     }
 }
