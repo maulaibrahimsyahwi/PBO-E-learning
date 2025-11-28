@@ -16,12 +16,13 @@ public class NilaiRepository {
     }
 
     public List<Nilai> findBySiswa(String idUser) {
-        List<Nilai> result = new ArrayList<>();
+        List<Nilai> hasil = new ArrayList<>();
         for (Nilai n : nilaiList) {
-            if (n.getIdUser().equals(idUser)) {
-                result.add(n);
+            if (n.getSiswa() != null &&
+                n.getSiswa().getIdUser().equals(idUser)) {
+                hasil.add(n);
             }
         }
-        return result;
+        return hasil;
     }
 }

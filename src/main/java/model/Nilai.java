@@ -1,42 +1,51 @@
 package model;
 
 public class Nilai {
-    // Menambahkan idUser agar bisa difilter oleh Repository
-    private String idUser;
-    
     private String idNilai;
+    private Siswa siswa;
+    private Tugas tugas;
     private double nilaiAngka;
     private String nilaiHuruf;
-    private String mapel;
+    private String keterangan;
 
-    // Konstruktor disesuaikan (optional: jika error di tempat lain, kembalikan ke constructor lama)
-    public Nilai(String id, String idUser, String mapel, double angka) {
-        this.idNilai = id;
-        this.idUser = idUser;
-        this.mapel = mapel;
-        setNilaiAngka(angka);
-    }
-    
-    // Konstruktor alternatif untuk kompatibilitas kode lama (JAGA-JAGA)
-    public Nilai(String id, String mapel, double angka) {
-        this.idNilai = id;
-        this.mapel = mapel;
-        setNilaiAngka(angka);
+    public Nilai(String idNilai, Siswa siswa, Tugas tugas,
+                 double nilaiAngka, String keterangan) {
+        this.idNilai = idNilai;
+        this.siswa = siswa;
+        this.tugas = tugas;
+        setNilaiAngka(nilaiAngka);
+        this.keterangan = keterangan;
     }
 
-    public void setNilaiAngka(double angka) {
-        this.nilaiAngka = angka;
-        if (angka >= 85) nilaiHuruf = "A";
-        else if (angka >= 75) nilaiHuruf = "B";
-        else if (angka >= 65) nilaiHuruf = "C";
+    public String getIdNilai() {
+        return idNilai;
+    }
+
+    public Siswa getSiswa() {
+        return siswa;
+    }
+
+    public Tugas getTugas() {
+        return tugas;
+    }
+
+    public double getNilaiAngka() {
+        return nilaiAngka;
+    }
+
+    public String getNilaiHuruf() {
+        return nilaiHuruf;
+    }
+
+    public String getKeterangan() {
+        return keterangan;
+    }
+
+    public void setNilaiAngka(double nilaiAngka) {
+        this.nilaiAngka = nilaiAngka;
+        if (nilaiAngka >= 85) nilaiHuruf = "A";
+        else if (nilaiAngka >= 75) nilaiHuruf = "B";
+        else if (nilaiAngka >= 65) nilaiHuruf = "C";
         else nilaiHuruf = "D";
     }
-
-    // --- GETTER & SETTER TAMBAHAN ---
-    public String getIdUser() { return idUser; }
-    public void setIdUser(String idUser) { this.idUser = idUser; }
-    // --------------------------------
-
-    public String getMapel() { return mapel; }
-    public String getNilaiHuruf() { return nilaiHuruf; }
 }

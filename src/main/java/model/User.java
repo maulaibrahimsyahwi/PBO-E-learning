@@ -18,23 +18,49 @@ public abstract class User {
         this.aktif = true;
     }
 
+    
+    public String getIdUser() {
+        return idUser;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public String getPassword() {     
+        return password;
+    }
+
+    public String getNamaLengkap() {
+        return namaLengkap;
+    }
+
+    public String getEmail() {         
+        return email;
+    }
+
+    public boolean isAktif() {
+        return aktif;
+    }
+
+   
+    public void setNamaLengkap(String namaLengkap) {
+        this.namaLengkap = namaLengkap;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    
     public boolean login(String username, String password) {
         return this.username.equals(username) && this.password.equals(password);
     }
 
     public void logout() {
-        System.out.println("Logout berhasil.\n");
+        System.out.println("Anda telah logout.");
     }
 
-    // --- GETTER YANG DIPERBAIKI ---
-    public String getUsername() { return username; }
-    public String getIdUser() { return idUser; }
-    // ------------------------------
-
-    public void setNamaLengkap(String nama) { this.namaLengkap = nama; }
-    public void setEmail(String email) { this.email = email; }
-    public String getNamaLengkap() { return namaLengkap; }
-    public boolean isAktif() { return aktif; }
-
+    
     public abstract void tampilkanMenu();
 }

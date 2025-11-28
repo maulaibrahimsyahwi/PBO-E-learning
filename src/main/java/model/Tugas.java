@@ -15,10 +15,19 @@ public class Tugas {
         this.deadline = dl;
     }
 
-    // --- GETTER YANG DIPERBAIKI ---
-    public String getIdTugas() { return idTugas; }
-    public LocalDate getDeadline() { return deadline; }
-    // ------------------------------
+    public String getIdTugas() {
+        return idTugas;
+    }
 
-    public String getJudul() { return judul; }
+    public String getJudul() {
+        return judul;
+    }
+
+    public String getDeskripsi() {
+        return deskripsi;
+    }
+
+    public LocalDate getDeadline() {
+        return deadline;
+    }
 }

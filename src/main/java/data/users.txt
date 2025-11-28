@@ -1,0 +1,7 @@
+123;maula;maula;maula;maula;SISWA
+123;aloy;aloy;aloysus;aloysus;GURU
+A001;admin;admin;Administrator;admin@lms.com;ADMIN
+A001;admin;admin;Administrator;admin@lms.com;ADMIN
+123;;;;;GURU
+A001;admin;admin;Administrator;admin@lms.com;ADMIN
+A001;admin;admin;Administrator;admin@lms.com;ADMIN

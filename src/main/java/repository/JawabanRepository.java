@@ -15,13 +15,25 @@ public class JawabanRepository {
         return jawabanList;
     }
 
-    public List<Jawaban> findBySiswa(String idSiswa) {
-        List<Jawaban> result = new ArrayList<>();
+    public List<Jawaban> findByTugas(String idTugas) {
+        List<Jawaban> hasil = new ArrayList<>();
         for (Jawaban j : jawabanList) {
-            if (j.getSiswa().getIdUser().equals(idSiswa)) {
-                result.add(j);
+            if (j.getTugas() != null &&
+                j.getTugas().getIdTugas().equals(idTugas)) {
+                hasil.add(j);
             }
         }
-        return result;
+        return hasil;
+    }
+
+    public List<Jawaban> findBySiswa(String idSiswa) {
+        List<Jawaban> hasil = new ArrayList<>();
+        for (Jawaban j : jawabanList) {
+            if (j.getSiswa() != null &&
+                j.getSiswa().getIdUser().equals(idSiswa)) {
+                hasil.add(j);
+            }
+        }
+        return hasil;
     }
 }

@@ -30,12 +30,27 @@ public class Siswa extends User implements IReportable {
     }
 
     @Override
-    public void generateReport() {
-        System.out.println("=== Laporan Nilai Siswa ===");
-        for (Nilai n : daftarNilai) {
-            System.out.println(n.getMapel() + " : " + n.getNilaiHuruf());
-        }
+public void generateReport() {
+    System.out.println("=== Laporan Nilai Siswa ===");
+
+    if (daftarNilai == null || daftarNilai.isEmpty()) {
+        System.out.println("Belum ada nilai.");
+        return;
     }
+
+    for (Nilai n : daftarNilai) {
+        String namaTugas = "-";
+        if (n.getTugas() != null) {
+            namaTugas = n.getTugas().getJudul();
+        }
+
+        System.out.println(
+            "Tugas : " + namaTugas +
+            " | Nilai : " + n.getNilaiAngka() +
+            " (" + n.getNilaiHuruf() + ")"
+        );
+    }
+}
 
     public void tambahNilai(Nilai n) {
         daftarNilai.add(n);
