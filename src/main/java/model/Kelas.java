@@ -19,6 +19,9 @@ public class Kelas {
         daftarSiswa.add(s);
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public String getIdKelas() { return idKelas; }
+
     public List<Siswa> getDaftarSiswa() {
         return daftarSiswa;
     }

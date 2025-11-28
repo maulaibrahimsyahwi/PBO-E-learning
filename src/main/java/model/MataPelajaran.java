@@ -11,5 +11,9 @@ public class MataPelajaran {
         this.deskripsi = desk;
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public String getIdMapel() { return idMapel; }
+    // ------------------------------
+
     public String getNamaMapel() { return namaMapel; }
 }

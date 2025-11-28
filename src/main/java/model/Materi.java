@@ -13,5 +13,9 @@ public class Materi {
         this.fileMateri = file;
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public String getIdMateri() { return idMateri; }
+    // ------------------------------
+
     public String getJudul() { return judul; }
 }

@@ -15,5 +15,9 @@ public class Ujian {
         this.durasi = durasi;
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public String getIdUjian() { return idUjian; }
+    // ------------------------------
+
     public String getJenisUjian() { return jenisUjian; }
 }

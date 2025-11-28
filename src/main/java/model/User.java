@@ -26,6 +26,11 @@ public abstract class User {
         System.out.println("Logout berhasil.\n");
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public String getUsername() { return username; }
+    public String getIdUser() { return idUser; }
+    // ------------------------------
+
     public void setNamaLengkap(String nama) { this.namaLengkap = nama; }
     public void setEmail(String email) { this.email = email; }
     public String getNamaLengkap() { return namaLengkap; }

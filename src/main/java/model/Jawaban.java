@@ -15,5 +15,9 @@ public class Jawaban {
         this.waktuKirim = LocalDateTime.now();
     }
 
+    // --- GETTER YANG DIPERBAIKI ---
+    public Siswa getSiswa() { return siswa; }
+    // ------------------------------
+
     public String getFileJawaban() { return fileJawaban; }
 }
