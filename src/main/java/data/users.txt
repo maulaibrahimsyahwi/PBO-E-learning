@@ -1,0 +1,4 @@
+A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-
+123123;maula;maula;maula ibrahim;maula@gmail.com;SISWA;1512623013;202
+A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-
+123123123;akmal;akmal;akmal akmal;akmal@gmail.com;GURU;123123;IPA

@@ -19,14 +19,17 @@ public class App {
         NilaiRepository nilaiRepo = new NilaiRepository();
 
         // Admin default
-        Admin defaultAdmin = new Admin(
-                "A001",
-                "admin",
-                "admin",
-                "Administrator",
-                "admin@lms.com"
-        );
-        userRepo.addUser(defaultAdmin);
+        if (userRepo.findByUsername("admin") == null) {
+    Admin defaultAdmin = new Admin(
+            "A001",
+            "admin",
+            "admin",
+            "Administrator",
+            "admin@lms.com"
+    );
+    userRepo.addUser(defaultAdmin);
+    System.out.println("Admin default dibuat.");
+}
 
         LoginView loginView = new LoginView(userRepo);
         AdminView adminView = new AdminView(userRepo, kelasRepo, mapelRepo);
