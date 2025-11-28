@@ -2,6 +2,7 @@ package app;
 
 import model.*;
 import repository.*;
+import service.DataReconstructor;
 import view.*;
 import utils.InputUtil;
 
@@ -18,6 +19,20 @@ public class App {
         JawabanRepository jawabanRepo = new JawabanRepository();
         NilaiRepository nilaiRepo = new NilaiRepository();
 
+        DataReconstructor recon = new DataReconstructor(
+        userRepo,
+        kelasRepo,
+        mapelRepo,
+        materiRepo,
+        tugasRepo,
+        ujianRepo,
+        jawabanRepo,
+        nilaiRepo
+);
+
+recon.reconstruct();
+
+
         // Admin default
         if (userRepo.findByUsername("admin") == null) {
     Admin defaultAdmin = new Admin(
@@ -30,6 +45,7 @@ public class App {
     userRepo.addUser(defaultAdmin);
     System.out.println("Admin default dibuat.");
 }
+
 
         LoginView loginView = new LoginView(userRepo);
         AdminView adminView = new AdminView(userRepo, kelasRepo, mapelRepo);

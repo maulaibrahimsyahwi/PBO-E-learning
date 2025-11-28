@@ -19,6 +19,10 @@ public class NilaiRepository {
         saveToFile();
     }
 
+    public List<Nilai> getAll() {
+    return nilaiList;
+}
+
     public List<Nilai> findBySiswa(String idSiswa) {
         List<Nilai> hasil = new ArrayList<>();
 

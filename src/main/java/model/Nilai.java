@@ -1,20 +1,19 @@
 package model;
 
 public class Nilai {
+
     private String idNilai;
     private Siswa siswa;
     private Tugas tugas;
-    private double nilaiAngka;
-    private String nilaiHuruf;
+    private int nilaiAngka;
     private String keterangan;
 
-    public Nilai(String idNilai, Siswa siswa, Tugas tugas,
-                 double nilaiAngka, String keterangan) {
-        this.idNilai = idNilai;
+    public Nilai(String id, Siswa siswa, Tugas tugas, int angka, String ket) {
+        this.idNilai = id;
         this.siswa = siswa;
         this.tugas = tugas;
-        setNilaiAngka(nilaiAngka);
-        this.keterangan = keterangan;
+        this.nilaiAngka = angka;
+        this.keterangan = ket;
     }
 
     public String getIdNilai() {
@@ -29,23 +28,27 @@ public class Nilai {
         return tugas;
     }
 
-    public double getNilaiAngka() {
+    public int getNilaiAngka() {
         return nilaiAngka;
     }
 
     public String getNilaiHuruf() {
-        return nilaiHuruf;
+        if (nilaiAngka >= 85) return "A";
+        if (nilaiAngka >= 75) return "B";
+        if (nilaiAngka >= 65) return "C";
+        return "D";
     }
 
     public String getKeterangan() {
         return keterangan;
     }
 
-    public void setNilaiAngka(double nilaiAngka) {
-        this.nilaiAngka = nilaiAngka;
-        if (nilaiAngka >= 85) nilaiHuruf = "A";
-        else if (nilaiAngka >= 75) nilaiHuruf = "B";
-        else if (nilaiAngka >= 65) nilaiHuruf = "C";
-        else nilaiHuruf = "D";
+    // ⬇ Tambahan penting untuk RECONSTRUCTOR
+    public void setSiswa(Siswa siswa) {
+        this.siswa = siswa;
+    }
+
+    public void setTugas(Tugas tugas) {
+        this.tugas = tugas;
     }
 }
