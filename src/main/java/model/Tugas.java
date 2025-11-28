@@ -8,6 +8,10 @@ public class Tugas {
     private String deskripsi;
     private LocalDate deadline;
 
+    private Guru guru;
+    private Kelas kelas;
+    private MataPelajaran mapel;
+
     public Tugas(String id, String judul, String desk, LocalDate dl) {
         this.idTugas = id;
         this.judul = judul;
@@ -29,5 +33,29 @@ public class Tugas {
 
     public LocalDate getDeadline() {
         return deadline;
+    }
+
+    public Guru getGuru() {
+        return guru;
+    }
+
+    public void setGuru(Guru guru) {
+        this.guru = guru;
+    }
+
+    public Kelas getKelas() {
+        return kelas;
+    }
+
+    public void setKelas(Kelas kelas) {
+        this.kelas = kelas;
+    }
+
+    public MataPelajaran getMapel() {
+        return mapel;
+    }
+
+    public void setMapel(MataPelajaran mapel) {
+        this.mapel = mapel;
     }
 }

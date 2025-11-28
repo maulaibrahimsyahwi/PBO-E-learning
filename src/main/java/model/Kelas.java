@@ -15,14 +15,25 @@ public class Kelas {
         this.tingkat = tingkat;
     }
 
-    public void tambahSiswa(Siswa s) {
-        daftarSiswa.add(s);
+    public String getIdKelas() {
+        return idKelas;
     }
 
-    // --- GETTER YANG DIPERBAIKI ---
-    public String getIdKelas() { return idKelas; }
+    public String getNamaKelas() {
+        return namaKelas;
+    }
+
+    public String getTingkat() {
+        return tingkat;
+    }
 
     public List<Siswa> getDaftarSiswa() {
         return daftarSiswa;
+    }
+
+    public void tambahSiswa(Siswa siswa) {
+        if (!daftarSiswa.contains(siswa)) {
+            daftarSiswa.add(siswa);
+        }
     }
 }

@@ -1,20 +1,25 @@
 package model;
 
-import java.time.LocalDateTime;
-
 public class Jawaban {
+
     private String idJawaban;
     private Siswa siswa;
-    private Tugas tugas;          // ➜ jawaban untuk tugas mana
+    private Tugas tugas;
     private String fileJawaban;
-    private LocalDateTime waktuKirim;
+    private String tanggalSubmit;
 
-    public Jawaban(String id, Siswa s, Tugas t, String file) {
-        this.idJawaban = id;
-        this.siswa = s;
-        this.tugas = t;
-        this.fileJawaban = file;
-        this.waktuKirim = LocalDateTime.now();
+    public Jawaban(String idJawaban, Siswa siswa, Tugas tugas, String fileJawaban) {
+        this.idJawaban = idJawaban;
+        this.siswa = siswa;
+        this.tugas = tugas;
+        this.fileJawaban = fileJawaban;
+        this.tanggalSubmit = java.time.LocalDate.now().toString(); // otomatis isi tanggal
+    }
+
+    // Tambahkan constructor untuk LOAD dari file
+    public Jawaban(String idJawaban, String tanggalSubmit) {
+        this.idJawaban = idJawaban;
+        this.tanggalSubmit = tanggalSubmit;
     }
 
     public String getIdJawaban() {
@@ -33,7 +38,15 @@ public class Jawaban {
         return fileJawaban;
     }
 
-    public LocalDateTime getWaktuKirim() {
-        return waktuKirim;
+    public String getTanggalSubmit() {
+        return tanggalSubmit;
+    }
+
+    public void setSiswa(Siswa siswa) {
+        this.siswa = siswa;
+    }
+
+    public void setTugas(Tugas tugas) {
+        this.tugas = tugas;
     }
 }

@@ -1,104 +1,98 @@
 package repository;
 
 import model.*;
-import java.util.*;
 import java.io.*;
+import java.util.*;
 
 public class UserRepository {
 
-    private List<User> users = new ArrayList<>();
-    private static final String FILE_PATH = "data/users.txt";
+    private List<User> userList = new ArrayList<>();
+    private final String FILE_PATH = "src/main/java/data/users.txt";
 
     public UserRepository() {
         loadFromFile();
     }
 
-
-    public void addUser(User user) {
-        users.add(user);
+    public void addUser(User u) {
+        userList.add(u);
         saveToFile();
     }
 
+    public List<User> getAll() {
+        return userList;
+    }
+
     public User findByUsername(String username) {
-        for (User u : users) {
-            if (u.getUsername().equals(username)) {
-                return u;
-            }
+        for (User u : userList) {
+            if (u.getUsername().equals(username)) return u;
         }
         return null;
     }
 
-    public List<User> getAll() {
-        return users;
-    }
-
-  
-
-    private void loadFromFile() {
-        File file = new File(FILE_PATH);
-        if (!file.exists()) {
-            try {
-                file.getParentFile().mkdirs();
-                file.createNewFile();
-            } catch (IOException e) {
-                System.out.println("Gagal membuat file users.txt: " + e.getMessage());
-            }
-            return;
-        }
-
-        try (BufferedReader br = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-
-                String[] parts = line.split(";");
-                if (parts.length < 6) continue;
-                String id = parts[0];
-                String username = parts[1];
-                String password = parts[2];
-                String nama = parts[3];
-                String email = parts[4];
-                String role = parts[5];
-
-                User u = null;
-                switch (role) {
-                    case "ADMIN" -> u = new Admin(id, username, password, nama, email);
-                    case "GURU" -> {
-                        u = new Guru(id, username, password, nama, email, "-", "-");
-                    }
-                    case "SISWA" -> {
-                        u = new Siswa(id, username, password, nama, email, "-", "-");
-                    }
-                }
-
-                if (u != null) {
-                    users.add(u);
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Gagal membaca users.txt: " + e.getMessage());
-        }
-    }
-
-    private void saveToFile() {
+    public void saveToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (User u : users) {
-                String role;
-                if (u instanceof Admin) role = "ADMIN";
-                else if (u instanceof Guru) role = "GURU";
-                else if (u instanceof Siswa) role = "SISWA";
-                else role = "UNKNOWN";
 
-                bw.write(u.getIdUser() + ";" 
-                        + u.getUsername() + ";" 
-                        + u.getPassword() + ";" 
-                        + u.getNamaLengkap() + ";" 
-                        + u.getEmail() + ";" 
-                        + role);
+            for (User u : userList) {
+                if (u instanceof Admin a) {
+                    bw.write(a.getIdUser() + ";" + a.getUsername() + ";" +
+                            a.getPassword() + ";" + a.getNamaLengkap() + ";" +
+                            a.getEmail() + ";ADMIN;-;-");
+                } else if (u instanceof Guru g) {
+                    bw.write(g.getIdUser() + ";" + g.getUsername() + ";" +
+                            g.getPassword() + ";" + g.getNamaLengkap() + ";" +
+                            g.getEmail() + ";GURU;" + g.getNip() + ";" +
+                            g.getSpesialisasi());
+                } else if (u instanceof Siswa s) {
+                    bw.write(s.getIdUser() + ";" + s.getUsername() + ";" +
+                            s.getPassword() + ";" + s.getNamaLengkap() + ";" +
+                            s.getEmail() + ";SISWA;" + s.getNis() + ";" +
+                            s.getAngkatan());
+                }
                 bw.newLine();
             }
-        } catch (IOException e) {
+
+        } catch (Exception e) {
             System.out.println("Gagal menyimpan users.txt: " + e.getMessage());
+        }
+    }
+
+    public void loadFromFile() {
+        try {
+            File file = new File(FILE_PATH);
+            if (!file.exists()) return;
+
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            String line;
+
+            while ((line = br.readLine()) != null) {
+                String[] d = line.split(";");
+
+                String id = d[0];
+                String username = d[1];
+                String password = d[2];
+                String nama = d[3];
+                String email = d[4];
+                String role = d[5];
+
+                if (role.equals("ADMIN")) {
+                    userList.add(new Admin(id, username, password, nama, email));
+
+                } else if (role.equals("GURU")) {
+                    String nip = d[6];
+                    String spes = d[7];
+                    userList.add(new Guru(id, username, password, nama, email, nip, spes));
+
+                } else if (role.equals("SISWA")) {
+                    String nis = d[6];
+                    String ang = d[7];
+                    userList.add(new Siswa(id, username, password, nama, email, nis, ang));
+                }
+            }
+
+            br.close();
+
+        } catch (Exception e) {
+            System.out.println("Gagal memuat users.txt: " + e.getMessage());
         }
     }
 }

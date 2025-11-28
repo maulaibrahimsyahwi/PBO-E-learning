@@ -6,6 +6,10 @@ public class Materi {
     private String deskripsi;
     private String fileMateri;
 
+    private Guru guru;
+    private Kelas kelas;
+    private MataPelajaran mapel;
+
     public Materi(String id, String judul, String desk, String file) {
         this.idMateri = id;
         this.judul = judul;
@@ -27,5 +31,29 @@ public class Materi {
 
     public String getFileMateri() {
         return fileMateri;
+    }
+
+    public Guru getGuru() {
+        return guru;
+    }
+
+    public void setGuru(Guru guru) {
+        this.guru = guru;
+    }
+
+    public Kelas getKelas() {
+        return kelas;
+    }
+
+    public void setKelas(Kelas kelas) {
+        this.kelas = kelas;
+    }
+
+    public MataPelajaran getMapel() {
+        return mapel;
+    }
+
+    public void setMapel(MataPelajaran mapel) {
+        this.mapel = mapel;
     }
 }

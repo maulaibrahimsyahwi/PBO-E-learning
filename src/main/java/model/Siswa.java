@@ -7,6 +7,7 @@ public class Siswa extends User implements IReportable {
 
     private String nis;
     private String angkatan;
+    private Kelas kelas;
     private List<Nilai> daftarNilai = new ArrayList<>();
 
     public Siswa(String idUser, String username, String password,
@@ -30,29 +31,38 @@ public class Siswa extends User implements IReportable {
     }
 
     @Override
-public void generateReport() {
-    System.out.println("=== Laporan Nilai Siswa ===");
-
-    if (daftarNilai == null || daftarNilai.isEmpty()) {
-        System.out.println("Belum ada nilai.");
-        return;
-    }
-
-    for (Nilai n : daftarNilai) {
-        String namaTugas = "-";
-        if (n.getTugas() != null) {
-            namaTugas = n.getTugas().getJudul();
+    public void generateReport() {
+        System.out.println("=== Laporan Nilai Siswa ===");
+        if (daftarNilai.isEmpty()) {
+            System.out.println("Belum ada nilai.");
+            return;
         }
 
-        System.out.println(
-            "Tugas : " + namaTugas +
-            " | Nilai : " + n.getNilaiAngka() +
-            " (" + n.getNilaiHuruf() + ")"
-        );
+        for (Nilai n : daftarNilai) {
+            String namaTugas = (n.getTugas() != null) ? n.getTugas().getJudul() : "-";
+            System.out.println("Tugas: " + namaTugas +
+                    " | Nilai: " + n.getNilaiAngka() +
+                    " (" + n.getNilaiHuruf() + ")");
+        }
     }
-}
 
     public void tambahNilai(Nilai n) {
         daftarNilai.add(n);
+    }
+
+    public String getNis() {
+        return nis;
+    }
+
+    public String getAngkatan() {
+        return angkatan;
+    }
+
+    public Kelas getKelas() {
+        return kelas;
+    }
+
+    public void setKelas(Kelas kelas) {
+        this.kelas = kelas;
     }
 }

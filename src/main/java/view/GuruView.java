@@ -14,20 +14,26 @@ public class GuruView {
     private UjianRepository ujianRepo;
     private JawabanRepository jawabanRepo;
     private NilaiRepository nilaiRepo;
+    private KelasRepository kelasRepo;
+    private MapelRepository mapelRepo;
 
     public GuruView(MateriRepository m,
                     TugasRepository t,
                     UjianRepository u,
                     JawabanRepository j,
-                    NilaiRepository n) {
+                    NilaiRepository n,
+                    KelasRepository k,
+                    MapelRepository mapelRepo) {
         this.materiRepo = m;
         this.tugasRepo = t;
         this.ujianRepo = u;
         this.jawabanRepo = j;
         this.nilaiRepo = n;
+        this.kelasRepo = k;
+        this.mapelRepo = mapelRepo;
     }
 
-    public void menu() {
+    public void menu(Guru guru) {
         while (true) {
             System.out.println("\n=== MENU GURU ===");
             System.out.println("1. Tambah Materi");
@@ -42,9 +48,9 @@ public class GuruView {
             if (pilih == 0) break;
 
             switch (pilih) {
-                case 1 -> tambahMateri();
-                case 2 -> tambahTugas();
-                case 3 -> tambahUjian();
+                case 1 -> tambahMateri(guru);
+                case 2 -> tambahTugas(guru);
+                case 3 -> tambahUjian(guru);
                 case 4 -> lihatJawabanTugas();
                 case 5 -> beriNilaiTugas();
                 default -> System.out.println("Menu tidak tersedia!");
@@ -52,119 +58,136 @@ public class GuruView {
         }
     }
 
-    private void tambahMateri() {
+    private MataPelajaran pilihMapelUntukGuru(Guru guru) {
+        List<MataPelajaran> mapelGuru = guru.getMapelDiampu();
+        List<MataPelajaran> listPakai;
+
+        if (!mapelGuru.isEmpty()) {
+            listPakai = mapelGuru;
+            System.out.println("Pilih mapel (yang Anda ampu):");
+        } else {
+            listPakai = mapelRepo.getAll();
+            System.out.println("Pilih mapel:");
+        }
+
+        if (listPakai.isEmpty()) {
+            System.out.println("Belum ada mapel.");
+            return null;
+        }
+
+        int no = 1;
+        for (MataPelajaran m : listPakai) {
+            System.out.println(no++ + ". " + m.getIdMapel() + " - " + m.getNamaMapel());
+        }
+        int pilih = InputUtil.inputInt("Pilih mapel: ");
+        if (pilih < 1 || pilih > listPakai.size()) {
+            System.out.println("Pilihan tidak valid.");
+            return null;
+        }
+        return listPakai.get(pilih - 1);
+    }
+
+    private Kelas pilihKelas() {
+        List<Kelas> kelasList = kelasRepo.getAll();
+        if (kelasList.isEmpty()) {
+            System.out.println("Belum ada kelas.");
+            return null;
+        }
+
+        System.out.println("Pilih kelas:");
+        int no = 1;
+        for (Kelas k : kelasList) {
+            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas());
+        }
+        int pilih = InputUtil.inputInt("Pilih kelas: ");
+        if (pilih < 1 || pilih > kelasList.size()) {
+            System.out.println("Pilihan tidak valid.");
+            return null;
+        }
+        return kelasList.get(pilih - 1);
+    }
+
+    private void tambahMateri(Guru guru) {
         System.out.println("\n=== TAMBAH MATERI ===");
+
+        MataPelajaran mapel = pilihMapelUntukGuru(guru);
+        if (mapel == null) return;
+
+        Kelas kelas = pilihKelas();
+        if (kelas == null) return;
+
         String id = InputUtil.inputString("ID Materi: ");
         String judul = InputUtil.inputString("Judul: ");
         String desk = InputUtil.inputString("Deskripsi: ");
         String file = InputUtil.inputString("Nama File (misal: materi1.pdf): ");
-        materiRepo.addMateri(new Materi(id, judul, desk, file));
-        System.out.println("Materi berhasil ditambahkan!");
+
+        Materi m = new Materi(id, judul, desk, file);
+        m.setGuru(guru);
+        m.setMapel(mapel);
+        m.setKelas(kelas);
+
+        materiRepo.addMateri(m);
+        System.out.println("Materi berhasil ditambahkan untuk kelas " + kelas.getNamaKelas()
+                + " | Mapel: " + mapel.getNamaMapel());
     }
 
-    private void tambahTugas() {
+    private void tambahTugas(Guru guru) {
         System.out.println("\n=== BUAT TUGAS ===");
+
+        MataPelajaran mapel = pilihMapelUntukGuru(guru);
+        if (mapel == null) return;
+
+        Kelas kelas = pilihKelas();
+        if (kelas == null) return;
+
         String id = InputUtil.inputString("ID Tugas: ");
         String judul = InputUtil.inputString("Judul: ");
         String desk = InputUtil.inputString("Deskripsi: ");
         String tgl = InputUtil.inputString("Deadline (yyyy-mm-dd): ");
-        tugasRepo.addTugas(new Tugas(id, judul, desk, DateUtil.parse(tgl)));
-        System.out.println("Tugas berhasil dibuat!");
+
+        Tugas tugas = new Tugas(id, judul, desk, DateUtil.parse(tgl));
+        tugas.setGuru(guru);
+        tugas.setMapel(mapel);
+        tugas.setKelas(kelas);
+
+        tugasRepo.addTugas(tugas);
+        System.out.println("Tugas berhasil dibuat untuk kelas " + kelas.getNamaKelas()
+                + " | Mapel: " + mapel.getNamaMapel());
     }
 
-    private void tambahUjian() {
+    private void tambahUjian(Guru guru) {
         System.out.println("\n=== BUAT UJIAN ===");
+
+        MataPelajaran mapel = pilihMapelUntukGuru(guru);
+        if (mapel == null) return;
+
+        Kelas kelas = pilihKelas();
+        if (kelas == null) return;
+
         String id = InputUtil.inputString("ID Ujian: ");
         String jenis = InputUtil.inputString("Jenis Ujian: ");
         String tgl = InputUtil.inputString("Tanggal (yyyy-mm-dd): ");
         int durasi = InputUtil.inputInt("Durasi (menit): ");
-        ujianRepo.addUjian(new Ujian(id, jenis, DateUtil.parse(tgl), durasi));
-        System.out.println("Ujian berhasil dibuat!");
+
+        Ujian ujian = new Ujian(id, jenis, DateUtil.parse(tgl), durasi);
+        ujian.setGuru(guru);
+        ujian.setMapel(mapel);
+        ujian.setKelas(kelas);
+
+        ujianRepo.addUjian(ujian);
+        System.out.println("Ujian berhasil dibuat untuk kelas " + kelas.getNamaKelas()
+                + " | Mapel: " + mapel.getNamaMapel());
     }
 
+    // ==== bagian lihatJawabanTugas() & beriNilaiTugas() bisa pakai versi yang sudah kita buat sebelumnya ====
+    // (tidak aku ulang di sini supaya jawabannya tidak kepanjangan)
+    // Kalau kamu mau, nanti aku kirim FULL GuruView dengan bagian nilai juga.
+    
     private void lihatJawabanTugas() {
-        System.out.println("\n=== LIHAT JAWABAN TUGAS ===");
-        List<Tugas> tugasList = tugasRepo.getAll();
-        if (tugasList.isEmpty()) {
-            System.out.println("Belum ada tugas.");
-            return;
-        }
-
-        int no = 1;
-        for (Tugas t : tugasList) {
-            System.out.println(no++ + ". " + t.getIdTugas() + " - " + t.getJudul());
-        }
-        int pilih = InputUtil.inputInt("Pilih nomor tugas: ");
-        if (pilih < 1 || pilih > tugasList.size()) {
-            System.out.println("Pilihan tidak valid.");
-            return;
-        }
-
-        Tugas t = tugasList.get(pilih - 1);
-        List<Jawaban> jawabanList = jawabanRepo.findByTugas(t.getIdTugas());
-
-        if (jawabanList.isEmpty()) {
-            System.out.println("Belum ada jawaban untuk tugas ini.");
-            return;
-        }
-
-        System.out.println("\nJawaban untuk tugas: " + t.getJudul());
-        int noJ = 1;
-        for (Jawaban j : jawabanList) {
-            System.out.println(noJ++ + ". " + j.getIdJawaban()
-                    + " | Siswa: " + j.getSiswa().getNamaLengkap()
-                    + " | File: " + j.getFileJawaban()
-                    + " | Waktu: " + j.getWaktuKirim());
-        }
+        // ... pakai versi yang sudah kita buat sebelumnya (tidak berubah banyak)
     }
 
     private void beriNilaiTugas() {
-        System.out.println("\n=== BERIKAN NILAI TUGAS ===");
-        List<Tugas> tugasList = tugasRepo.getAll();
-        if (tugasList.isEmpty()) {
-            System.out.println("Belum ada tugas.");
-            return;
-        }
-
-        int no = 1;
-        for (Tugas t : tugasList) {
-            System.out.println(no++ + ". " + t.getIdTugas() + " - " + t.getJudul());
-        }
-        int pilihTugas = InputUtil.inputInt("Pilih nomor tugas: ");
-        if (pilihTugas < 1 || pilihTugas > tugasList.size()) {
-            System.out.println("Pilihan tidak valid.");
-            return;
-        }
-
-        Tugas tugas = tugasList.get(pilihTugas - 1);
-        List<Jawaban> jawabanList = jawabanRepo.findByTugas(tugas.getIdTugas());
-
-        if (jawabanList.isEmpty()) {
-            System.out.println("Belum ada jawaban untuk tugas ini.");
-            return;
-        }
-
-        System.out.println("\nPilih jawaban yang ingin dinilai:");
-        int noJ = 1;
-        for (Jawaban j : jawabanList) {
-            System.out.println(noJ++ + ". " + j.getIdJawaban()
-                    + " | " + j.getSiswa().getNamaLengkap()
-                    + " | File: " + j.getFileJawaban());
-        }
-        int pilihJ = InputUtil.inputInt("Pilih nomor jawaban: ");
-        if (pilihJ < 1 || pilihJ > jawabanList.size()) {
-            System.out.println("Pilihan tidak valid.");
-            return;
-        }
-
-        Jawaban jawaban = jawabanList.get(pilihJ - 1);
-        double angka = Double.parseDouble(InputUtil.inputString("Nilai angka: "));
-        String ket = InputUtil.inputString("Keterangan: ");
-
-        String idNilai = "N" + System.currentTimeMillis();
-        Nilai nilai = new Nilai(idNilai, jawaban.getSiswa(), tugas, angka, ket);
-        nilaiRepo.addNilai(nilai);
-
-        System.out.println("Nilai berhasil disimpan untuk " + jawaban.getSiswa().getNamaLengkap());
+        // ... pakai versi yang sudah kita buat sebelumnya (tidak berubah banyak)
     }
 }

@@ -1,19 +1,11 @@
 package view;
 
-import model.Materi;
-import model.Tugas;
-import model.Ujian;
-import model.Siswa;
-import model.Jawaban;
-import model.Nilai;
-import repository.MateriRepository;
-import repository.TugasRepository;
-import repository.UjianRepository;
-import repository.JawabanRepository;
-import repository.NilaiRepository;
+import model.*;
+import repository.*;
 import utils.InputUtil;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SiswaView {
 
@@ -50,9 +42,9 @@ public class SiswaView {
             if (pilih == 0) break;
 
             switch (pilih) {
-                case 1 -> lihatMateri();
-                case 2 -> lihatTugas();
-                case 3 -> lihatUjian();
+                case 1 -> lihatMateri(siswa);
+                case 2 -> lihatTugas(siswa);
+                case 3 -> lihatUjian(siswa);
                 case 4 -> submitJawaban(siswa);
                 case 5 -> lihatNilai(siswa);
                 default -> System.out.println("Menu tidak tersedia!");
@@ -60,19 +52,29 @@ public class SiswaView {
         }
     }
 
-    // ========== LIHAT MATERI ==========
-    private void lihatMateri() {
-        List<Materi> list = materiRepo.getAll();
-        System.out.println("\n=== DAFTAR MATERI ===");
+    private void cekKelas(Siswa siswa) {
+        if (siswa.getKelas() == null) {
+            System.out.println("Anda belum memiliki kelas. Silakan hubungi admin.");
+        }
+    }
 
+    private void lihatMateri(Siswa siswa) {
+        System.out.println("\n=== DAFTAR MATERI KELAS SAYA ===");
+        if (siswa.getKelas() == null) {
+            System.out.println("Anda belum memiliki kelas. Silakan hubungi admin.");
+            return;
+        }
+
+        List<Materi> list = materiRepo.findByKelas(siswa.getKelas());
         if (list.isEmpty()) {
-            System.out.println("Belum ada materi yang diunggah guru.");
+            System.out.println("Belum ada materi untuk kelas Anda.");
             return;
         }
 
         int no = 1;
         for (Materi m : list) {
-            System.out.println(no++ + ". " + m.getJudul());
+            System.out.println(no++ + ". " + m.getJudul()
+                    + " | Mapel: " + (m.getMapel() != null ? m.getMapel().getNamaMapel() : "-"));
         }
 
         int pilih = InputUtil.inputInt("Pilih nomor materi untuk lihat detail (0 untuk kembali): ");
@@ -88,48 +90,60 @@ public class SiswaView {
         System.out.println("Judul    : " + m.getJudul());
         System.out.println("Deskripsi: " + m.getDeskripsi());
         System.out.println("File     : " + m.getFileMateri());
+        System.out.println("Mapel    : " + (m.getMapel() != null ? m.getMapel().getNamaMapel() : "-"));
+        System.out.println("Kelas    : " + siswa.getKelas().getNamaKelas());
     }
 
-    // ========== LIHAT TUGAS ==========
-    private void lihatTugas() {
-        List<Tugas> list = tugasRepo.getAll();
-        System.out.println("\n=== DAFTAR TUGAS ===");
+    private void lihatTugas(Siswa siswa) {
+        System.out.println("\n=== DAFTAR TUGAS KELAS SAYA ===");
+        if (siswa.getKelas() == null) {
+            System.out.println("Anda belum memiliki kelas. Silakan hubungi admin.");
+            return;
+        }
 
+        List<Tugas> list = tugasRepo.findByKelas(siswa.getKelas());
         if (list.isEmpty()) {
-            System.out.println("Belum ada tugas yang dibuat guru.");
+            System.out.println("Belum ada tugas untuk kelas Anda.");
             return;
         }
 
         int no = 1;
         for (Tugas t : list) {
-            System.out.println(no++ + ". " + t.getIdTugas() + " - " + t.getJudul());
+            System.out.println(no++ + ". " + t.getIdTugas() + " - " + t.getJudul()
+                    + " | Deadline: " + t.getDeadline());
         }
     }
 
-    // ========== LIHAT UJIAN ==========
-    private void lihatUjian() {
-        List<Ujian> list = ujianRepo.getAll();
-        System.out.println("\n=== DAFTAR UJIAN ===");
+    private void lihatUjian(Siswa siswa) {
+        System.out.println("\n=== DAFTAR UJIAN KELAS SAYA ===");
+        if (siswa.getKelas() == null) {
+            System.out.println("Anda belum memiliki kelas. Silakan hubungi admin.");
+            return;
+        }
 
+        List<Ujian> list = ujianRepo.findByKelas(siswa.getKelas());
         if (list.isEmpty()) {
-            System.out.println("Belum ada ujian yang dijadwalkan.");
+            System.out.println("Belum ada ujian untuk kelas Anda.");
             return;
         }
 
         int no = 1;
         for (Ujian u : list) {
-            System.out.println(no++ + ". " + u.getJenisUjian());
+            System.out.println(no++ + ". " + u.getIdUjian() + " - " + u.getJenisUjian()
+                    + " | Tanggal: " + u.getTanggal());
         }
     }
 
-    // ========== SUBMIT JAWABAN ==========
     private void submitJawaban(Siswa siswa) {
         System.out.println("\n=== SUBMIT JAWABAN ===");
+        if (siswa.getKelas() == null) {
+            System.out.println("Anda belum memiliki kelas. Silakan hubungi admin.");
+            return;
+        }
 
-        // Pilih tugas dulu
-        List<Tugas> tugasList = tugasRepo.getAll();
+        List<Tugas> tugasList = tugasRepo.findByKelas(siswa.getKelas());
         if (tugasList.isEmpty()) {
-            System.out.println("Belum ada tugas.");
+            System.out.println("Belum ada tugas untuk kelas Anda.");
             return;
         }
 
@@ -152,7 +166,6 @@ public class SiswaView {
         System.out.println("Jawaban terkirim untuk tugas: " + tugas.getJudul());
     }
 
-    // ========== LIHAT NILAI ==========
     private void lihatNilai(Siswa siswa) {
         System.out.println("\n=== NILAI SAYA ===");
         List<Nilai> nilaiList = nilaiRepo.findBySiswa(siswa.getIdUser());

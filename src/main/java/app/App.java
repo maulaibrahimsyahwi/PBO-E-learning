@@ -18,9 +18,7 @@ public class App {
         JawabanRepository jawabanRepo = new JawabanRepository();
         NilaiRepository nilaiRepo = new NilaiRepository();
 
-        // =====================================================
-        //                 ADMIN DEFAULT DI SINI
-        // =====================================================
+        // Admin default
         Admin defaultAdmin = new Admin(
                 "A001",
                 "admin",
@@ -29,13 +27,13 @@ public class App {
                 "admin@lms.com"
         );
         userRepo.addUser(defaultAdmin);
-        System.out.println("Admin default berhasil ditambahkan: admin/admin");
-        // =====================================================
 
         LoginView loginView = new LoginView(userRepo);
         AdminView adminView = new AdminView(userRepo, kelasRepo, mapelRepo);
-        GuruView guruView = new GuruView(materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo);
-        SiswaView siswaView = new SiswaView(materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo);
+        GuruView guruView = new GuruView(materiRepo, tugasRepo, ujianRepo,
+                                         jawabanRepo, nilaiRepo, kelasRepo, mapelRepo);
+        SiswaView siswaView = new SiswaView(materiRepo, tugasRepo, ujianRepo,
+                                            jawabanRepo, nilaiRepo);
 
         while (true) {
             System.out.println("\n=== LMS SMK NUSANTARA ===");
@@ -52,8 +50,8 @@ public class App {
                     User u = loginView.login();
                     if (u == null) continue;
 
-                    if (u instanceof Admin) adminView.menu();
-                    else if (u instanceof Guru) guruView.menu();
+                    if (u instanceof Admin a) adminView.menu();
+                    else if (u instanceof Guru g) guruView.menu(g);
                     else if (u instanceof Siswa s) siswaView.menu(s);
                 }
                 case 2 -> registrasi(userRepo);

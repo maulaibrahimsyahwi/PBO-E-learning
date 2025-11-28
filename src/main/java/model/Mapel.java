@@ -1,14 +1,12 @@
 package model;
 
-public class MataPelajaran {
+public class Mapel {
     private String idMapel;
     private String namaMapel;
-    private String deskripsi;
 
-    public MataPelajaran(String id, String nama, String desk) {
+    public Mapel(String id, String nama) {
         this.idMapel = id;
         this.namaMapel = nama;
-        this.deskripsi = desk;
     }
 
     public String getIdMapel() {
@@ -19,12 +17,8 @@ public class MataPelajaran {
         return namaMapel;
     }
 
-    public String getDeskripsi() {
-        return deskripsi;
-    }
-
     @Override
     public String toString() {
-        return idMapel + " - " + namaMapel;
+        return namaMapel;
     }
 }
