@@ -3,10 +3,12 @@ package repository;
 import model.Kelas;
 import model.MataPelajaran;
 import model.Tugas;
+import utils.DateUtil;
 
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class TugasRepository {
 
@@ -26,13 +28,28 @@ public class TugasRepository {
         return tugasList;
     }
 
+    public List<Tugas> getByKelas(Kelas kelas) {
+        return tugasList.stream()
+                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
+                .collect(Collectors.toList());
+    }
+
+    public List<Tugas> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
+        return tugasList.stream()
+                .filter(t -> t.getMapel() != null && t.getMapel().equals(mapel))
+                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
+                .collect(Collectors.toList());
+    }
+
     public void saveToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
 
             for (Tugas t : tugasList) {
+                // Perbaikan: Menyertakan deskripsi dalam penyimpanan file
                 bw.write(
                         t.getIdTugas() + ";" +
                         t.getJudul() + ";" +
+                        t.getDeskripsi() + ";" +
                         t.getDeadline() + ";" +
                         (t.getGuru() != null ? t.getGuru().getIdUser() : "-") + ";" +
                         (t.getKelas() != null ? t.getKelas().getIdKelas() : "-") + ";" +
@@ -61,14 +78,20 @@ public class TugasRepository {
                 if (line.isBlank()) continue;
                 String[] d = line.split(";");
 
-                String id = d[0];
-                String judul = d[1];
-                String deadline = d[2];
+                // Perbaikan: Memastikan data cukup untuk konstruktor (min 4 field utama)
+                // Format: id;judul;deskripsi;deadline;...
+                if (d.length >= 4) {
+                    String id = d[0];
+                    String judul = d[1];
+                    String desk = d[2];
+                    String deadlineStr = d[3];
 
-                Tugas t = new Tugas(id, judul, deadline);
-                // guru, kelas, mapel direkonstruksi di DataReconstructor
-
-                tugasList.add(t);
+                    // Perbaikan: Parse tanggal dan gunakan konstruktor yang sesuai
+                    Tugas t = new Tugas(id, judul, desk, DateUtil.parse(deadlineStr));
+                    
+                    // Note: Relasi guru, kelas, mapel direkonstruksi di DataReconstructor
+                    tugasList.add(t);
+                }
             }
 
             br.close();
@@ -76,24 +99,5 @@ public class TugasRepository {
         } catch (Exception e) {
             System.out.println("Gagal memuat tugas.txt: " + e.getMessage());
         }
-    }
-
-    // ==============================================
-    // 🔥 Tambahan method untuk fitur SiswaView
-    // ==============================================
-
-    /** Ambil tugas berdasarkan kelas siswa */
-    public List<Tugas> getByKelas(Kelas kelas) {
-        return tugasList.stream()
-                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
-                .toList();
-    }
-
-    /** Ambil tugas berdasarkan kelas + mapel */
-    public List<Tugas> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return tugasList.stream()
-                .filter(t -> t.getMapel() != null && t.getMapel().equals(mapel))
-                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
-                .toList();
     }
 }

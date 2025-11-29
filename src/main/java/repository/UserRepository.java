@@ -5,6 +5,7 @@ import model.*;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserRepository {
 
@@ -36,21 +37,34 @@ public class UserRepository {
 
             for (User u : userList) {
                 if (u instanceof Admin a) {
-                    // format: id;username;password;nama;email;role;nip/nis;spes/angkatan;idKelas
                     bw.write(a.getIdUser() + ";" + a.getUsername() + ";" +
                              a.getPassword() + ";" + a.getNamaLengkap() + ";" +
-                             a.getEmail() + ";ADMIN;-;-;-");
+                             a.getEmail() + ";ADMIN;-;-;-;-");
                 } else if (u instanceof Guru g) {
+                    String listMapel = "-";
+                    if (!g.getMapelDiampu().isEmpty()) {
+                        listMapel = g.getMapelDiampu().stream()
+                                .map(MataPelajaran::getIdMapel)
+                                .collect(Collectors.joining(","));
+                    }
+
+                    String listKelas = "-";
+                    if (!g.getDaftarKelas().isEmpty()) {
+                        listKelas = g.getDaftarKelas().stream()
+                                .map(Kelas::getIdKelas)
+                                .collect(Collectors.joining(","));
+                    }
+
                     bw.write(g.getIdUser() + ";" + g.getUsername() + ";" +
                              g.getPassword() + ";" + g.getNamaLengkap() + ";" +
                              g.getEmail() + ";GURU;" + g.getNip() + ";" +
-                             g.getSpesialisasi() + ";-");
+                             g.getSpesialisasi() + ";" + listMapel + ";" + listKelas);
                 } else if (u instanceof Siswa s) {
                     String idKelas = s.getIdKelas() != null ? s.getIdKelas() : "-";
                     bw.write(s.getIdUser() + ";" + s.getUsername() + ";" +
                              s.getPassword() + ";" + s.getNamaLengkap() + ";" +
                              s.getEmail() + ";SISWA;" + s.getNis() + ";" +
-                             s.getAngkatan() + ";" + idKelas);
+                             s.getAngkatan() + ";" + idKelas + ";-");
                 }
                 bw.newLine();
             }
@@ -87,7 +101,20 @@ public class UserRepository {
                 } else if ("GURU".equals(role)) {
                     String nip  = d.length > 6 ? d[6] : "-";
                     String spes = d.length > 7 ? d[7] : "-";
-                    userList.add(new Guru(id, username, password, nama, email, nip, spes));
+                    
+                    Guru g = new Guru(id, username, password, nama, email, nip, spes);
+                    
+                    if (d.length > 8 && !d[8].equals("-")) {
+                        String[] mapelIds = d[8].split(",");
+                        for(String mid : mapelIds) g.addTempIdMapel(mid);
+                    }
+                    
+                    if (d.length > 9 && !d[9].equals("-")) {
+                        String[] kelasIds = d[9].split(",");
+                        for(String kid : kelasIds) g.addTempIdKelas(kid);
+                    }
+                    
+                    userList.add(g);
 
                 } else if ("SISWA".equals(role)) {
                     String nis      = d.length > 6 ? d[6] : "-";

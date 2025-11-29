@@ -7,6 +7,7 @@ import model.Materi;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class MateriRepository {
 
@@ -24,6 +25,19 @@ public class MateriRepository {
 
     public List<Materi> getAll() {
         return materiList;
+    }
+
+    public List<Materi> getByKelas(Kelas kelas) {
+        return materiList.stream()
+                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
+                .collect(Collectors.toList());
+    }
+
+    public List<Materi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
+        return materiList.stream()
+                .filter(m -> m.getMapel() != null && m.getMapel().equals(mapel))
+                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
+                .collect(Collectors.toList());
     }
 
     public void saveToFile() {
@@ -45,50 +59,21 @@ public class MateriRepository {
 
     public void loadFromFile() {
         materiList.clear();
-
         try {
             File file = new File(FILE_PATH);
             if (!file.exists()) return;
 
             BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
-
             while ((line = br.readLine()) != null) {
                 if (line.isBlank()) continue;
-
                 String[] d = line.split(";");
-
-                String id = d[0];
-                String judul = d[1];
-
-                Materi m = new Materi(id, judul);
-
-                // relasi direkonstruksi nanti oleh DataReconstructor
+                Materi m = new Materi(d[0], d[1]); 
                 materiList.add(m);
             }
-
             br.close();
         } catch (Exception e) {
             System.out.println("Gagal memuat materi.txt: " + e.getMessage());
         }
-    }
-
-    // ==============================================
-    // 🔥 Tambahan method untuk fitur SiswaView
-    // ==============================================
-
-    /** Ambil materi berdasarkan kelas saja */
-    public List<Materi> getByKelas(Kelas kelas) {
-        return materiList.stream()
-                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
-                .toList();
-    }
-
-    /** Ambil materi berdasarkan kelas + mapel */
-    public List<Materi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return materiList.stream()
-                .filter(m -> m.getMapel() != null && m.getMapel().equals(mapel))
-                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
-                .toList();
     }
 }

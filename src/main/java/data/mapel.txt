@@ -1,1 +1,2 @@
-123123123123;IPA;Ilmu Pengetahuan Alam
+1L2IB;IPA;Ilmu Pengetahuan Alam;12
+PHBIX;MTK;Matematika Menyenangkan tidak ?;12

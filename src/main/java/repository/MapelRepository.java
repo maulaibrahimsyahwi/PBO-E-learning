@@ -34,9 +34,11 @@ public class MapelRepository {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
 
             for (MataPelajaran m : mapelList) {
+                // Format: id;nama;deskripsi;tingkat
                 bw.write(m.getIdMapel() + ";" +
                          m.getNamaMapel() + ";" +
-                         m.getDeskripsi());
+                         m.getDeskripsi() + ";" +
+                         m.getTingkat());
                 bw.newLine();
             }
 
@@ -54,8 +56,19 @@ public class MapelRepository {
             String line;
 
             while ((line = br.readLine()) != null) {
+                if (line.trim().isEmpty()) continue;
+
                 String[] d = line.split(";");
-                mapelList.add(new MataPelajaran(d[0], d[1], d[2]));
+                
+                // Handle format lama (length 3) dan baru (length 4)
+                if (d.length >= 3) {
+                    String id = d[0];
+                    String nama = d[1];
+                    String desk = d[2];
+                    String tingkat = (d.length > 3) ? d[3] : "-"; // Default jika data lama
+
+                    mapelList.add(new MataPelajaran(id, nama, desk, tingkat));
+                }
             }
 
             br.close();

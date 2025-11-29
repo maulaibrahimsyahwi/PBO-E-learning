@@ -2,9 +2,11 @@ package view;
 
 import model.*;
 import repository.*;
+import utils.IdUtil;
 import utils.InputUtil;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AdminView {
 
@@ -25,7 +27,7 @@ public class AdminView {
             System.out.println("2. Tambah Siswa");
             System.out.println("3. Tambah Kelas");
             System.out.println("4. Tambah Mapel");
-            System.out.println("5. Assign Guru ke Mapel");
+            System.out.println("5. Assign Guru (Mapel & Kelas)");
             System.out.println("6. Assign Siswa ke Kelas");
             System.out.println("0. Logout");
 
@@ -38,7 +40,7 @@ public class AdminView {
                 case 2 -> tambahSiswa();
                 case 3 -> tambahKelas();
                 case 4 -> tambahMapel();
-                case 5 -> assignGuruMapel();
+                case 5 -> assignGuru();
                 case 6 -> assignSiswaKelas();
                 default -> System.out.println("Menu tidak tersedia!");
             }
@@ -47,7 +49,6 @@ public class AdminView {
 
     private void tambahGuru() {
         System.out.println("\n=== TAMBAH GURU ===");
-        String id = InputUtil.inputString("ID Guru: ");
         String username = InputUtil.inputString("Username: ");
         String pwd = InputUtil.inputString("Password: ");
         String nama = InputUtil.inputString("Nama Lengkap: ");
@@ -55,14 +56,14 @@ public class AdminView {
         String nip = InputUtil.inputString("NIP: ");
         String spes = InputUtil.inputString("Spesialisasi: ");
 
+        String id = IdUtil.generate(); 
         Guru g = new Guru(id, username, pwd, nama, email, nip, spes);
         userRepo.addUser(g);
-        System.out.println("Guru berhasil ditambahkan!");
+        System.out.println("Guru berhasil ditambahkan! (ID: " + id + ")");
     }
 
     private void tambahSiswa() {
         System.out.println("\n=== TAMBAH SISWA ===");
-        String id = InputUtil.inputString("ID Siswa: ");
         String username = InputUtil.inputString("Username: ");
         String pwd = InputUtil.inputString("Password: ");
         String nama = InputUtil.inputString("Nama Lengkap: ");
@@ -70,39 +71,69 @@ public class AdminView {
         String nis = InputUtil.inputString("NIS: ");
         String angkatan = InputUtil.inputString("Angkatan: ");
 
+        String id = IdUtil.generate();
         Siswa s = new Siswa(id, username, pwd, nama, email, nis, angkatan);
         userRepo.addUser(s);
-        System.out.println("Siswa berhasil ditambahkan!");
+        System.out.println("Siswa berhasil ditambahkan! (ID: " + id + ")");
     }
 
     private void tambahKelas() {
         System.out.println("\n=== TAMBAH KELAS ===");
-        String id = InputUtil.inputString("ID Kelas: ");
         String nama = InputUtil.inputString("Nama Kelas: ");
-        String tingkat = InputUtil.inputString("Tingkat: ");
+        
+        String tingkat;
+        while (true) {
+            tingkat = InputUtil.inputString("Tingkat (10/11/12): ");
+            if (tingkat.equals("10") || tingkat.equals("11") || tingkat.equals("12")) {
+                break;
+            }
+            System.out.println("Input salah! Tingkat hanya boleh 10, 11, atau 12.");
+        }
 
+        String id = IdUtil.generate();
         kelasRepo.addKelas(new Kelas(id, nama, tingkat));
-        System.out.println("Kelas berhasil ditambahkan!");
+        System.out.println("Kelas berhasil ditambahkan! (ID: " + id + ")");
     }
 
     private void tambahMapel() {
         System.out.println("\n=== TAMBAH MAPEL ===");
-        String id = InputUtil.inputString("ID Mapel: ");
         String nama = InputUtil.inputString("Nama Mapel: ");
         String desk = InputUtil.inputString("Deskripsi: ");
 
-        mapelRepo.addMapel(new MataPelajaran(id, nama, desk));
-        System.out.println("Mapel berhasil ditambahkan!");
+        String tingkat;
+        while (true) {
+            tingkat = InputUtil.inputString("Untuk Tingkat Kelas (10/11/12): ");
+            if (tingkat.equals("10") || tingkat.equals("11") || tingkat.equals("12")) {
+                break;
+            }
+            System.out.println("Input salah! Tingkat hanya boleh 10, 11, atau 12.");
+        }
+
+        String id = IdUtil.generate();
+        MataPelajaran m = new MataPelajaran(id, nama, desk, tingkat);
+        mapelRepo.addMapel(m);
+
+        // 🔥 PERBAIKAN UTAMA: Langsung update kelas yang relevan saat ini juga
+        int count = 0;
+        for (Kelas k : kelasRepo.getAll()) {
+            if (k.getTingkat().equals(tingkat)) {
+                k.tambahMapel(m);
+                count++;
+            }
+        }
+
+        System.out.println("Mapel berhasil ditambahkan! (ID: " + id + ")");
+        System.out.println("Mapel otomatis didistribusikan ke " + count + " kelas tingkat " + tingkat + ".");
     }
 
-    private void assignGuruMapel() {
-        System.out.println("\n=== ASSIGN GURU KE MAPEL ===");
+    private void assignGuru() {
+        System.out.println("\n=== ASSIGN GURU (MAPEL & KELAS) ===");
 
         List<User> allUsers = userRepo.getAll();
         List<Guru> guruList = allUsers.stream()
                 .filter(u -> u instanceof Guru)
                 .map(u -> (Guru) u)
-                .toList();
+                .collect(Collectors.toList());
 
         if (guruList.isEmpty()) {
             System.out.println("Belum ada guru.");
@@ -128,22 +159,47 @@ public class AdminView {
 
         no = 1;
         for (MataPelajaran m : mapelList) {
-            System.out.println(no++ + ". " + m.getIdMapel() + " - " + m.getNamaMapel());
+            System.out.println(no++ + ". " + m.getIdMapel() + " - " + m.getNamaMapel() + " (Kls " + m.getTingkat() + ")");
         }
-        int pilihMapel = InputUtil.inputInt("Pilih mapel: ");
+        int pilihMapel = InputUtil.inputInt("Pilih mapel untuk diajarkan: ");
         if (pilihMapel < 1 || pilihMapel > mapelList.size()) {
             System.out.println("Pilihan tidak valid.");
             return;
         }
         MataPelajaran mapel = mapelList.get(pilihMapel - 1);
 
+        List<Kelas> kelasList = kelasRepo.getAll();
+        if (kelasList.isEmpty()) {
+            System.out.println("Belum ada kelas.");
+            return;
+        }
+
+        no = 1;
+        for (Kelas k : kelasList) {
+            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas() + " (Tingkat " + k.getTingkat() + ")");
+        }
+        int pilihKelas = InputUtil.inputInt("Pilih kelas tujuan: ");
+        if (pilihKelas < 1 || pilihKelas > kelasList.size()) {
+            System.out.println("Pilihan tidak valid.");
+            return;
+        }
+        Kelas kelas = kelasList.get(pilihKelas - 1);
+
+        if (!mapel.getTingkat().equals("-") && !mapel.getTingkat().equals(kelas.getTingkat())) {
+            System.out.println("[INFO] Perhatian: Anda meng-assign Mapel Tingkat " + mapel.getTingkat() + 
+                               " ke Kelas Tingkat " + kelas.getTingkat());
+        }
+
         guru.tambahMapel(mapel);
-        userRepo.saveToFile(); // simpan perubahan guru
-        System.out.println("Guru " + guru.getNamaLengkap() +
-                " sekarang mengajar mapel " + mapel.getNamaMapel());
+        guru.tambahKelas(kelas);
+        
+        userRepo.saveToFile();
+
+        System.out.println("Berhasil! Guru " + guru.getNamaLengkap() + 
+                " ditugaskan mengajar " + mapel.getNamaMapel() + 
+                " di kelas " + kelas.getNamaKelas());
     }
 
-    /** 🔥 BAGIAN PENTING: relasi siswa–kelas + saveToFile */
     private void assignSiswaKelas() {
         System.out.println("\n=== ASSIGN SISWA KE KELAS ===");
 
@@ -151,7 +207,7 @@ public class AdminView {
         List<Siswa> siswaList = allUsers.stream()
                 .filter(u -> u instanceof Siswa)
                 .map(u -> (Siswa) u)
-                .toList();
+                .collect(Collectors.toList());
 
         if (siswaList.isEmpty()) {
             System.out.println("Belum ada siswa.");
@@ -177,7 +233,7 @@ public class AdminView {
 
         no = 1;
         for (Kelas k : kelasList) {
-            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas());
+            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas() + " (Tingkat " + k.getTingkat() + ")");
         }
         int pilihKelas = InputUtil.inputInt("Pilih kelas: ");
         if (pilihKelas < 1 || pilihKelas > kelasList.size()) {
@@ -186,11 +242,9 @@ public class AdminView {
         }
         Kelas kelas = kelasList.get(pilihKelas - 1);
 
-        // set relasi di object + simpan idKelas
-        siswa.setKelas(kelas);                     // ini sekaligus mengisi idKelas di Siswa
+        siswa.setKelas(kelas);                     
         kelas.tambahSiswa(siswa);
 
-        // simpan perubahan ke file users.txt
         userRepo.saveToFile();
 
         System.out.println("Siswa " + siswa.getNamaLengkap() +

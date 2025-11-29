@@ -4,6 +4,7 @@ import model.*;
 import repository.*;
 import service.DataReconstructor;
 import view.*;
+import utils.IdUtil;
 import utils.InputUtil;
 
 public class App {
@@ -18,41 +19,57 @@ public class App {
         UjianRepository ujianRepo = new UjianRepository();
         JawabanRepository jawabanRepo = new JawabanRepository();
         NilaiRepository nilaiRepo = new NilaiRepository();
+        ForumRepository forumRepo = new ForumRepository(); 
 
         DataReconstructor recon = new DataReconstructor(
-        userRepo,
-        kelasRepo,
-        mapelRepo,
-        materiRepo,
-        tugasRepo,
-        ujianRepo,
-        jawabanRepo,
-        nilaiRepo
-);
+            userRepo,
+            kelasRepo,
+            mapelRepo,
+            materiRepo,
+            tugasRepo,
+            ujianRepo,
+            jawabanRepo,
+            nilaiRepo,
+            forumRepo
+        );
 
-recon.reconstruct();
+        recon.reconstruct();
 
-
-        // Admin default
         if (userRepo.findByUsername("admin") == null) {
-    Admin defaultAdmin = new Admin(
-            "A001",
-            "admin",
-            "admin",
-            "Administrator",
-            "admin@lms.com"
-    );
-    userRepo.addUser(defaultAdmin);
-    System.out.println("Admin default dibuat.");
-}
-
+            Admin defaultAdmin = new Admin(
+                    "A001",
+                    "admin",
+                    "admin",
+                    "Administrator",
+                    "admin@lms.com"
+            );
+            userRepo.addUser(defaultAdmin);
+            System.out.println("Admin default dibuat.");
+        }
 
         LoginView loginView = new LoginView(userRepo);
         AdminView adminView = new AdminView(userRepo, kelasRepo, mapelRepo);
-        GuruView guruView = new GuruView(materiRepo, tugasRepo, ujianRepo,
-                                         jawabanRepo, nilaiRepo, kelasRepo, mapelRepo);
-        SiswaView siswaView = new SiswaView(materiRepo, tugasRepo, ujianRepo,
-                                            jawabanRepo, nilaiRepo);
+        
+        GuruView guruView = new GuruView(
+            materiRepo, 
+            tugasRepo, 
+            ujianRepo,
+            jawabanRepo, 
+            nilaiRepo, 
+            kelasRepo, 
+            mapelRepo, 
+            userRepo,
+            forumRepo // Tambahan parameter
+        );
+        
+        SiswaView siswaView = new SiswaView(
+            materiRepo, 
+            tugasRepo, 
+            ujianRepo,
+            jawabanRepo, 
+            nilaiRepo,
+            forumRepo 
+        );
 
         while (true) {
             System.out.println("\n=== LMS SMK NUSANTARA ===");
@@ -91,7 +108,9 @@ recon.reconstruct();
         int tipe = InputUtil.inputInt("Pilih: ");
         if (tipe == 0) return;
 
-        String id = InputUtil.inputString("ID User: ");
+        String id = IdUtil.generate();
+        System.out.println("ID User Anda: " + id);
+
         String username = InputUtil.inputString("Username: ");
         String password = InputUtil.inputString("Password: ");
         String nama = InputUtil.inputString("Nama Lengkap: ");

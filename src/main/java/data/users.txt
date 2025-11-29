@@ -1,3 +1,6 @@
-A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-;-
-123123;maula;maula;maula ibrahim;maula@gmail.com;SISWA;1512623013;202;123
-123123123;akmal;akmal;akmal akmal;akmal@gmail.com;GURU;123123;IPA;-
+A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-;-;-
+123123;maula;maula;maula ibrahim;maula@gmail.com;SISWA;1512623013;202;K3DAU;-
+123123123;akmal;akmal;akmal akmal;akmal@gmail.com;GURU;123123;IPA;1L2IB;K3DAU
+I3SCR;Djuanda;Djuanda;Djuanda Djuanda;Djuanda@gmail.com;SISWA;1512313;2021;U7RS8;-
+7FUJI;jaid;jaid;jaid jaid;jaid@gmail.com;GURU;18123132;MTK;-;-
+O9BB6;rafi;rafi;rafi rafi;rafi@gmail.com;GURU;123411245;TIK;-;-

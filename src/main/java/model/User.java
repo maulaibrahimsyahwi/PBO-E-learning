@@ -18,7 +18,6 @@ public abstract class User {
         this.aktif = true;
     }
 
-    
     public String getIdUser() {
         return idUser;
     }
@@ -29,6 +28,11 @@ public abstract class User {
 
     public String getPassword() {     
         return password;
+    }
+
+    // 🔥 METHOD BARU
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public String getNamaLengkap() {
@@ -43,7 +47,6 @@ public abstract class User {
         return aktif;
     }
 
-   
     public void setNamaLengkap(String namaLengkap) {
         this.namaLengkap = namaLengkap;
     }
@@ -51,7 +54,6 @@ public abstract class User {
     public void setEmail(String email) {
         this.email = email;
     }
-
     
     public boolean login(String username, String password) {
         return this.username.equals(username) && this.password.equals(password);
@@ -61,6 +63,5 @@ public abstract class User {
         System.out.println("Anda telah logout.");
     }
 
-    
     public abstract void tampilkanMenu();
 }

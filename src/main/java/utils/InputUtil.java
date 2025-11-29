@@ -22,7 +22,7 @@ public class InputUtil {
             } catch (NumberFormatException e) {
                 System.out.println("Input harus angka! Coba lagi:");
             } catch (Exception e) {
-                System.out.println("\nProgram dihentikan.");
+                System.out.println("\nTerima kasih menggunakan LMS!");
                 System.exit(0);
             }
         }
@@ -33,7 +33,7 @@ public class InputUtil {
             System.out.print(msg);
             return scanner.nextLine();
         } catch (Exception e) {
-            System.out.println("\nProgram dihentikan.");
+            System.out.println("\nTerima kasih menggunakan LMS!");
             System.exit(0);
             return null;
         }

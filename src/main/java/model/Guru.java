@@ -7,6 +7,10 @@ public class Guru extends User {
     private String nip;
     private String spesialisasi;
     private List<MataPelajaran> mapelDiampu = new ArrayList<>();
+    private List<Kelas> daftarKelas = new ArrayList<>();
+
+    private List<String> tempIdMapel = new ArrayList<>();
+    private List<String> tempIdKelas = new ArrayList<>();
 
     public Guru(String idUser, String username, String password,
                 String namaLengkap, String email,
@@ -20,12 +24,6 @@ public class Guru extends User {
     @Override
     public void tampilkanMenu() {
         System.out.println("=== Menu Guru ===");
-        System.out.println("1. Kelola Materi");
-        System.out.println("2. Kelola Tugas");
-        System.out.println("3. Kelola Ujian");
-        System.out.println("4. Lihat Jawaban");
-        System.out.println("5. Nilai Jawaban");
-        System.out.println("0. Logout");
     }
 
     public String getNip() {
@@ -44,5 +42,31 @@ public class Guru extends User {
         if (!mapelDiampu.contains(mapel)) {
             mapelDiampu.add(mapel);
         }
+    }
+
+    public List<Kelas> getDaftarKelas() {
+        return daftarKelas;
+    }
+
+    public void tambahKelas(Kelas kelas) {
+        if (!daftarKelas.contains(kelas)) {
+            daftarKelas.add(kelas);
+        }
+    }
+
+    public List<String> getTempIdMapel() {
+        return tempIdMapel;
+    }
+
+    public void addTempIdMapel(String id) {
+        this.tempIdMapel.add(id);
+    }
+
+    public List<String> getTempIdKelas() {
+        return tempIdKelas;
+    }
+
+    public void addTempIdKelas(String id) {
+        this.tempIdKelas.add(id);
     }
 }

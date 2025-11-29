@@ -15,6 +15,7 @@ public class DataReconstructor {
     private UjianRepository ujianRepo;
     private JawabanRepository jawabanRepo;
     private NilaiRepository nilaiRepo;
+    private ForumRepository forumRepo; 
 
     public DataReconstructor(
             UserRepository userRepo,
@@ -24,7 +25,8 @@ public class DataReconstructor {
             TugasRepository tugasRepo,
             UjianRepository ujianRepo,
             JawabanRepository jawabanRepo,
-            NilaiRepository nilaiRepo) {
+            NilaiRepository nilaiRepo,
+            ForumRepository forumRepo) {
 
         this.userRepo = userRepo;
         this.kelasRepo = kelasRepo;
@@ -34,15 +36,14 @@ public class DataReconstructor {
         this.ujianRepo = ujianRepo;
         this.jawabanRepo = jawabanRepo;
         this.nilaiRepo = nilaiRepo;
+        this.forumRepo = forumRepo;
     }
 
     public void reconstruct() {
 
         List<User> users = userRepo.getAll();
 
-        // =====================================================
-        // 1. REKONSTRUKSI SISWA → KELAS (METODE BARU & BENAR)
-        // =====================================================
+        // 1. Link Siswa -> Kelas & Guru -> Mapel/Kelas (dari file users.txt)
         for (User u : users) {
             if (u instanceof Siswa s) {
                 String idKelas = s.getIdKelas();
@@ -53,148 +54,128 @@ public class DataReconstructor {
                         k.tambahSiswa(s);
                     }
                 }
+            } else if (u instanceof Guru g) {
+                for (String mid : g.getTempIdMapel()) {
+                    MataPelajaran m = mapelRepo.findById(mid);
+                    if (m != null) g.tambahMapel(m);
+                }
+                for (String kid : g.getTempIdKelas()) {
+                    Kelas k = kelasRepo.findById(kid);
+                    if (k != null) g.tambahKelas(k);
+                }
             }
         }
 
-        // =====================================================
-        // 2. REKONSTRUKSI GURU → MAPEL
-        // =====================================================
-        for (User u : users) {
-            if (u instanceof Guru g) {
-                // TODO jika kamu simpan mapel → guru, isi di sini
-            }
-        }
-
-        // =====================================================
-        // 3. REKONSTRUKSI MATERI
-        // =====================================================
+        // 2. Link Materi -> Guru/Kelas/Mapel
         for (Materi m : materiRepo.getAll()) {
-
-            // Guru
             if (m.getGuru() == null) {
                 for (User u : users) {
-                    if (u instanceof Guru g) {
-                        if (m.getIdMateri().startsWith(g.getIdUser())) {
-                            m.setGuru(g);
-                        }
+                    if (u instanceof Guru g && m.getIdMateri().startsWith(g.getIdUser())) {
+                        m.setGuru(g);
                     }
                 }
             }
-
-            // Kelas
             if (m.getKelas() == null) {
                 for (Kelas k : kelasRepo.getAll()) {
-                    if (m.getIdMateri().contains(k.getIdKelas())) {
-                        m.setKelas(k);
-                    }
+                    if (m.getIdMateri().contains(k.getIdKelas())) m.setKelas(k);
                 }
             }
-
-            // Mapel
             if (m.getMapel() == null) {
                 for (MataPelajaran map : mapelRepo.getAll()) {
-                    if (m.getIdMateri().contains(map.getIdMapel())) {
-                        m.setMapel(map);
-                    }
+                    if (m.getIdMateri().contains(map.getIdMapel())) m.setMapel(map);
                 }
             }
         }
 
-        // =====================================================
-        // 4. REKONSTRUKSI TUGAS
-        // =====================================================
+        // 3. Link Tugas -> Guru/Kelas/Mapel
         for (Tugas t : tugasRepo.getAll()) {
-
-            // Guru
             for (User u : users) {
-                if (u instanceof Guru g && t.getGuru() == null) {
-                    if (t.getIdTugas().startsWith(g.getIdUser())) {
-                        t.setGuru(g);
-                    }
+                if (u instanceof Guru g && t.getGuru() == null && t.getIdTugas().startsWith(g.getIdUser())) {
+                    t.setGuru(g);
                 }
             }
-
-            // Kelas
             for (Kelas k : kelasRepo.getAll()) {
-                if (t.getKelas() == null && t.getIdTugas().contains(k.getIdKelas())) {
-                    t.setKelas(k);
-                }
+                if (t.getKelas() == null && t.getIdTugas().contains(k.getIdKelas())) t.setKelas(k);
             }
-
-            // Mapel
             for (MataPelajaran map : mapelRepo.getAll()) {
-                if (t.getMapel() == null && t.getIdTugas().contains(map.getIdMapel())) {
-                    t.setMapel(map);
-                }
+                if (t.getMapel() == null && t.getIdTugas().contains(map.getIdMapel())) t.setMapel(map);
             }
         }
 
-        // =====================================================
-        // 5. REKONSTRUKSI UJIAN
-        // =====================================================
+        // 4. Link Ujian -> Guru/Kelas/Mapel
         for (Ujian u : ujianRepo.getAll()) {
-
             for (User usr : users) {
-                if (usr instanceof Guru g && u.getGuru() == null) {
-                    if (u.getIdUjian().startsWith(g.getIdUser())) {
-                        u.setGuru(g);
-                    }
+                if (usr instanceof Guru g && u.getGuru() == null && u.getIdUjian().startsWith(g.getIdUser())) {
+                    u.setGuru(g);
                 }
             }
-
             for (Kelas k : kelasRepo.getAll()) {
-                if (u.getKelas() == null && u.getIdUjian().contains(k.getIdKelas())) {
-                    u.setKelas(k);
-                }
+                if (u.getKelas() == null && u.getIdUjian().contains(k.getIdKelas())) u.setKelas(k);
             }
-
             for (MataPelajaran m : mapelRepo.getAll()) {
-                if (u.getMapel() == null && u.getIdUjian().contains(m.getIdMapel())) {
-                    u.setMapel(m);
-                }
+                if (u.getMapel() == null && u.getIdUjian().contains(m.getIdMapel())) u.setMapel(m);
             }
         }
 
-        // =====================================================
-        // 6. REKONSTRUKSI JAWABAN
-        // =====================================================
+        // 5. Link Jawaban -> Siswa/Tugas
         for (Jawaban j : jawabanRepo.getAll()) {
-
-            // siswa
             for (User u : users) {
-                if (u instanceof Siswa s && j.getSiswa() == null) {
-                    if (j.getIdJawaban().startsWith(s.getIdUser())) {
-                        j.setSiswa(s);
-                    }
+                if (u instanceof Siswa s && j.getSiswa() == null && j.getIdJawaban().startsWith(s.getIdUser())) {
+                    j.setSiswa(s);
                 }
             }
-
-            // tugas
             for (Tugas t : tugasRepo.getAll()) {
-                if (j.getTugas() == null && j.getIdJawaban().contains(t.getIdTugas())) {
-                    j.setTugas(t);
-                }
+                if (j.getTugas() == null && j.getIdJawaban().contains(t.getIdTugas())) j.setTugas(t);
             }
         }
 
-        // =====================================================
-        // 7. REKONSTRUKSI NILAI
-        // =====================================================
+        // 6. Link Nilai -> Siswa/Tugas
         for (Nilai n : nilaiRepo.getAll()) {
-
-            // siswa
             for (User u : users) {
-                if (u instanceof Siswa s && n.getSiswa() == null) {
-                    if (n.getIdNilai().startsWith(s.getIdUser())) {
-                        n.setSiswa(s);
+                if (u instanceof Siswa s && n.getSiswa() == null && n.getIdNilai().startsWith(s.getIdUser())) {
+                    n.setSiswa(s);
+                }
+            }
+            for (Tugas t : tugasRepo.getAll()) {
+                if (n.getTugas() == null && n.getIdNilai().contains(t.getIdTugas())) n.setTugas(t);
+            }
+        }
+        
+        // 7. Link Forum -> Pengirim/Kelas/Mapel
+        try {
+            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("src/main/java/data/forum.txt"));
+            String line;
+            int idx = 0;
+            while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
+                String[] d = line.split(";");
+                if (d.length >= 6) {
+                    if (idx < forumRepo.getAll().size()) {
+                        ForumDiskusi f = forumRepo.getAll().get(idx++);
+                        for (User u : users) {
+                            if (u.getIdUser().equals(d[1])) {
+                                f.setPengirim(u);
+                                break;
+                            }
+                        }
+                        f.setKelas(kelasRepo.findById(d[4]));
+                        f.setMapel(mapelRepo.findById(d[5]));
                     }
                 }
             }
+            br.close();
+        } catch (Exception e) { 
+            // File mungkin belum ada
+        }
 
-            // tugas
-            for (Tugas t : tugasRepo.getAll()) {
-                if (n.getTugas() == null && n.getIdNilai().contains(t.getIdTugas())) {
-                    n.setTugas(t);
+        // =================================================================
+        // 🔥 UPDATE PENTING: LINK MAPEL KE KELAS BERDASARKAN TINGKAT 🔥
+        // =================================================================
+        for (Kelas k : kelasRepo.getAll()) {
+            for (MataPelajaran m : mapelRepo.getAll()) {
+                // Jika tingkat sama (misal 10 == 10), masukkan mapel ke kelas
+                if (k.getTingkat().equals(m.getTingkat())) {
+                    k.tambahMapel(m);
                 }
             }
         }
