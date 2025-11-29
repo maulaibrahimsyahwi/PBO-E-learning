@@ -1,4 +1,3 @@
-
 ```
 PBO‑E‑learning
 ├─ hierarchical structure.md
@@ -9,6 +8,7 @@ PBO‑E‑learning
          │  ├─ App.class
          │  └─ App.java
          ├─ data
+         │  ├─ forum.txt
          │  ├─ jawaban.txt
          │  ├─ kelas.txt
          │  ├─ mapel.txt
@@ -50,6 +50,8 @@ PBO‑E‑learning
          │  ├─ User.class
          │  └─ User.java
          ├─ repository
+         │  ├─ ForumRepository.class
+         │  ├─ ForumRepository.java
          │  ├─ JawabanRepository.class
          │  ├─ JawabanRepository.java
          │  ├─ KelasRepository.class
@@ -69,6 +71,8 @@ PBO‑E‑learning
          ├─ service
          │  ├─ AdminService.class
          │  ├─ AdminService.java
+         │  ├─ DataReconstructor.class
+         │  ├─ DataReconstructor.java
          │  ├─ GuruService.class
          │  ├─ GuruService.java
          │  ├─ JawabanService.class
@@ -88,6 +92,8 @@ PBO‑E‑learning
          ├─ utils
          │  ├─ DateUtil.class
          │  ├─ DateUtil.java
+         │  ├─ IdUtil.class
+         │  ├─ IdUtil.java
          │  ├─ InputUtil.class
          │  └─ InputUtil.java
          └─ view
