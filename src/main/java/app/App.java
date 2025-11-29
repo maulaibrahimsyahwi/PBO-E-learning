@@ -59,7 +59,7 @@ public class App {
             kelasRepo, 
             mapelRepo, 
             userRepo,
-            forumRepo // Tambahan parameter
+            forumRepo 
         );
         
         SiswaView siswaView = new SiswaView(
@@ -68,7 +68,8 @@ public class App {
             ujianRepo,
             jawabanRepo, 
             nilaiRepo,
-            forumRepo 
+            forumRepo,
+            userRepo // Tambahan parameter
         );
 
         while (true) {

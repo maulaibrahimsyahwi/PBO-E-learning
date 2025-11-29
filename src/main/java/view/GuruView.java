@@ -214,77 +214,67 @@ public class GuruView {
     }
 
     private void lihatJawabanFilter(Kelas kelas, MataPelajaran mapel) {
+        System.out.println("\n--- JAWABAN TUGAS ---");
         List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(mapel, kelas);
-        if (listTugas.isEmpty()) {
-            System.out.println("Belum ada tugas di kelas ini.");
-            return;
-        }
-
-        System.out.println("Daftar Tugas:");
         for(Tugas t : listTugas) {
-            System.out.println("- [" + t.getIdTugas() + "] " + t.getJudul());
+            System.out.println("Tugas [" + t.getIdTugas() + "] " + t.getJudul());
+            for(Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
+                System.out.println("  -> " + j.getSiswa().getNamaLengkap() + " (" + j.getFileJawaban() + ")");
+            }
         }
 
-        String idTugas = InputUtil.inputString("Masukkan ID Tugas: ");
-        List<Jawaban> list = jawabanRepo.findByTugas(idTugas);
-        
-        if (list.isEmpty()) {
-            System.out.println("Belum ada jawaban masuk.");
-            return;
+        System.out.println("\n--- JAWABAN UJIAN ---");
+        List<Ujian> listUjian = ujianRepo.getByMapelAndKelas(mapel, kelas);
+        for(Ujian u : listUjian) {
+            System.out.println("Ujian [" + u.getIdUjian() + "] " + u.getJenisUjian());
+            for(Jawaban j : jawabanRepo.findByUjian(u.getIdUjian())) {
+                System.out.println("  -> " + j.getSiswa().getNamaLengkap() + " (" + j.getFileJawaban() + ")");
+            }
         }
-        
-        System.out.println("--- Jawaban Masuk ---");
-        for (Jawaban j : list) {
-            System.out.println("Siswa: " + j.getSiswa().getNamaLengkap() + 
-                               " | ID Siswa: " + j.getSiswa().getIdUser() +
-                               " | File: " + j.getFileJawaban() + 
-                               " | Tgl: " + j.getTanggalSubmit());
-        }
+        InputUtil.inputString("\nTekan Enter...");
     }
 
     private void beriNilaiFilter(Guru guru, Kelas kelas, MataPelajaran mapel) {
-        String idTugas = InputUtil.inputString("Masukkan ID Tugas yang dinilai: ");
-        
-        Tugas t = null;
-        for (Tugas task : tugasRepo.getAll()) {
-            if (task.getIdTugas().equals(idTugas) && 
-                task.getMapel().equals(mapel) && 
-                task.getKelas().equals(kelas)) {
-                t = task; 
-                break;
-            }
-        }
-        
-        if (t == null) {
-            System.out.println("Tugas tidak ditemukan di kelas/mapel ini.");
-            return;
-        }
+        System.out.println("\nInput Nilai untuk:");
+        System.out.println("1. Tugas");
+        System.out.println("2. Ujian");
+        int tipe = InputUtil.inputInt("Pilih: ");
 
+        String idTarget = InputUtil.inputString("Masukkan ID (Tugas/Ujian): ");
         String idSiswa = InputUtil.inputString("Masukkan ID Siswa: ");
-        
+
         Jawaban jawab = null;
-        for (Jawaban j : jawabanRepo.findByTugas(idTugas)) {
-            if (j.getSiswa().getIdUser().equals(idSiswa)) {
-                jawab = j;
-                break;
+        Tugas tTarget = null;
+        Ujian uTarget = null;
+
+        if (tipe == 1) {
+            List<Jawaban> list = jawabanRepo.findByTugas(idTarget);
+            for(Jawaban j : list) {
+                if(j.getSiswa().getIdUser().equals(idSiswa)) { jawab = j; tTarget = j.getTugas(); break; }
+            }
+        } else if (tipe == 2) {
+            List<Jawaban> list = jawabanRepo.findByUjian(idTarget);
+            for(Jawaban j : list) {
+                if(j.getSiswa().getIdUser().equals(idSiswa)) { jawab = j; uTarget = j.getUjian(); break; }
             }
         }
 
         if (jawab == null) {
-            System.out.println("Siswa ini belum mengumpulkan jawaban.");
+            System.out.println("Jawaban tidak ditemukan untuk siswa/ID tersebut.");
             return;
         }
 
-        int angka = InputUtil.inputInt("Nilai Angka (0-100): ");
+        int angka = InputUtil.inputInt("Nilai (0-100): ");
         String ket = InputUtil.inputString("Keterangan: ");
-
         String idNilai = IdUtil.generate();
-        Nilai n = new Nilai(idNilai, jawab.getSiswa(), t, angka, ket);
-        
+
+        Nilai n;
+        if (tipe == 1) n = new Nilai(idNilai, jawab.getSiswa(), tTarget, angka, ket);
+        else n = new Nilai(idNilai, jawab.getSiswa(), uTarget, angka, ket);
+
         nilaiRepo.addNilai(n);
         jawab.getSiswa().tambahNilai(n);
-        
-        System.out.println("Nilai berhasil disimpan (ID Nilai: " + idNilai + ")");
+        System.out.println("Nilai berhasil disimpan!");
     }
 
     private void forumDiskusi(Guru guru, Kelas kelas, MataPelajaran mapel) {

@@ -26,9 +26,8 @@ public class AdminView {
             System.out.println("1. Tambah Guru");
             System.out.println("2. Tambah Siswa");
             System.out.println("3. Tambah Kelas");
-            System.out.println("4. Tambah Mapel");
-            System.out.println("5. Assign Guru (Mapel & Kelas)");
-            System.out.println("6. Assign Siswa ke Kelas");
+            System.out.println("4. Kelola Mata Pelajaran");
+            System.out.println("5. Assign Siswa ke Kelas");
             System.out.println("0. Logout");
 
             int pilih = InputUtil.inputInt("Pilih menu: ");
@@ -39,10 +38,28 @@ public class AdminView {
                 case 1 -> tambahGuru();
                 case 2 -> tambahSiswa();
                 case 3 -> tambahKelas();
-                case 4 -> tambahMapel();
-                case 5 -> assignGuru();
-                case 6 -> assignSiswaKelas();
+                case 4 -> kelolaMataPelajaran();
+                case 5 -> assignSiswaKelas();
                 default -> System.out.println("Menu tidak tersedia!");
+            }
+        }
+    }
+
+    private void kelolaMataPelajaran() {
+        while (true) {
+            System.out.println("\n=== KELOLA MATA PELAJARAN ===");
+            System.out.println("1. Tambah Mata Pelajaran");
+            System.out.println("2. Assign Guru (ke Mapel & Kelas)");
+            System.out.println("0. Kembali");
+
+            int pilih = InputUtil.inputInt("Pilih menu: ");
+
+            if (pilih == 0) return;
+
+            switch (pilih) {
+                case 1 -> tambahMapel();
+                case 2 -> assignGuru();
+                default -> System.out.println("Pilihan tidak valid!");
             }
         }
     }
@@ -113,7 +130,6 @@ public class AdminView {
         MataPelajaran m = new MataPelajaran(id, nama, desk, tingkat);
         mapelRepo.addMapel(m);
 
-        // 🔥 PERBAIKAN UTAMA: Langsung update kelas yang relevan saat ini juga
         int count = 0;
         for (Kelas k : kelasRepo.getAll()) {
             if (k.getTingkat().equals(tingkat)) {
@@ -233,7 +249,7 @@ public class AdminView {
 
         no = 1;
         for (Kelas k : kelasList) {
-            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas() + " (Tingkat " + k.getTingkat() + ")");
+            System.out.println(no++ + ". " + k.getIdKelas() + " - " + k.getNamaKelas());
         }
         int pilihKelas = InputUtil.inputInt("Pilih kelas: ");
         if (pilihKelas < 1 || pilihKelas > kelasList.size()) {

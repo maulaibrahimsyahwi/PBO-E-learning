@@ -15,13 +15,15 @@ public class SiswaView {
     private JawabanRepository jawabanRepo;
     private NilaiRepository nilaiRepo;
     private ForumRepository forumRepo;
+    private UserRepository userRepo;
 
     public SiswaView(MateriRepository materiRepo,
                      TugasRepository tugasRepo,
                      UjianRepository ujianRepo,
                      JawabanRepository jawabanRepo,
                      NilaiRepository nilaiRepo,
-                     ForumRepository forumRepo) {
+                     ForumRepository forumRepo,
+                     UserRepository userRepo) {
 
         this.materiRepo = materiRepo;
         this.tugasRepo = tugasRepo;
@@ -29,6 +31,7 @@ public class SiswaView {
         this.jawabanRepo = jawabanRepo;
         this.nilaiRepo = nilaiRepo;
         this.forumRepo = forumRepo;
+        this.userRepo = userRepo;
     }
 
     public void menu(Siswa s) {
@@ -37,8 +40,9 @@ public class SiswaView {
             System.out.println("1. Lihat Mata Pelajaran (Masuk Kelas)");
             System.out.println("2. Lihat Semua Materi");
             System.out.println("3. Lihat Semua Tugas");
-            System.out.println("4. Submit Jawaban (Tugas)");
+            System.out.println("4. Submit Jawaban");
             System.out.println("5. Lihat Nilai");
+            System.out.println("6. Profil & Akun");
             System.out.println("0. Logout");
 
             int pilih = InputUtil.inputInt("Pilih menu: ");
@@ -50,9 +54,57 @@ public class SiswaView {
                 case 3 -> lihatTugas(s);
                 case 4 -> submitJawaban(s);
                 case 5 -> lihatNilai(s);
+                case 6 -> menuProfil(s);
                 default -> System.out.println("Pilihan tidak valid!");
             }
         }
+    }
+
+    private void menuProfil(Siswa s) {
+        while (true) {
+            System.out.println("\n=== PROFIL SISWA ===");
+            System.out.println("Nama     : " + s.getNamaLengkap());
+            System.out.println("NIS      : " + s.getNis());
+            System.out.println("Kelas    : " + (s.getKelas() != null ? s.getKelas().getNamaKelas() : "Belum masuk kelas"));
+            System.out.println("Angkatan : " + s.getAngkatan());
+            System.out.println("Email    : " + s.getEmail());
+            System.out.println("-------------------------");
+            System.out.println("1. Ubah Password");
+            System.out.println("0. Kembali");
+
+            int pilih = InputUtil.inputInt("Pilih: ");
+            if (pilih == 0) return;
+
+            if (pilih == 1) {
+                ubahPassword(s);
+            }
+        }
+    }
+
+    private void ubahPassword(Siswa s) {
+        System.out.println("\n--- Ubah Password ---");
+        String oldPass = InputUtil.inputString("Masukkan password lama: ");
+
+        if (!s.getPassword().equals(oldPass)) {
+            System.out.println("Password lama salah!");
+            return;
+        }
+
+        String newPass = InputUtil.inputString("Masukkan password baru: ");
+        if (newPass.isBlank()) {
+            System.out.println("Password tidak boleh kosong.");
+            return;
+        }
+
+        String confirmPass = InputUtil.inputString("Konfirmasi password baru: ");
+        if (!newPass.equals(confirmPass)) {
+            System.out.println("Konfirmasi password tidak cocok!");
+            return;
+        }
+
+        s.setPassword(newPass);
+        userRepo.saveToFile();
+        System.out.println("Password berhasil diubah!");
     }
 
     private void lihatMataPelajaran(Siswa s) {
@@ -93,7 +145,7 @@ public class SiswaView {
             System.out.println("1. Lihat Materi");
             System.out.println("2. Lihat Tugas");
             System.out.println("3. Forum Diskusi");
-            System.out.println("4. Lihat Jadwal Ujian"); // 🔥 Menu Baru
+            System.out.println("4. Lihat Jadwal Ujian");
             System.out.println("0. Kembali ke Daftar Mapel");
 
             int pilih = InputUtil.inputInt("Pilih menu: ");
@@ -103,13 +155,12 @@ public class SiswaView {
                 case 1 -> lihatMateriByMapel(s, mapel);
                 case 2 -> lihatTugasByMapel(s, mapel);
                 case 3 -> forumDiskusi(s, mapel);
-                case 4 -> lihatUjianByMapel(s, mapel); // 🔥 Fitur Baru
+                case 4 -> lihatUjianByMapel(s, mapel);
                 default -> System.out.println("Pilihan tidak valid.");
             }
         }
     }
 
-    // 🔥 FITUR BARU: LIHAT UJIAN DI MAPEL INI
     private void lihatUjianByMapel(Siswa s, MataPelajaran mapel) {
         System.out.println("\n--- Jadwal Ujian: " + mapel.getNamaMapel() + " ---");
         List<Ujian> list = ujianRepo.getByMapelAndKelas(mapel, s.getKelas());
@@ -217,21 +268,48 @@ public class SiswaView {
 
     private void submitJawaban(Siswa s) {
         System.out.println("\n=== SUBMIT JAWABAN ===");
-        String idTugas = InputUtil.inputString("Masukkan ID Tugas: ");
-        String file = InputUtil.inputString("Nama File Jawaban: ");
+        System.out.println("1. Submit Tugas");
+        System.out.println("2. Submit Ujian");
+        System.out.println("0. Kembali");
         
-        Tugas tugasTujuan = null;
-        for(Tugas t : tugasRepo.getAll()) {
-            if(t.getIdTugas().equals(idTugas)) { tugasTujuan = t; break; }
+        int p = InputUtil.inputInt("Pilih: ");
+        if (p == 1) submitTugas(s);
+        else if (p == 2) submitUjian(s);
+    }
+
+    private void submitTugas(Siswa s) {
+        String idTugas = InputUtil.inputString("Masukkan ID Tugas: ");
+        Tugas tFound = null;
+        for (Tugas t : tugasRepo.getAll()) {
+            if (t.getIdTugas().equals(idTugas)) { tFound = t; break; }
         }
 
-        if (tugasTujuan != null) {
+        if (tFound != null) {
+            String file = InputUtil.inputString("Nama File Jawaban: ");
             String idJawab = IdUtil.generate();
-            Jawaban j = new Jawaban(idJawab, s, tugasTujuan, file);
+            Jawaban j = new Jawaban(idJawab, s, tFound, file);
             jawabanRepo.addJawaban(j);
-            System.out.println("Jawaban berhasil dikirim! (ID: " + idJawab + ")");
+            System.out.println("Jawaban Tugas berhasil dikirim!");
         } else {
-            System.out.println("Tugas dengan ID tersebut tidak ditemukan.");
+            System.out.println("Tugas tidak ditemukan.");
+        }
+    }
+
+    private void submitUjian(Siswa s) {
+        String idUjian = InputUtil.inputString("Masukkan ID Ujian: ");
+        Ujian uFound = null;
+        for (Ujian u : ujianRepo.getAll()) {
+            if (u.getIdUjian().equals(idUjian)) { uFound = u; break; }
+        }
+
+        if (uFound != null) {
+            String file = InputUtil.inputString("Nama File Jawaban Ujian: ");
+            String idJawab = IdUtil.generate();
+            Jawaban j = new Jawaban(idJawab, s, uFound, file);
+            jawabanRepo.addJawaban(j);
+            System.out.println("Jawaban Ujian berhasil dikirim!");
+        } else {
+            System.out.println("Ujian tidak ditemukan.");
         }
     }
 

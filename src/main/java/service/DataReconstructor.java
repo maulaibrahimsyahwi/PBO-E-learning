@@ -2,7 +2,6 @@ package service;
 
 import model.*;
 import repository.*;
-
 import java.util.List;
 
 public class DataReconstructor {
@@ -15,44 +14,30 @@ public class DataReconstructor {
     private UjianRepository ujianRepo;
     private JawabanRepository jawabanRepo;
     private NilaiRepository nilaiRepo;
-    private ForumRepository forumRepo; 
+    private ForumRepository forumRepo;
 
-    public DataReconstructor(
-            UserRepository userRepo,
-            KelasRepository kelasRepo,
-            MapelRepository mapelRepo,
-            MateriRepository materiRepo,
-            TugasRepository tugasRepo,
-            UjianRepository ujianRepo,
-            JawabanRepository jawabanRepo,
-            NilaiRepository nilaiRepo,
-            ForumRepository forumRepo) {
-
-        this.userRepo = userRepo;
-        this.kelasRepo = kelasRepo;
-        this.mapelRepo = mapelRepo;
-        this.materiRepo = materiRepo;
-        this.tugasRepo = tugasRepo;
-        this.ujianRepo = ujianRepo;
-        this.jawabanRepo = jawabanRepo;
-        this.nilaiRepo = nilaiRepo;
-        this.forumRepo = forumRepo;
+    public DataReconstructor(UserRepository u, KelasRepository k, MapelRepository mp,
+                             MateriRepository mt, TugasRepository t, UjianRepository uj,
+                             JawabanRepository j, NilaiRepository n, ForumRepository f) {
+        this.userRepo = u;
+        this.kelasRepo = k;
+        this.mapelRepo = mp;
+        this.materiRepo = mt;
+        this.tugasRepo = t;
+        this.ujianRepo = uj;
+        this.jawabanRepo = j;
+        this.nilaiRepo = n;
+        this.forumRepo = f;
     }
 
     public void reconstruct() {
-
         List<User> users = userRepo.getAll();
 
-        // 1. Link Siswa -> Kelas & Guru -> Mapel/Kelas (dari file users.txt)
         for (User u : users) {
             if (u instanceof Siswa s) {
-                String idKelas = s.getIdKelas();
-                if (idKelas != null && !idKelas.equals("-")) {
-                    Kelas k = kelasRepo.findById(idKelas);
-                    if (k != null) {
-                        s.setKelas(k);
-                        k.tambahSiswa(s);
-                    }
+                if (s.getIdKelas() != null && !s.getIdKelas().equals("-")) {
+                    Kelas k = kelasRepo.findById(s.getIdKelas());
+                    if (k != null) { s.setKelas(k); k.tambahSiswa(s); }
                 }
             } else if (u instanceof Guru g) {
                 for (String mid : g.getTempIdMapel()) {
@@ -66,82 +51,66 @@ public class DataReconstructor {
             }
         }
 
-        // 2. Link Materi -> Guru/Kelas/Mapel
         for (Materi m : materiRepo.getAll()) {
-            if (m.getGuru() == null) {
-                for (User u : users) {
-                    if (u instanceof Guru g && m.getIdMateri().startsWith(g.getIdUser())) {
-                        m.setGuru(g);
+            if (m.getGuru() == null) reconstructGuru(m, users);
+            if (m.getKelas() == null) reconstructKelas(m);
+            if (m.getMapel() == null) reconstructMapel(m);
+        }
+
+        for (Tugas t : tugasRepo.getAll()) {
+            if (t.getGuru() == null) reconstructGuru(t, users);
+            if (t.getKelas() == null) reconstructKelas(t);
+            if (t.getMapel() == null) reconstructMapel(t);
+        }
+        for (Ujian u : ujianRepo.getAll()) {
+            if (u.getGuru() == null) reconstructGuru(u, users);
+            if (u.getKelas() == null) reconstructKelas(u);
+            if (u.getMapel() == null) reconstructMapel(u);
+        }
+
+        try {
+            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("src/main/java/data/jawaban.txt"));
+            String line;
+            int idx = 0;
+            while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
+                String[] d = line.split(";");
+                if (d.length >= 6 && idx < jawabanRepo.getAll().size()) {
+                    Jawaban j = jawabanRepo.getAll().get(idx++);
+                    for (User u : users) { if (u.getIdUser().equals(d[1])) { j.setSiswa((Siswa) u); break; } }
+                    if (!d[2].equals("-")) {
+                        for (Tugas t : tugasRepo.getAll()) { if (t.getIdTugas().equals(d[2])) { j.setTugas(t); break; } }
+                    }
+                    if (!d[3].equals("-")) {
+                        for (Ujian u : ujianRepo.getAll()) { if (u.getIdUjian().equals(d[3])) { j.setUjian(u); break; } }
                     }
                 }
             }
-            if (m.getKelas() == null) {
-                for (Kelas k : kelasRepo.getAll()) {
-                    if (m.getIdMateri().contains(k.getIdKelas())) m.setKelas(k);
-                }
-            }
-            if (m.getMapel() == null) {
-                for (MataPelajaran map : mapelRepo.getAll()) {
-                    if (m.getIdMateri().contains(map.getIdMapel())) m.setMapel(map);
-                }
-            }
-        }
+            br.close();
+        } catch (Exception e) {}
 
-        // 3. Link Tugas -> Guru/Kelas/Mapel
-        for (Tugas t : tugasRepo.getAll()) {
-            for (User u : users) {
-                if (u instanceof Guru g && t.getGuru() == null && t.getIdTugas().startsWith(g.getIdUser())) {
-                    t.setGuru(g);
+        try {
+            java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("src/main/java/data/nilai.txt"));
+            String line;
+            int idx = 0;
+            while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
+                String[] d = line.split(";");
+                if (d.length >= 6 && idx < nilaiRepo.getAll().size()) {
+                    Nilai n = nilaiRepo.getAll().get(idx++);
+                    for (User u : users) { if (u.getIdUser().equals(d[1])) { n.setSiswa((Siswa) u); break; } }
+                    if (!d[2].equals("-")) {
+                        for (Tugas t : tugasRepo.getAll()) { if (t.getIdTugas().equals(d[2])) { n.setTugas(t); break; } }
+                    }
+                    if (!d[3].equals("-")) {
+                        for (Ujian u : ujianRepo.getAll()) { if (u.getIdUjian().equals(d[3])) { n.setUjian(u); break; } }
+                    }
+                    if (n.getSiswa() != null) n.getSiswa().tambahNilai(n);
                 }
             }
-            for (Kelas k : kelasRepo.getAll()) {
-                if (t.getKelas() == null && t.getIdTugas().contains(k.getIdKelas())) t.setKelas(k);
-            }
-            for (MataPelajaran map : mapelRepo.getAll()) {
-                if (t.getMapel() == null && t.getIdTugas().contains(map.getIdMapel())) t.setMapel(map);
-            }
-        }
+            br.close();
+        } catch (Exception e) {}
 
-        // 4. Link Ujian -> Guru/Kelas/Mapel
-        for (Ujian u : ujianRepo.getAll()) {
-            for (User usr : users) {
-                if (usr instanceof Guru g && u.getGuru() == null && u.getIdUjian().startsWith(g.getIdUser())) {
-                    u.setGuru(g);
-                }
-            }
-            for (Kelas k : kelasRepo.getAll()) {
-                if (u.getKelas() == null && u.getIdUjian().contains(k.getIdKelas())) u.setKelas(k);
-            }
-            for (MataPelajaran m : mapelRepo.getAll()) {
-                if (u.getMapel() == null && u.getIdUjian().contains(m.getIdMapel())) u.setMapel(m);
-            }
-        }
-
-        // 5. Link Jawaban -> Siswa/Tugas
-        for (Jawaban j : jawabanRepo.getAll()) {
-            for (User u : users) {
-                if (u instanceof Siswa s && j.getSiswa() == null && j.getIdJawaban().startsWith(s.getIdUser())) {
-                    j.setSiswa(s);
-                }
-            }
-            for (Tugas t : tugasRepo.getAll()) {
-                if (j.getTugas() == null && j.getIdJawaban().contains(t.getIdTugas())) j.setTugas(t);
-            }
-        }
-
-        // 6. Link Nilai -> Siswa/Tugas
-        for (Nilai n : nilaiRepo.getAll()) {
-            for (User u : users) {
-                if (u instanceof Siswa s && n.getSiswa() == null && n.getIdNilai().startsWith(s.getIdUser())) {
-                    n.setSiswa(s);
-                }
-            }
-            for (Tugas t : tugasRepo.getAll()) {
-                if (n.getTugas() == null && n.getIdNilai().contains(t.getIdTugas())) n.setTugas(t);
-            }
-        }
-        
-        // 7. Link Forum -> Pengirim/Kelas/Mapel
         try {
             java.io.BufferedReader br = new java.io.BufferedReader(new java.io.FileReader("src/main/java/data/forum.txt"));
             String line;
@@ -149,31 +118,23 @@ public class DataReconstructor {
             while ((line = br.readLine()) != null) {
                 if (line.isBlank()) continue;
                 String[] d = line.split(";");
-                if (d.length >= 6) {
-                    if (idx < forumRepo.getAll().size()) {
-                        ForumDiskusi f = forumRepo.getAll().get(idx++);
-                        for (User u : users) {
-                            if (u.getIdUser().equals(d[1])) {
-                                f.setPengirim(u);
-                                break;
-                            }
+                if (d.length >= 6 && idx < forumRepo.getAll().size()) {
+                    ForumDiskusi f = forumRepo.getAll().get(idx++);
+                    for (User u : users) {
+                        if (u.getIdUser().equals(d[1])) {
+                            f.setPengirim(u);
+                            break;
                         }
-                        f.setKelas(kelasRepo.findById(d[4]));
-                        f.setMapel(mapelRepo.findById(d[5]));
                     }
+                    f.setKelas(kelasRepo.findById(d[4]));
+                    f.setMapel(mapelRepo.findById(d[5]));
                 }
             }
             br.close();
-        } catch (Exception e) { 
-            // File mungkin belum ada
-        }
+        } catch (Exception e) {}
 
-        // =================================================================
-        // 🔥 UPDATE PENTING: LINK MAPEL KE KELAS BERDASARKAN TINGKAT 🔥
-        // =================================================================
         for (Kelas k : kelasRepo.getAll()) {
             for (MataPelajaran m : mapelRepo.getAll()) {
-                // Jika tingkat sama (misal 10 == 10), masukkan mapel ke kelas
                 if (k.getTingkat().equals(m.getTingkat())) {
                     k.tambahMapel(m);
                 }
@@ -181,5 +142,53 @@ public class DataReconstructor {
         }
 
         System.out.println(">> Rekonstruksi data lengkap SELESAI!");
+    }
+
+    private void reconstructGuru(Object obj, List<User> users) {
+        if (obj instanceof Materi m) {
+            for (User u : users) {
+                if (u instanceof Guru g && m.getIdMateri().startsWith(g.getIdUser())) { m.setGuru(g); return; }
+            }
+        } else if (obj instanceof Tugas t) {
+            for (User u : users) {
+                if (u instanceof Guru g && t.getIdTugas().startsWith(g.getIdUser())) { t.setGuru(g); return; }
+            }
+        } else if (obj instanceof Ujian u) {
+            for (User usr : users) {
+                if (usr instanceof Guru g && u.getIdUjian().startsWith(g.getIdUser())) { u.setGuru(g); return; }
+            }
+        }
+    }
+
+    private void reconstructKelas(Object obj) {
+        if (obj instanceof Materi m) {
+            for (Kelas k : kelasRepo.getAll()) {
+                if (m.getIdMateri().contains(k.getIdKelas())) { m.setKelas(k); return; }
+            }
+        } else if (obj instanceof Tugas t) {
+            for (Kelas k : kelasRepo.getAll()) {
+                if (t.getIdTugas().contains(k.getIdKelas())) { t.setKelas(k); return; }
+            }
+        } else if (obj instanceof Ujian u) {
+            for (Kelas k : kelasRepo.getAll()) {
+                if (u.getIdUjian().contains(k.getIdKelas())) { u.setKelas(k); return; }
+            }
+        }
+    }
+
+    private void reconstructMapel(Object obj) {
+        if (obj instanceof Materi m) {
+            for (MataPelajaran mp : mapelRepo.getAll()) {
+                if (m.getIdMateri().contains(mp.getIdMapel())) { m.setMapel(mp); return; }
+            }
+        } else if (obj instanceof Tugas t) {
+            for (MataPelajaran mp : mapelRepo.getAll()) {
+                if (t.getIdTugas().contains(mp.getIdMapel())) { t.setMapel(mp); return; }
+            }
+        } else if (obj instanceof Ujian u) {
+            for (MataPelajaran mp : mapelRepo.getAll()) {
+                if (u.getIdUjian().contains(mp.getIdMapel())) { u.setMapel(mp); return; }
+            }
+        }
     }
 }

@@ -5,32 +5,40 @@ public class Nilai {
     private String idNilai;
     private Siswa siswa;
     private Tugas tugas;
+    private Ujian ujian;
     private int nilaiAngka;
     private String keterangan;
 
-    public Nilai(String id, Siswa siswa, Tugas tugas, int angka, String ket) {
+    public Nilai(String id, Siswa s, Tugas t, int angka, String ket) {
         this.idNilai = id;
-        this.siswa = siswa;
-        this.tugas = tugas;
+        this.siswa = s;
+        this.tugas = t;
+        this.ujian = null;
         this.nilaiAngka = angka;
         this.keterangan = ket;
     }
 
-    public String getIdNilai() {
-        return idNilai;
+    public Nilai(String id, Siswa s, Ujian u, int angka, String ket) {
+        this.idNilai = id;
+        this.siswa = s;
+        this.tugas = null;
+        this.ujian = u;
+        this.nilaiAngka = angka;
+        this.keterangan = ket;
     }
 
-    public Siswa getSiswa() {
-        return siswa;
+    public Nilai(String id, int angka, String ket) {
+        this.idNilai = id;
+        this.nilaiAngka = angka;
+        this.keterangan = ket;
     }
 
-    public Tugas getTugas() {
-        return tugas;
-    }
-
-    public int getNilaiAngka() {
-        return nilaiAngka;
-    }
+    public String getIdNilai() { return idNilai; }
+    public Siswa getSiswa() { return siswa; }
+    public Tugas getTugas() { return tugas; }
+    public Ujian getUjian() { return ujian; }
+    public int getNilaiAngka() { return nilaiAngka; }
+    public String getKeterangan() { return keterangan; }
 
     public String getNilaiHuruf() {
         if (nilaiAngka >= 85) return "A";
@@ -39,16 +47,7 @@ public class Nilai {
         return "D";
     }
 
-    public String getKeterangan() {
-        return keterangan;
-    }
-
-    // ⬇ Tambahan penting untuk RECONSTRUCTOR
-    public void setSiswa(Siswa siswa) {
-        this.siswa = siswa;
-    }
-
-    public void setTugas(Tugas tugas) {
-        this.tugas = tugas;
-    }
+    public void setSiswa(Siswa s) { this.siswa = s; }
+    public void setTugas(Tugas t) { this.tugas = t; }
+    public void setUjian(Ujian u) { this.ujian = u; }
 }

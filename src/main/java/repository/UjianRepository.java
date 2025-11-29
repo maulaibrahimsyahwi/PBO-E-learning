@@ -35,7 +35,6 @@ public class UjianRepository {
                 .collect(Collectors.toList());
     }
 
-    // 🔥 METHOD BARU: Filter Ujian berdasarkan Mapel & Kelas
     public List<Ujian> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         return ujianList.stream()
                 .filter(u -> u.getMapel() != null && u.getMapel().equals(mapel))
@@ -79,7 +78,6 @@ public class UjianRepository {
                 
                 if (d.length >= 4) {
                     Ujian u = new Ujian(d[0], d[1], LocalDate.parse(d[2]), Integer.parseInt(d[3]));
-                    // Relasi direkonstruksi di DataReconstructor
                     ujianList.add(u);
                 }
             }
