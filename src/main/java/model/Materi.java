@@ -16,6 +16,11 @@ public class Materi {
         this.deskripsi = desk;
         this.fileMateri = file;
     }
+    
+    public Materi(String idMateri, String judul) {
+        this.idMateri = idMateri;
+        this.judul = judul;
+    }
 
     public String getIdMateri() {
         return idMateri;

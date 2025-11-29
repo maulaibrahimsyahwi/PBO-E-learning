@@ -1,8 +1,10 @@
 package repository;
 
 import model.*;
+
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class UserRepository {
 
@@ -34,19 +36,21 @@ public class UserRepository {
 
             for (User u : userList) {
                 if (u instanceof Admin a) {
+                    // format: id;username;password;nama;email;role;nip/nis;spes/angkatan;idKelas
                     bw.write(a.getIdUser() + ";" + a.getUsername() + ";" +
-                            a.getPassword() + ";" + a.getNamaLengkap() + ";" +
-                            a.getEmail() + ";ADMIN;-;-");
+                             a.getPassword() + ";" + a.getNamaLengkap() + ";" +
+                             a.getEmail() + ";ADMIN;-;-;-");
                 } else if (u instanceof Guru g) {
                     bw.write(g.getIdUser() + ";" + g.getUsername() + ";" +
-                            g.getPassword() + ";" + g.getNamaLengkap() + ";" +
-                            g.getEmail() + ";GURU;" + g.getNip() + ";" +
-                            g.getSpesialisasi());
+                             g.getPassword() + ";" + g.getNamaLengkap() + ";" +
+                             g.getEmail() + ";GURU;" + g.getNip() + ";" +
+                             g.getSpesialisasi() + ";-");
                 } else if (u instanceof Siswa s) {
+                    String idKelas = s.getIdKelas() != null ? s.getIdKelas() : "-";
                     bw.write(s.getIdUser() + ";" + s.getUsername() + ";" +
-                            s.getPassword() + ";" + s.getNamaLengkap() + ";" +
-                            s.getEmail() + ";SISWA;" + s.getNis() + ";" +
-                            s.getAngkatan());
+                             s.getPassword() + ";" + s.getNamaLengkap() + ";" +
+                             s.getEmail() + ";SISWA;" + s.getNis() + ";" +
+                             s.getAngkatan() + ";" + idKelas);
                 }
                 bw.newLine();
             }
@@ -57,6 +61,7 @@ public class UserRepository {
     }
 
     public void loadFromFile() {
+        userList.clear();
         try {
             File file = new File(FILE_PATH);
             if (!file.exists()) return;
@@ -65,27 +70,35 @@ public class UserRepository {
             String line;
 
             while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
                 String[] d = line.split(";");
+                if (d.length < 6) continue;
 
-                String id = d[0];
-                String username = d[1];
-                String password = d[2];
-                String nama = d[3];
-                String email = d[4];
-                String role = d[5];
+                String id      = d[0];
+                String username= d[1];
+                String password= d[2];
+                String nama    = d[3];
+                String email   = d[4];
+                String role    = d[5];
 
-                if (role.equals("ADMIN")) {
+                if ("ADMIN".equals(role)) {
                     userList.add(new Admin(id, username, password, nama, email));
 
-                } else if (role.equals("GURU")) {
-                    String nip = d[6];
-                    String spes = d[7];
+                } else if ("GURU".equals(role)) {
+                    String nip  = d.length > 6 ? d[6] : "-";
+                    String spes = d.length > 7 ? d[7] : "-";
                     userList.add(new Guru(id, username, password, nama, email, nip, spes));
 
-                } else if (role.equals("SISWA")) {
-                    String nis = d[6];
-                    String ang = d[7];
-                    userList.add(new Siswa(id, username, password, nama, email, nis, ang));
+                } else if ("SISWA".equals(role)) {
+                    String nis      = d.length > 6 ? d[6] : "-";
+                    String angkatan = d.length > 7 ? d[7] : "-";
+                    String idKelas  = d.length > 8 ? d[8] : "-";
+
+                    Siswa s = new Siswa(id, username, password, nama, email, nis, angkatan);
+                    if (!"-".equals(idKelas)) {
+                        s.setIdKelas(idKelas);
+                    }
+                    userList.add(s);
                 }
             }
 

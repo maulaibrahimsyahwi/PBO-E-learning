@@ -76,6 +76,7 @@ public class AdminView {
     }
 
     private void tambahKelas() {
+        System.out.println("\n=== TAMBAH KELAS ===");
         String id = InputUtil.inputString("ID Kelas: ");
         String nama = InputUtil.inputString("Nama Kelas: ");
         String tingkat = InputUtil.inputString("Tingkat: ");
@@ -85,6 +86,7 @@ public class AdminView {
     }
 
     private void tambahMapel() {
+        System.out.println("\n=== TAMBAH MAPEL ===");
         String id = InputUtil.inputString("ID Mapel: ");
         String nama = InputUtil.inputString("Nama Mapel: ");
         String desk = InputUtil.inputString("Deskripsi: ");
@@ -95,6 +97,7 @@ public class AdminView {
 
     private void assignGuruMapel() {
         System.out.println("\n=== ASSIGN GURU KE MAPEL ===");
+
         List<User> allUsers = userRepo.getAll();
         List<Guru> guruList = allUsers.stream()
                 .filter(u -> u instanceof Guru)
@@ -117,7 +120,7 @@ public class AdminView {
         }
         Guru guru = guruList.get(pilihGuru - 1);
 
-        List<MataPelajaran> mapelList = mapelRepo.getAll();
+        var mapelList = mapelRepo.getAll();
         if (mapelList.isEmpty()) {
             System.out.println("Belum ada mapel.");
             return;
@@ -135,12 +138,15 @@ public class AdminView {
         MataPelajaran mapel = mapelList.get(pilihMapel - 1);
 
         guru.tambahMapel(mapel);
+        userRepo.saveToFile(); // simpan perubahan guru
         System.out.println("Guru " + guru.getNamaLengkap() +
                 " sekarang mengajar mapel " + mapel.getNamaMapel());
     }
 
+    /** 🔥 BAGIAN PENTING: relasi siswa–kelas + saveToFile */
     private void assignSiswaKelas() {
         System.out.println("\n=== ASSIGN SISWA KE KELAS ===");
+
         List<User> allUsers = userRepo.getAll();
         List<Siswa> siswaList = allUsers.stream()
                 .filter(u -> u instanceof Siswa)
@@ -180,8 +186,12 @@ public class AdminView {
         }
         Kelas kelas = kelasList.get(pilihKelas - 1);
 
-        siswa.setKelas(kelas);
+        // set relasi di object + simpan idKelas
+        siswa.setKelas(kelas);                     // ini sekaligus mengisi idKelas di Siswa
         kelas.tambahSiswa(siswa);
+
+        // simpan perubahan ke file users.txt
+        userRepo.saveToFile();
 
         System.out.println("Siswa " + siswa.getNamaLengkap() +
                 " sekarang berada di kelas " + kelas.getNamaKelas());

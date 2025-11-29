@@ -40,42 +40,48 @@ public class DataReconstructor {
 
         List<User> users = userRepo.getAll();
 
-        // === 1. HUBUNGKAN SISWA → KELAS ===
+        // =====================================================
+        // 1. REKONSTRUKSI SISWA → KELAS (METODE BARU & BENAR)
+        // =====================================================
         for (User u : users) {
             if (u instanceof Siswa s) {
-                for (Kelas k : kelasRepo.getAll()) {
-                    if (k.getDaftarSiswa().stream().anyMatch(
-                            sx -> sx.getIdUser().equals(s.getIdUser()))) {
+                String idKelas = s.getIdKelas();
+                if (idKelas != null && !idKelas.equals("-")) {
+                    Kelas k = kelasRepo.findById(idKelas);
+                    if (k != null) {
                         s.setKelas(k);
+                        k.tambahSiswa(s);
                     }
                 }
             }
         }
 
-        // === 2. HUBUNGKAN GURU → MAPEL ===
+        // =====================================================
+        // 2. REKONSTRUKSI GURU → MAPEL
+        // =====================================================
         for (User u : users) {
             if (u instanceof Guru g) {
-                // Guru.mapelDiampu sudah dimuat dari file user.txt? Jika belum, bisa ditambah formatnya nanti.
-                // Untuk sekarang, skip jika mapel assignment belum ditulis dalam file.
+                // TODO jika kamu simpan mapel → guru, isi di sini
             }
         }
 
-        // === 3. HUBUNGKAN MATERI → (GURU, KELAS, MAPEL) ===
+        // =====================================================
+        // 3. REKONSTRUKSI MATERI
+        // =====================================================
         for (Materi m : materiRepo.getAll()) {
 
+            // Guru
             if (m.getGuru() == null) {
-                // cari guru
                 for (User u : users) {
                     if (u instanceof Guru g) {
-                        if (m.getIdMateri().startsWith(g.getIdUser())) { 
-                            // atau cek idGuru saat save
+                        if (m.getIdMateri().startsWith(g.getIdUser())) {
                             m.setGuru(g);
                         }
                     }
                 }
             }
 
-            // Hubungkan kelas
+            // Kelas
             if (m.getKelas() == null) {
                 for (Kelas k : kelasRepo.getAll()) {
                     if (m.getIdMateri().contains(k.getIdKelas())) {
@@ -84,7 +90,7 @@ public class DataReconstructor {
                 }
             }
 
-            // Hubungkan mapel
+            // Mapel
             if (m.getMapel() == null) {
                 for (MataPelajaran map : mapelRepo.getAll()) {
                     if (m.getIdMateri().contains(map.getIdMapel())) {
@@ -94,7 +100,9 @@ public class DataReconstructor {
             }
         }
 
-        // === 4. HUBUNGKAN TUGAS → (GURU, KELAS, MAPEL) ===
+        // =====================================================
+        // 4. REKONSTRUKSI TUGAS
+        // =====================================================
         for (Tugas t : tugasRepo.getAll()) {
 
             // Guru
@@ -121,7 +129,9 @@ public class DataReconstructor {
             }
         }
 
-        // === 5. HUBUNGKAN UJIAN → (GURU, KELAS, MAPEL) ===
+        // =====================================================
+        // 5. REKONSTRUKSI UJIAN
+        // =====================================================
         for (Ujian u : ujianRepo.getAll()) {
 
             for (User usr : users) {
@@ -145,7 +155,9 @@ public class DataReconstructor {
             }
         }
 
-        // === 6. HUBUNGKAN JAWABAN → (SISWA, TUGAS) ===
+        // =====================================================
+        // 6. REKONSTRUKSI JAWABAN
+        // =====================================================
         for (Jawaban j : jawabanRepo.getAll()) {
 
             // siswa
@@ -165,7 +177,9 @@ public class DataReconstructor {
             }
         }
 
-        // === 7. HUBUNGKAN NILAI → (SISWA, TUGAS) ===
+        // =====================================================
+        // 7. REKONSTRUKSI NILAI
+        // =====================================================
         for (Nilai n : nilaiRepo.getAll()) {
 
             // siswa
@@ -185,6 +199,6 @@ public class DataReconstructor {
             }
         }
 
-        System.out.println(">> Rekonstruksi data selesai!");
+        System.out.println(">> Rekonstruksi data lengkap SELESAI!");
     }
 }

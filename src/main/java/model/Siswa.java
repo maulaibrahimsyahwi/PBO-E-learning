@@ -7,7 +7,11 @@ public class Siswa extends User implements IReportable {
 
     private String nis;
     private String angkatan;
+
+    // relasi ke kelas (objek) dan penyimpanan idKelas untuk ke file
     private Kelas kelas;
+    private String idKelas;
+
     private List<Nilai> daftarNilai = new ArrayList<>();
 
     public Siswa(String idUser, String username, String password,
@@ -26,7 +30,6 @@ public class Siswa extends User implements IReportable {
         System.out.println("2. Lihat Tugas/Ujian");
         System.out.println("3. Submit Jawaban");
         System.out.println("4. Lihat Nilai");
-        System.out.println("5. Kelola Profil");
         System.out.println("0. Logout");
     }
 
@@ -62,7 +65,18 @@ public class Siswa extends User implements IReportable {
         return kelas;
     }
 
+    /** dipakai di runtime (object relationship) */
     public void setKelas(Kelas kelas) {
         this.kelas = kelas;
+        this.idKelas = (kelas != null ? kelas.getIdKelas() : null);
+    }
+
+    /** disimpan ke file, lalu dipakai saat reconstruct */
+    public String getIdKelas() {
+        return idKelas;
+    }
+
+    public void setIdKelas(String idKelas) {
+        this.idKelas = idKelas;
     }
 }

@@ -1,10 +1,12 @@
 package repository;
 
-import model.*;
+import model.Kelas;
+import model.MataPelajaran;
+import model.Tugas;
 
 import java.io.*;
-import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TugasRepository {
 
@@ -24,23 +26,13 @@ public class TugasRepository {
         return tugasList;
     }
 
-    public List<Tugas> findByKelas(Kelas k) {
-        List<Tugas> hasil = new ArrayList<>();
-        for (Tugas t : tugasList) {
-            if (t.getKelas() != null &&
-                t.getKelas().getIdKelas().equals(k.getIdKelas())) hasil.add(t);
-        }
-        return hasil;
-    }
-
-    private void saveToFile() {
+    public void saveToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
 
             for (Tugas t : tugasList) {
                 bw.write(
                         t.getIdTugas() + ";" +
                         t.getJudul() + ";" +
-                        t.getDeskripsi() + ";" +
                         t.getDeadline() + ";" +
                         (t.getGuru() != null ? t.getGuru().getIdUser() : "-") + ";" +
                         (t.getKelas() != null ? t.getKelas().getIdKelas() : "-") + ";" +
@@ -54,18 +46,28 @@ public class TugasRepository {
         }
     }
 
-    private void loadFromFile() {
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
+    public void loadFromFile() {
+        tugasList.clear();
 
-            BufferedReader br = new BufferedReader(new FileReader(f));
+        try {
+            File file = new File(FILE_PATH);
+            if (!file.exists()) return;
+
+            BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
             while ((line = br.readLine()) != null) {
+
+                if (line.isBlank()) continue;
                 String[] d = line.split(";");
 
-                Tugas t = new Tugas(d[0], d[1], d[2], LocalDate.parse(d[3]));
+                String id = d[0];
+                String judul = d[1];
+                String deadline = d[2];
+
+                Tugas t = new Tugas(id, judul, deadline);
+                // guru, kelas, mapel direkonstruksi di DataReconstructor
+
                 tugasList.add(t);
             }
 
@@ -74,5 +76,24 @@ public class TugasRepository {
         } catch (Exception e) {
             System.out.println("Gagal memuat tugas.txt: " + e.getMessage());
         }
+    }
+
+    // ==============================================
+    // 🔥 Tambahan method untuk fitur SiswaView
+    // ==============================================
+
+    /** Ambil tugas berdasarkan kelas siswa */
+    public List<Tugas> getByKelas(Kelas kelas) {
+        return tugasList.stream()
+                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
+                .toList();
+    }
+
+    /** Ambil tugas berdasarkan kelas + mapel */
+    public List<Tugas> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
+        return tugasList.stream()
+                .filter(t -> t.getMapel() != null && t.getMapel().equals(mapel))
+                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
+                .toList();
     }
 }

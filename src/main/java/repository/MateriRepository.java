@@ -1,9 +1,12 @@
 package repository;
 
-import model.*;
+import model.Kelas;
+import model.MataPelajaran;
+import model.Materi;
 
 import java.io.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MateriRepository {
 
@@ -23,57 +26,69 @@ public class MateriRepository {
         return materiList;
     }
 
-    public List<Materi> findByKelas(Kelas kelas) {
-        List<Materi> hasil = new ArrayList<>();
-        for (Materi m : materiList) {
-            if (m.getKelas() != null &&
-                m.getKelas().getIdKelas().equals(kelas.getIdKelas())) {
-                hasil.add(m);
-            }
-        }
-        return hasil;
-    }
-
-    private void saveToFile() {
+    public void saveToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-
             for (Materi m : materiList) {
                 bw.write(
                         m.getIdMateri() + ";" +
                         m.getJudul() + ";" +
-                        m.getDeskripsi() + ";" +
-                        m.getFileMateri() + ";" +
                         (m.getGuru() != null ? m.getGuru().getIdUser() : "-") + ";" +
                         (m.getKelas() != null ? m.getKelas().getIdKelas() : "-") + ";" +
                         (m.getMapel() != null ? m.getMapel().getIdMapel() : "-")
                 );
                 bw.newLine();
             }
-
         } catch (Exception e) {
             System.out.println("Gagal menyimpan materi.txt: " + e.getMessage());
         }
     }
 
-    private void loadFromFile() {
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
+    public void loadFromFile() {
+        materiList.clear();
 
-            BufferedReader br = new BufferedReader(new FileReader(f));
+        try {
+            File file = new File(FILE_PATH);
+            if (!file.exists()) return;
+
+            BufferedReader br = new BufferedReader(new FileReader(file));
             String line;
 
             while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
+
                 String[] d = line.split(";");
 
-                Materi m = new Materi(d[0], d[1], d[2], d[3]);
+                String id = d[0];
+                String judul = d[1];
+
+                Materi m = new Materi(id, judul);
+
+                // relasi direkonstruksi nanti oleh DataReconstructor
                 materiList.add(m);
             }
 
             br.close();
-
         } catch (Exception e) {
             System.out.println("Gagal memuat materi.txt: " + e.getMessage());
         }
+    }
+
+    // ==============================================
+    // 🔥 Tambahan method untuk fitur SiswaView
+    // ==============================================
+
+    /** Ambil materi berdasarkan kelas saja */
+    public List<Materi> getByKelas(Kelas kelas) {
+        return materiList.stream()
+                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
+                .toList();
+    }
+
+    /** Ambil materi berdasarkan kelas + mapel */
+    public List<Materi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
+        return materiList.stream()
+                .filter(m -> m.getMapel() != null && m.getMapel().equals(mapel))
+                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
+                .toList();
     }
 }
