@@ -1,10 +1,15 @@
 package repository;
 
-import model.*;
+import model.Kelas;
+import model.MataPelajaran;
+import model.Ujian;
+import utils.DateUtil;
 
 import java.io.*;
 import java.time.LocalDate;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class UjianRepository {
 
@@ -24,13 +29,18 @@ public class UjianRepository {
         return ujianList;
     }
 
-    public List<Ujian> findByKelas(Kelas k) {
-        List<Ujian> hasil = new ArrayList<>();
-        for (Ujian u : ujianList) {
-            if (u.getKelas() != null &&
-                u.getKelas().getIdKelas().equals(k.getIdKelas())) hasil.add(u);
-        }
-        return hasil;
+    public List<Ujian> getByKelas(Kelas kelas) {
+        return ujianList.stream()
+                .filter(u -> u.getKelas() != null && u.getKelas().equals(kelas))
+                .collect(Collectors.toList());
+    }
+
+    // 🔥 METHOD BARU: Filter Ujian berdasarkan Mapel & Kelas
+    public List<Ujian> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
+        return ujianList.stream()
+                .filter(u -> u.getMapel() != null && u.getMapel().equals(mapel))
+                .filter(u -> u.getKelas() != null && u.getKelas().equals(kelas))
+                .collect(Collectors.toList());
     }
 
     private void saveToFile() {
@@ -55,6 +65,7 @@ public class UjianRepository {
     }
 
     private void loadFromFile() {
+        ujianList.clear();
         try {
             File f = new File(FILE_PATH);
             if (!f.exists()) return;
@@ -63,9 +74,14 @@ public class UjianRepository {
             String line;
 
             while ((line = br.readLine()) != null) {
+                if (line.isBlank()) continue;
                 String[] d = line.split(";");
-                Ujian u = new Ujian(d[0], d[1], LocalDate.parse(d[2]), Integer.parseInt(d[3]));
-                ujianList.add(u);
+                
+                if (d.length >= 4) {
+                    Ujian u = new Ujian(d[0], d[1], LocalDate.parse(d[2]), Integer.parseInt(d[3]));
+                    // Relasi direkonstruksi di DataReconstructor
+                    ujianList.add(u);
+                }
             }
 
             br.close();

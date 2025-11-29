@@ -37,7 +37,7 @@ public class SiswaView {
             System.out.println("1. Lihat Mata Pelajaran (Masuk Kelas)");
             System.out.println("2. Lihat Semua Materi");
             System.out.println("3. Lihat Semua Tugas");
-            System.out.println("4. Submit Jawaban");
+            System.out.println("4. Submit Jawaban (Tugas)");
             System.out.println("5. Lihat Nilai");
             System.out.println("0. Logout");
 
@@ -93,6 +93,7 @@ public class SiswaView {
             System.out.println("1. Lihat Materi");
             System.out.println("2. Lihat Tugas");
             System.out.println("3. Forum Diskusi");
+            System.out.println("4. Lihat Jadwal Ujian"); // 🔥 Menu Baru
             System.out.println("0. Kembali ke Daftar Mapel");
 
             int pilih = InputUtil.inputInt("Pilih menu: ");
@@ -102,9 +103,26 @@ public class SiswaView {
                 case 1 -> lihatMateriByMapel(s, mapel);
                 case 2 -> lihatTugasByMapel(s, mapel);
                 case 3 -> forumDiskusi(s, mapel);
+                case 4 -> lihatUjianByMapel(s, mapel); // 🔥 Fitur Baru
                 default -> System.out.println("Pilihan tidak valid.");
             }
         }
+    }
+
+    // 🔥 FITUR BARU: LIHAT UJIAN DI MAPEL INI
+    private void lihatUjianByMapel(Siswa s, MataPelajaran mapel) {
+        System.out.println("\n--- Jadwal Ujian: " + mapel.getNamaMapel() + " ---");
+        List<Ujian> list = ujianRepo.getByMapelAndKelas(mapel, s.getKelas());
+
+        if (list.isEmpty()) {
+            System.out.println("Belum ada ujian terjadwal.");
+        } else {
+            for (Ujian u : list) {
+                System.out.println("- [" + u.getJenisUjian() + "] Tanggal: " + u.getTanggal() + 
+                                   " | Durasi: " + u.getDurasi() + " menit");
+            }
+        }
+        InputUtil.inputString("\nTekan Enter untuk kembali...");
     }
 
     private void forumDiskusi(Siswa s, MataPelajaran mapel) {
