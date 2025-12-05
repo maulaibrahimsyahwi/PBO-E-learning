@@ -1,103 +1,63 @@
 package repository;
 
-import model.Kelas;
-import model.MataPelajaran;
-import model.Tugas;
-import utils.DateUtil;
-
-import java.io.*;
+import config.DatabaseConnection;
+import model.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class TugasRepository {
 
-    private List<Tugas> tugasList = new ArrayList<>();
-    private final String FILE_PATH = "data/tugas.txt";
-
-    public TugasRepository() {
-        loadFromFile();
-    }
-
     public void addTugas(Tugas t) {
-        tugasList.add(t);
-        saveToFile();
-    }
-
-    public List<Tugas> getAll() {
-        return tugasList;
-    }
-
-    public List<Tugas> getByKelas(Kelas kelas) {
-        return tugasList.stream()
-                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
-                .collect(Collectors.toList());
+        String sql = "INSERT INTO tugas VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, t.getIdTugas());
+            stmt.setString(2, t.getJudul());
+            stmt.setString(3, t.getDeskripsi());
+            stmt.setDate(4, Date.valueOf(t.getDeadline()));
+            stmt.setString(5, t.getGuru().getIdUser());
+            stmt.setString(6, t.getKelas().getIdKelas());
+            stmt.setString(7, t.getMapel().getIdMapel());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Tugas> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return tugasList.stream()
-                .filter(t -> t.getMapel() != null && t.getMapel().equals(mapel))
-                .filter(t -> t.getKelas() != null && t.getKelas().equals(kelas))
-                .collect(Collectors.toList());
-    }
-
-    public void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-
-            for (Tugas t : tugasList) {
-                // Perbaikan: Menyertakan deskripsi dalam penyimpanan file
-                bw.write(
-                        t.getIdTugas() + ";" +
-                        t.getJudul() + ";" +
-                        t.getDeskripsi() + ";" +
-                        t.getDeadline() + ";" +
-                        (t.getGuru() != null ? t.getGuru().getIdUser() : "-") + ";" +
-                        (t.getKelas() != null ? t.getKelas().getIdKelas() : "-") + ";" +
-                        (t.getMapel() != null ? t.getMapel().getIdMapel() : "-")
-                );
-                bw.newLine();
+        List<Tugas> list = new ArrayList<>();
+        String sql = "SELECT * FROM tugas WHERE id_mapel = ? AND id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, mapel.getIdMapel());
+            stmt.setString(2, kelas.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Tugas t = new Tugas(rs.getString("id_tugas"), rs.getString("judul"), rs.getString("deskripsi"), rs.getDate("deadline").toLocalDate());
+                t.setKelas(kelas);
+                t.setMapel(mapel);
+                list.add(t);
             }
-
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan tugas.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
-
-    public void loadFromFile() {
-        tugasList.clear();
-
-        try {
-            File file = new File(FILE_PATH);
-            if (!file.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-
-                // Perbaikan: Memastikan data cukup untuk konstruktor (min 4 field utama)
-                // Format: id;judul;deskripsi;deadline;...
-                if (d.length >= 4) {
-                    String id = d[0];
-                    String judul = d[1];
-                    String desk = d[2];
-                    String deadlineStr = d[3];
-
-                    // Perbaikan: Parse tanggal dan gunakan konstruktor yang sesuai
-                    Tugas t = new Tugas(id, judul, desk, DateUtil.parse(deadlineStr));
-                    
-                    // Note: Relasi guru, kelas, mapel direkonstruksi di DataReconstructor
-                    tugasList.add(t);
-                }
+    
+    public List<Tugas> getAll() {
+        return new ArrayList<>();
+    }
+    
+    public List<Tugas> getByKelas(Kelas k) {
+        List<Tugas> list = new ArrayList<>();
+        String sql = "SELECT * FROM tugas WHERE id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, k.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Tugas t = new Tugas(rs.getString("id_tugas"), rs.getString("judul"), rs.getString("deskripsi"), rs.getDate("deadline").toLocalDate());
+                t.setKelas(k);
+                list.add(t);
             }
-
-            br.close();
-
-        } catch (Exception e) {
-            System.out.println("Gagal memuat tugas.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 }

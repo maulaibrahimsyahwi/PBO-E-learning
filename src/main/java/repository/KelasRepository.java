@@ -1,65 +1,81 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.Kelas;
-import java.io.*;
-import java.util.*;
+import model.MataPelajaran;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class KelasRepository {
 
-    private List<Kelas> kelasList = new ArrayList<>();
-    private final String FILE_PATH = "data/kelas.txt";
-
-    public KelasRepository() {
-        loadFromFile();
+    public void addKelas(Kelas k) {
+        String sql = "INSERT INTO kelas (id_kelas, nama_kelas, tingkat) VALUES (?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, k.getIdKelas());
+            stmt.setString(2, k.getNamaKelas());
+            stmt.setString(3, k.getTingkat());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    public void addKelas(Kelas k) {
-        kelasList.add(k);
-        saveToFile();
+    public void updateKelas(Kelas k) {
+        String sql = "UPDATE kelas SET nama_kelas = ?, tingkat = ? WHERE id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, k.getNamaKelas());
+            stmt.setString(2, k.getTingkat());
+            stmt.setString(3, k.getIdKelas());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Kelas> getAll() {
-        return kelasList;
+        List<Kelas> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM kelas")) {
+            while (rs.next()) {
+                Kelas k = new Kelas(rs.getString("id_kelas"), rs.getString("nama_kelas"), rs.getString("tingkat"));
+                loadMapelKelas(k); 
+                list.add(k);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 
     public Kelas findById(String id) {
-        for (Kelas k : kelasList) {
-            if (k.getIdKelas().equals(id)) return k;
-        }
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM kelas WHERE id_kelas = ?")) {
+            stmt.setString(1, id);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                Kelas k = new Kelas(rs.getString("id_kelas"), rs.getString("nama_kelas"), rs.getString("tingkat"));
+                loadMapelKelas(k);
+                return k;
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
         return null;
     }
 
-    public void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-
-            for (Kelas k : kelasList) {
-                bw.write(k.getIdKelas() + ";" +
-                         k.getNamaKelas() + ";" +
-                         k.getTingkat());
-                bw.newLine();
+    private void loadMapelKelas(Kelas k) {
+        String sql = "SELECT m.* FROM mapel m JOIN kelas_mapel km ON m.id_mapel = km.id_mapel WHERE km.id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, k.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                k.tambahMapel(new MataPelajaran(rs.getString("id_mapel"), rs.getString("nama_mapel"), rs.getString("deskripsi"), rs.getString("tingkat")));
             }
-
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan kelas.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
     }
-
-    private void loadFromFile() {
-        try {
-            File file = new File(FILE_PATH);
-            if (!file.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                String[] d = line.split(";");
-                kelasList.add(new Kelas(d[0], d[1], d[2]));
-            }
-
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat kelas.txt: " + e.getMessage());
-        }
+    
+    public void addMapelToKelas(String idKelas, String idMapel) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("INSERT IGNORE INTO kelas_mapel VALUES (?, ?)")) {
+            stmt.setString(1, idKelas);
+            stmt.setString(2, idMapel);
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 }

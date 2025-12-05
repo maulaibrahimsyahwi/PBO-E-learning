@@ -1,95 +1,95 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.ForumDiskusi;
 import model.Kelas;
 import model.MataPelajaran;
-
-import java.io.*;
+import model.User;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ForumRepository {
 
-    private List<ForumDiskusi> forumList = new ArrayList<>();
-    private final String FILE_PATH = "data/forum.txt";
-
-    public ForumRepository() {
-        loadFromFile();
-    }
-
     public void addPesan(ForumDiskusi f) {
-        forumList.add(f);
-        saveToFile();
+        String sql = "INSERT INTO forum VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, f.getIdPesan());
+            stmt.setString(2, f.getPengirim().getIdUser());
+            stmt.setString(3, f.getJudul());
+            stmt.setString(4, f.getIsiPesan());
+            stmt.setString(5, f.getWaktu());
+            stmt.setString(6, f.getKelas().getIdKelas());
+            stmt.setString(7, f.getMapel().getIdMapel());
+            stmt.setString(8, f.getParentId());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<ForumDiskusi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return forumList.stream()
-                .filter(f -> f.getMapel() != null && f.getMapel().equals(mapel))
-                .filter(f -> f.getKelas() != null && f.getKelas().equals(kelas))
-                .collect(Collectors.toList());
+        List<ForumDiskusi> list = new ArrayList<>();
+        String sql = "SELECT * FROM forum WHERE id_mapel = ? AND id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, mapel.getIdMapel());
+            stmt.setString(2, kelas.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                list.add(mapRow(rs, mapel, kelas));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
+    public List<ForumDiskusi> getReplies(String threadId) {
+        List<ForumDiskusi> list = new ArrayList<>();
+        String sql = "SELECT * FROM forum WHERE parent_id = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, threadId);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                // Mapel dan Kelas null karena kita hanya butuh isi reply
+                list.add(mapRow(rs, null, null));
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
     
-    // Baru: Ambil semua balasan berdasarkan ID Topik
-    public List<ForumDiskusi> getReplies(String threadId) {
-        return forumList.stream()
-                .filter(f -> f.getParentId().equals(threadId))
-                .collect(Collectors.toList());
-    }
-
     public List<ForumDiskusi> getAll() {
-        return forumList;
+        List<ForumDiskusi> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM forum")) {
+            while (rs.next()) list.add(mapRow(rs, null, null));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 
-    public void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (ForumDiskusi f : forumList) {
-                // Format: id;idUser;judul;isi;waktu;idKelas;idMapel;parentId
-                bw.write(
-                        f.getIdPesan() + ";" +
-                        (f.getPengirim() != null ? f.getPengirim().getIdUser() : "-") + ";" +
-                        f.getJudul() + ";" +
-                        f.getIsiPesan() + ";" +
-                        f.getWaktu() + ";" +
-                        (f.getKelas() != null ? f.getKelas().getIdKelas() : "-") + ";" +
-                        (f.getMapel() != null ? f.getMapel().getIdMapel() : "-") + ";" +
-                        f.getParentId()
-                );
-                bw.newLine();
-            }
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan forum.txt: " + e.getMessage());
+    // Perbaikan di sini: Menambahkan rs.getString("waktu") dan melengkapi logic User/Kelas/Mapel
+    private ForumDiskusi mapRow(ResultSet rs, MataPelajaran m, Kelas k) throws SQLException {
+        // Ambil user
+        User u = new UserRepository().findByUsername(rs.getString("id_user")); 
+        if (u == null) {
+            // Fallback jika findByUsername gagal (misal data user terhapus), pakai id_user sementara
+            // Atau biarkan null, nanti di View ditangani sebagai "User Terhapus"
         }
-    }
-
-    private void loadFromFile() {
-        forumList.clear();
-        try {
-            File file = new File(FILE_PATH);
-            if (!file.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-                
-                // Support format lama (migrasi otomatis saat runtime) & baru
-                // Format Baru: id;idUser;judul;isi;waktu;idKelas;idMapel;parentId (len 8)
-                if (d.length >= 8) {
-                    ForumDiskusi f = new ForumDiskusi(d[0], d[2], d[3], d[4], d[7]);
-                    forumList.add(f);
-                } 
-                // Fallback format lama (jika ada data lama)
-                else if (d.length >= 6) {
-                    // Anggap data lama sebagai ROOT topic tanpa judul spesifik
-                    ForumDiskusi f = new ForumDiskusi(d[0], "Diskusi Umum", d[2], d[3], "ROOT"); 
-                    forumList.add(f);
-                }
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat forum.txt: " + e.getMessage());
+        
+        // Jika m atau k null (misal dari getAll/getReplies), coba fetch dari DB agar objek lengkap
+        if (m == null) {
+            // Logika sederhana: ambil ID mapel, tapi untuk efisiensi kita biarkan null jika tidak krusial
+            // Jika mau lengkap: m = new MapelRepository().findById(rs.getString("id_mapel"));
         }
+        
+        return new ForumDiskusi(
+            rs.getString("id_pesan"),
+            u,
+            rs.getString("judul"),
+            rs.getString("isi_pesan"),
+            rs.getString("waktu"), // INI YANG DITAMBAHKAN
+            k, 
+            m,
+            rs.getString("parent_id")
+        );
     }
 }

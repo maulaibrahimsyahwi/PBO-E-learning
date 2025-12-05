@@ -1,74 +1,54 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.*;
-import java.io.*;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class NilaiRepository {
 
-    private List<Nilai> nilaiList = new ArrayList<>();
-    private final String FILE_PATH = "data/nilai.txt";
-
-    public NilaiRepository() {
-        loadFromFile();
-    }
-
     public void addNilai(Nilai n) {
-        nilaiList.add(n);
-        saveToFile();
+        String sql = "INSERT INTO nilai VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, n.getIdNilai());
+            stmt.setString(2, n.getSiswa().getIdUser());
+            stmt.setString(3, n.getTugas() != null ? n.getTugas().getIdTugas() : null);
+            stmt.setString(4, n.getUjian() != null ? n.getUjian().getIdUjian() : null);
+            stmt.setInt(5, n.getNilaiAngka());
+            stmt.setString(6, n.getKeterangan());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Nilai> getAll() {
-        return nilaiList;
+        List<Nilai> list = new ArrayList<>();
+        String sql = "SELECT * FROM nilai";
+        try (Connection conn = DatabaseConnection.getConnection();
+             ResultSet rs = conn.createStatement().executeQuery(sql)) {
+            while(rs.next()) {
+                Siswa s = new Siswa(rs.getString("id_siswa"), "","","","","","");
+                Nilai n = new Nilai(rs.getString("id_nilai"), s, (Tugas)null, rs.getInt("nilai_angka"), rs.getString("keterangan"));
+                list.add(n);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
-
+    
     public List<Nilai> findBySiswa(String idSiswa) {
-        List<Nilai> hasil = new ArrayList<>();
-        for (Nilai n : nilaiList) {
-            if (n.getSiswa() != null && n.getSiswa().getIdUser().equals(idSiswa)) {
-                hasil.add(n);
+        List<Nilai> list = new ArrayList<>();
+        String sql = "SELECT * FROM nilai WHERE id_siswa = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, idSiswa);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Siswa s = new Siswa(rs.getString("id_siswa"), "","","","","","");
+                Nilai n = new Nilai(rs.getString("id_nilai"), s, (Tugas)null, rs.getInt("nilai_angka"), rs.getString("keterangan"));
+                list.add(n);
             }
-        }
-        return hasil;
-    }
-
-    private void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Nilai n : nilaiList) {
-                String idTugas = (n.getTugas() != null) ? n.getTugas().getIdTugas() : "-";
-                String idUjian = (n.getUjian() != null) ? n.getUjian().getIdUjian() : "-";
-
-                bw.write(n.getIdNilai() + ";" +
-                         n.getSiswa().getIdUser() + ";" +
-                         idTugas + ";" +
-                         idUjian + ";" +
-                         n.getNilaiAngka() + ";" +
-                         n.getKeterangan());
-                bw.newLine();
-            }
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan nilai.txt: " + e.getMessage());
-        }
-    }
-
-    private void loadFromFile() {
-        nilaiList.clear();
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-                if (d.length >= 6) {
-                    nilaiList.add(new Nilai(d[0], Integer.parseInt(d[4]), d[5]));
-                }
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat nilai.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 }

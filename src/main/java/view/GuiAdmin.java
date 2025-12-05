@@ -3,6 +3,7 @@ package view;
 import model.*;
 import repository.*;
 import utils.IdUtil;
+import utils.SecurityUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -10,14 +11,11 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class GuiAdmin extends JFrame {
     private UserRepository userRepo;
     private KelasRepository kelasRepo;
     private MapelRepository mapelRepo;
-    
     private MateriRepository materiRepo;
     private TugasRepository tugasRepo;
     private UjianRepository ujianRepo;
@@ -128,7 +126,7 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Guru", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                String passHash = utils.SecurityUtil.hashPassword(txtPass.getText());
+                String passHash = SecurityUtil.hashPassword(txtPass.getText());
                 Guru g = new Guru(IdUtil.generate(), txtUser.getText(), passHash, 
                                   txtNama.getText(), txtEmail.getText(), txtNip.getText(), txtSpes.getText());
                 userRepo.addUser(g);
@@ -152,8 +150,10 @@ public class GuiAdmin extends JFrame {
 
     private JPanel createPanelSiswa() {
         JPanel panel = new JPanel(new BorderLayout());
-        String[] columns = {"ID", "Username", "Nama", "NIS", "Kelas"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        String[] columns = {"ID", "Username", "Nama", "NIS", "Kelas", "Angkatan", "Email"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
         JTable table = new JTable(model);
         
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
@@ -179,9 +179,12 @@ public class GuiAdmin extends JFrame {
         });
 
         JPanel btnPanel = new JPanel();
-        JButton btnAdd = new JButton("Tambah Siswa");
-        JButton btnAssign = new JButton("Assign ke Kelas");
+        JButton btnAdd = new JButton("Tambah");
+        JButton btnEdit = new JButton("Edit Data"); 
+        JButton btnAssign = new JButton("Assign Kelas");
+        
         btnPanel.add(btnAdd);
+        btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);
 
         btnAdd.addActionListener(e -> {
@@ -199,11 +202,50 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                String passHash = utils.SecurityUtil.hashPassword(txtPass.getText());
+                String passHash = SecurityUtil.hashPassword(txtPass.getText());
                 Siswa s = new Siswa(IdUtil.generate(), txtUser.getText(), passHash, 
                                     txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngkatan.getText());
                 userRepo.addUser(s);
                 refreshSiswaTable(model);
+            }
+        });
+
+        btnEdit.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih siswa dulu!");
+                return;
+            }
+            
+            int modelRow = table.convertRowIndexToModel(row);
+
+            String id = (String) model.getValueAt(modelRow, 0);
+            String user = (String) model.getValueAt(modelRow, 1);
+            String nama = (String) model.getValueAt(modelRow, 2);
+            String nis = (String) model.getValueAt(modelRow, 3);
+            String angk = (String) model.getValueAt(modelRow, 5);
+            String email = (String) model.getValueAt(modelRow, 6);
+
+            JTextField txtUser = new JTextField(user);
+            JTextField txtNama = new JTextField(nama);
+            JTextField txtNis = new JTextField(nis);
+            JTextField txtAngk = new JTextField(angk);
+            JTextField txtEmail = new JTextField(email);
+
+            Object[] message = {
+                "Username:", txtUser, 
+                "Nama Lengkap:", txtNama,
+                "NIS:", txtNis,
+                "Angkatan:", txtAngk,
+                "Email:", txtEmail
+            };
+
+            int opt = JOptionPane.showConfirmDialog(this, message, "Edit Siswa", JOptionPane.OK_CANCEL_OPTION);
+            if (opt == JOptionPane.OK_OPTION) {
+                Siswa sBaru = new Siswa(id, txtUser.getText(), "", txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngk.getText());
+                userRepo.updateSiswa(sBaru);
+                refreshSiswaTable(model);
+                JOptionPane.showMessageDialog(this, "Data Siswa berhasil diupdate!");
             }
         });
 
@@ -247,8 +289,7 @@ public class GuiAdmin extends JFrame {
 
                 if (s != null && k != null) {
                     s.setKelas(k);
-                    k.tambahSiswa(s);
-                    userRepo.saveToFile();
+                    userRepo.addUser(s); 
                     refreshSiswaTable(model);
                     JOptionPane.showMessageDialog(this, "Berhasil assign " + s.getNamaLengkap() + " ke kelas " + k.getNamaKelas());
                 }
@@ -265,7 +306,7 @@ public class GuiAdmin extends JFrame {
         for (User u : userRepo.getAll()) {
             if (u instanceof Siswa s) {
                 String kls = (s.getKelas() != null) ? s.getKelas().getNamaKelas() : "-";
-                model.addRow(new Object[]{s.getIdUser(), s.getUsername(), s.getNamaLengkap(), s.getNis(), kls});
+                model.addRow(new Object[]{s.getIdUser(), s.getUsername(), s.getNamaLengkap(), s.getNis(), kls, s.getAngkatan(), s.getEmail()});
             }
         }
     }
@@ -273,12 +314,19 @@ public class GuiAdmin extends JFrame {
     private JPanel createPanelKelas() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Kelas", "Tingkat"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
         JTable table = new JTable(model);
         
         refreshKelasTable(model);
 
+        JPanel btnPanel = new JPanel();
         JButton btnAdd = new JButton("Tambah Kelas");
+        JButton btnEdit = new JButton("Edit Kelas");
+        btnPanel.add(btnAdd);
+        btnPanel.add(btnEdit);
+
         btnAdd.addActionListener(e -> {
             JTextField txtNama = new JTextField();
             JTextField txtTingkat = new JTextField();
@@ -290,8 +338,37 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        btnEdit.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih kelas yang mau diedit!");
+                return;
+            }
+
+            String idKelas = (String) model.getValueAt(row, 0);
+            String namaLama = (String) model.getValueAt(row, 1);
+            String tingkatLama = (String) model.getValueAt(row, 2);
+
+            JTextField txtNama = new JTextField(namaLama);
+            JTextField txtTingkat = new JTextField(tingkatLama);
+            
+            Object[] message = {
+                "ID: " + idKelas,
+                "Nama Kelas:", txtNama, 
+                "Tingkat (10/11/12):", txtTingkat
+            };
+
+            int option = JOptionPane.showConfirmDialog(this, message, "Edit Kelas", JOptionPane.OK_CANCEL_OPTION);
+            if (option == JOptionPane.OK_OPTION) {
+                Kelas kBaru = new Kelas(idKelas, txtNama.getText(), txtTingkat.getText());
+                kelasRepo.updateKelas(kBaru);
+                refreshKelasTable(model);
+                JOptionPane.showMessageDialog(this, "Data Kelas berhasil diubah!");
+            }
+        });
+
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
@@ -303,15 +380,19 @@ public class GuiAdmin extends JFrame {
     private JPanel createPanelMapel() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Mapel", "Deskripsi", "Tingkat"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0);
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
         JTable table = new JTable(model);
         
         refreshMapelTable(model);
 
         JPanel btnPanel = new JPanel();
         JButton btnAdd = new JButton("Tambah Mapel");
-        JButton btnAssign = new JButton("Assign Guru ke Mapel");
+        JButton btnEdit = new JButton("Edit Mapel");
+        JButton btnAssign = new JButton("Assign Guru");
         btnPanel.add(btnAdd);
+        btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);
 
         btnAdd.addActionListener(e -> {
@@ -327,6 +408,32 @@ public class GuiAdmin extends JFrame {
                     if (k.getTingkat().equals(m.getTingkat())) k.tambahMapel(m);
                 }
                 refreshMapelTable(model);
+            }
+        });
+
+        btnEdit.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih mapel yang mau diedit!");
+                return;
+            }
+
+            String id = (String) model.getValueAt(row, 0);
+            String nama = (String) model.getValueAt(row, 1);
+            String desk = (String) model.getValueAt(row, 2);
+            String tkt = (String) model.getValueAt(row, 3);
+
+            JTextField txtNama = new JTextField(nama);
+            JTextField txtDesk = new JTextField(desk);
+            JTextField txtTingkat = new JTextField(tkt);
+            
+            Object[] msg = {"Nama:", txtNama, "Deskripsi:", txtDesk, "Tingkat:", txtTingkat};
+            
+            if (JOptionPane.showConfirmDialog(this, msg, "Edit Mapel", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                MataPelajaran mBaru = new MataPelajaran(id, txtNama.getText(), txtDesk.getText(), txtTingkat.getText());
+                mapelRepo.updateMapel(mBaru);
+                refreshMapelTable(model);
+                JOptionPane.showMessageDialog(this, "Mapel berhasil diupdate!");
             }
         });
 
@@ -388,7 +495,7 @@ public class GuiAdmin extends JFrame {
                 if (g != null && m != null && k != null) {
                     g.tambahMapel(m);
                     g.tambahKelas(k);
-                    userRepo.saveToFile();
+                    userRepo.addUser(g); 
                     JOptionPane.showMessageDialog(this, "Sukses assign Guru " + g.getNamaLengkap());
                 }
             }

@@ -1,80 +1,50 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.*;
-import java.io.*;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class JawabanRepository {
 
-    private List<Jawaban> jawabanList = new ArrayList<>();
-    private final String FILE_PATH = "data/jawaban.txt";
-
-    public JawabanRepository() {
-        loadFromFile();
-    }
-
     public void addJawaban(Jawaban j) {
-        jawabanList.add(j);
-        saveToFile();
-    }
-
-    public List<Jawaban> getAll() {
-        return jawabanList;
+        String sql = "INSERT INTO jawaban VALUES (?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, j.getIdJawaban());
+            stmt.setString(2, j.getSiswa().getIdUser());
+            stmt.setString(3, j.getTugas() != null ? j.getTugas().getIdTugas() : null);
+            stmt.setString(4, j.getUjian() != null ? j.getUjian().getIdUjian() : null);
+            stmt.setString(5, j.getFileJawaban());
+            stmt.setString(6, j.getTanggalSubmit());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Jawaban> findByTugas(String idTugas) {
-        return jawabanList.stream()
-                .filter(j -> j.getTugas() != null && j.getTugas().getIdTugas().equals(idTugas))
-                .collect(Collectors.toList());
+        return findByRef("id_tugas", idTugas);
     }
 
     public List<Jawaban> findByUjian(String idUjian) {
-        return jawabanList.stream()
-                .filter(j -> j.getUjian() != null && j.getUjian().getIdUjian().equals(idUjian))
-                .collect(Collectors.toList());
+        return findByRef("id_ujian", idUjian);
     }
 
-    private void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Jawaban j : jawabanList) {
-                // Format: id;idSiswa;idTugas;idUjian;file;tanggal
-                String idTugas = (j.getTugas() != null) ? j.getTugas().getIdTugas() : "-";
-                String idUjian = (j.getUjian() != null) ? j.getUjian().getIdUjian() : "-";
-                
-                bw.write(j.getIdJawaban() + ";" +
-                         j.getSiswa().getIdUser() + ";" +
-                         idTugas + ";" +
-                         idUjian + ";" +
-                         j.getFileJawaban() + ";" +
-                         j.getTanggalSubmit());
-                bw.newLine();
+    private List<Jawaban> findByRef(String col, String val) {
+        List<Jawaban> list = new ArrayList<>();
+        String sql = "SELECT * FROM jawaban WHERE " + col + " = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, val);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Siswa s = new Siswa(rs.getString("id_siswa"), "", "", "", "", "", ""); 
+                Jawaban j = new Jawaban(rs.getString("id_jawaban"), s, (Tugas)null, rs.getString("file_jawaban"));
+                list.add(j);
             }
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan jawaban.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
-
-    private void loadFromFile() {
-        jawabanList.clear();
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-                // id;idSiswa;idTugas;idUjian;file;tanggal
-                if (d.length >= 6) {
-                    Jawaban j = new Jawaban(d[0], d[4], d[5]);
-                    jawabanList.add(j);
-                }
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat jawaban.txt: " + e.getMessage());
-        }
-    }
+    
+    public List<Jawaban> getAll() { return new ArrayList<>(); }
 }

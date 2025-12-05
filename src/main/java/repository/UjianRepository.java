@@ -1,99 +1,67 @@
 package repository;
 
-import model.Kelas;
-import model.MataPelajaran;
-import model.Ujian;
-import utils.DateUtil;
-
-import java.io.*;
-import java.time.LocalDate;
+import config.DatabaseConnection;
+import model.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class UjianRepository {
 
-    private List<Ujian> ujianList = new ArrayList<>();
-    private final String FILE_PATH = "data/ujian.txt";
-
-    public UjianRepository() {
-        loadFromFile();
-    }
-
     public void addUjian(Ujian u) {
-        ujianList.add(u);
-        saveToFile();
+        String sql = "INSERT INTO ujian VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, u.getIdUjian());
+            stmt.setString(2, u.getNamaUjian());
+            stmt.setString(3, u.getTipeUjian());
+            stmt.setDate(4, Date.valueOf(u.getTanggal()));
+            stmt.setInt(5, u.getDurasiTotal());
+            stmt.setInt(6, u.getWaktuPerSoal());
+            stmt.setInt(7, u.getMaxSoal());
+            stmt.setString(8, u.getGuru().getIdUser());
+            stmt.setString(9, u.getKelas().getIdKelas());
+            stmt.setString(10, u.getMapel().getIdMapel());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
-
-    public List<Ujian> getAll() { return ujianList; }
 
     public List<Ujian> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return ujianList.stream()
-                .filter(u -> u.getMapel() != null && u.getMapel().equals(mapel))
-                .filter(u -> u.getKelas() != null && u.getKelas().equals(kelas))
-                .collect(Collectors.toList());
+        List<Ujian> list = new ArrayList<>();
+        String sql = "SELECT * FROM ujian WHERE id_mapel = ? AND id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, mapel.getIdMapel());
+            stmt.setString(2, kelas.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Ujian u = new Ujian(rs.getString("id_ujian"), rs.getString("nama_ujian"), rs.getString("tipe_ujian"),
+                        rs.getDate("tanggal").toLocalDate(), rs.getInt("durasi_total"), rs.getInt("waktu_per_soal"), rs.getInt("max_soal"));
+                u.setKelas(kelas); u.setMapel(mapel);
+                list.add(u);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
     
-    public List<Ujian> getByKelas(Kelas kelas) {
-        return ujianList.stream()
-                .filter(u -> u.getKelas() != null && u.getKelas().equals(kelas))
-                .collect(Collectors.toList());
-    }
-
-    private void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Ujian u : ujianList) {
-                // Format Baru: id;nama;tipe;tgl;durasi;waktuPerSoal;maxSoal;guru;kelas;mapel
-                bw.write(
-                        u.getIdUjian() + ";" +
-                        u.getNamaUjian() + ";" +
-                        u.getTipeUjian() + ";" +
-                        u.getTanggal() + ";" +
-                        u.getDurasiTotal() + ";" +
-                        u.getWaktuPerSoal() + ";" +
-                        u.getMaxSoal() + ";" +
-                        (u.getGuru() != null ? u.getGuru().getIdUser() : "-") + ";" +
-                        (u.getKelas() != null ? u.getKelas().getIdKelas() : "-") + ";" +
-                        (u.getMapel() != null ? u.getMapel().getIdMapel() : "-")
-                );
-                bw.newLine();
+    public List<Ujian> getAll() { 
+        return new ArrayList<>(); 
+    } 
+    
+    public List<Ujian> getByKelas(Kelas k) { 
+        List<Ujian> list = new ArrayList<>();
+        String sql = "SELECT * FROM ujian WHERE id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, k.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Ujian u = new Ujian(rs.getString("id_ujian"), rs.getString("nama_ujian"), rs.getString("tipe_ujian"),
+                        rs.getDate("tanggal").toLocalDate(), rs.getInt("durasi_total"), rs.getInt("waktu_per_soal"), rs.getInt("max_soal"));
+                u.setKelas(k);
+                list.add(u);
             }
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan ujian.txt: " + e.getMessage());
-        }
-    }
-
-    private void loadFromFile() {
-        ujianList.clear();
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-                
-                // Support format baru (10 kolom) dan lama (>=4 kolom)
-                if (d.length >= 10) {
-                    Ujian u = new Ujian(
-                        d[0], d[1], d[2], 
-                        LocalDate.parse(d[3]), 
-                        Integer.parseInt(d[4]), 
-                        Integer.parseInt(d[5]), 
-                        Integer.parseInt(d[6])
-                    );
-                    ujianList.add(u);
-                } else if (d.length >= 4) {
-                    // Migrasi data lama (default PG)
-                    Ujian u = new Ujian(d[0], d[1], "PG", LocalDate.parse(d[2]), Integer.parseInt(d[3]), 0, 50);
-                    ujianList.add(u);
-                }
-            }
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat ujian.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list; 
     }
 }

@@ -1,79 +1,44 @@
 package repository;
 
+import config.DatabaseConnection;
 import model.MataPelajaran;
-
-import java.io.*;
-import java.util.*;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MapelRepository {
 
-    private List<MataPelajaran> mapelList = new ArrayList<>();
-    private final String FILE_PATH = "data/mapel.txt";
-
-    public MapelRepository() {
-        loadFromFile();
+    public void addMapel(MataPelajaran m) {
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement("INSERT INTO mapel VALUES (?, ?, ?, ?)")) {
+            stmt.setString(1, m.getIdMapel());
+            stmt.setString(2, m.getNamaMapel());
+            stmt.setString(3, m.getDeskripsi());
+            stmt.setString(4, m.getTingkat());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    public void addMapel(MataPelajaran m) {
-        mapelList.add(m);
-        saveToFile();
+    public void updateMapel(MataPelajaran m) {
+        String sql = "UPDATE mapel SET nama_mapel = ?, deskripsi = ?, tingkat = ? WHERE id_mapel = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, m.getNamaMapel());
+            stmt.setString(2, m.getDeskripsi());
+            stmt.setString(3, m.getTingkat());
+            stmt.setString(4, m.getIdMapel());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<MataPelajaran> getAll() {
-        return mapelList;
-    }
-
-    public MataPelajaran findById(String id) {
-        for (MataPelajaran m : mapelList) {
-            if (m.getIdMapel().equals(id)) return m;
-        }
-        return null;
-    }
-
-    private void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-
-            for (MataPelajaran m : mapelList) {
-                // Format: id;nama;deskripsi;tingkat
-                bw.write(m.getIdMapel() + ";" +
-                         m.getNamaMapel() + ";" +
-                         m.getDeskripsi() + ";" +
-                         m.getTingkat());
-                bw.newLine();
+        List<MataPelajaran> list = new ArrayList<>();
+        try (Connection conn = DatabaseConnection.getConnection();
+             ResultSet rs = conn.createStatement().executeQuery("SELECT * FROM mapel")) {
+            while (rs.next()) {
+                list.add(new MataPelajaran(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4)));
             }
-
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan mapel.txt: " + e.getMessage());
-        }
-    }
-
-    private void loadFromFile() {
-        try {
-            File file = new File(FILE_PATH);
-            if (!file.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-
-                String[] d = line.split(";");
-                
-                // Handle format lama (length 3) dan baru (length 4)
-                if (d.length >= 3) {
-                    String id = d[0];
-                    String nama = d[1];
-                    String desk = d[2];
-                    String tingkat = (d.length > 3) ? d[3] : "-"; // Default jika data lama
-
-                    mapelList.add(new MataPelajaran(id, nama, desk, tingkat));
-                }
-            }
-
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat mapel.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 }

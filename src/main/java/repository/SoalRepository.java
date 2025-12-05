@@ -1,58 +1,42 @@
 package repository;
+
+import config.DatabaseConnection;
 import model.Soal;
-import java.io.*;
-import java.util.*;
-import java.util.stream.Collectors;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
 
 public class SoalRepository {
-    private List<Soal> soalList = new ArrayList<>();
-    private final String FILE_PATH = "data/soal.txt";
-
-    public SoalRepository() { loadFromFile(); }
 
     public void addSoal(Soal s) {
-        soalList.add(s);
-        saveToFile();
+        String sql = "INSERT INTO soal VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, s.getIdSoal());
+            stmt.setString(2, s.getIdUjian());
+            stmt.setString(3, s.getTipeSoal());
+            stmt.setString(4, s.getPertanyaan());
+            stmt.setString(5, s.getPilA());
+            stmt.setString(6, s.getPilB());
+            stmt.setString(7, s.getPilC());
+            stmt.setString(8, s.getPilD());
+            stmt.setString(9, s.getKunciJawaban());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Soal> getByUjian(String idUjian) {
-        return soalList.stream().filter(s -> s.getIdUjian().equals(idUjian)).collect(Collectors.toList());
-    }
-
-    private void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Soal s : soalList) {
-                // Format: id;idUjian;tipe;tanya;A;B;C;D;kunci
-                bw.write(s.getIdSoal() + ";" + 
-                         s.getIdUjian() + ";" + 
-                         s.getTipeSoal() + ";" +
-                         s.getPertanyaan() + ";" +
-                         s.getPilA() + ";" + s.getPilB() + ";" + s.getPilC() + ";" + s.getPilD() + ";" + 
-                         s.getKunciJawaban());
-                bw.newLine();
+        List<Soal> list = new ArrayList<>();
+        String sql = "SELECT * FROM soal WHERE id_ujian = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, idUjian);
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                list.add(new Soal(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
+                        rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9)));
             }
-        } catch (IOException e) { e.printStackTrace(); }
-    }
-
-    private void loadFromFile() {
-        soalList.clear();
-        try {
-            File f = new File(FILE_PATH);
-            if (!f.exists()) return;
-            BufferedReader br = new BufferedReader(new FileReader(f));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if(line.isBlank()) continue;
-                String[] d = line.split(";");
-                // Format baru (9 kolom) vs lama (8 kolom)
-                if (d.length >= 9) {
-                    soalList.add(new Soal(d[0], d[1], d[2], d[3], d[4], d[5], d[6], d[7], d[8]));
-                } else if (d.length >= 8) {
-                    // Migrasi data lama
-                    soalList.add(new Soal(d[0], d[1], "PG", d[2], d[3], d[4], d[5], d[6], d[7]));
-                }
-            }
-            br.close();
-        } catch (IOException e) { e.printStackTrace(); }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 }

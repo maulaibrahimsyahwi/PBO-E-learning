@@ -1,79 +1,61 @@
 package repository;
 
-import model.Kelas;
-import model.MataPelajaran;
-import model.Materi;
-
-import java.io.*;
+import config.DatabaseConnection;
+import model.*;
+import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class MateriRepository {
 
-    private List<Materi> materiList = new ArrayList<>();
-    private final String FILE_PATH = "data/materi.txt";
-
-    public MateriRepository() {
-        loadFromFile();
-    }
-
     public void addMateri(Materi m) {
-        materiList.add(m);
-        saveToFile();
-    }
-
-    public List<Materi> getAll() {
-        return materiList;
-    }
-
-    public List<Materi> getByKelas(Kelas kelas) {
-        return materiList.stream()
-                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
-                .collect(Collectors.toList());
+        String sql = "INSERT INTO materi (id_materi, judul, deskripsi, file_materi, id_guru, id_kelas, id_mapel) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, m.getIdMateri());
+            stmt.setString(2, m.getJudul());
+            stmt.setString(3, m.getDeskripsi());
+            stmt.setString(4, m.getFileMateri());
+            stmt.setString(5, m.getGuru().getIdUser());
+            stmt.setString(6, m.getKelas().getIdKelas());
+            stmt.setString(7, m.getMapel().getIdMapel());
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public List<Materi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
-        return materiList.stream()
-                .filter(m -> m.getMapel() != null && m.getMapel().equals(mapel))
-                .filter(m -> m.getKelas() != null && m.getKelas().equals(kelas))
-                .collect(Collectors.toList());
-    }
-
-    public void saveToFile() {
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
-            for (Materi m : materiList) {
-                bw.write(
-                        m.getIdMateri() + ";" +
-                        m.getJudul() + ";" +
-                        (m.getGuru() != null ? m.getGuru().getIdUser() : "-") + ";" +
-                        (m.getKelas() != null ? m.getKelas().getIdKelas() : "-") + ";" +
-                        (m.getMapel() != null ? m.getMapel().getIdMapel() : "-")
-                );
-                bw.newLine();
+        List<Materi> list = new ArrayList<>();
+        String sql = "SELECT * FROM materi WHERE id_mapel = ? AND id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, mapel.getIdMapel());
+            stmt.setString(2, kelas.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Materi m = new Materi(rs.getString("id_materi"), rs.getString("judul"), rs.getString("deskripsi"), rs.getString("file_materi"));
+                User u = new UserRepository().findByUsername(rs.getString("id_guru")); 
+                if(u instanceof Guru) m.setGuru((Guru)u);
+                m.setKelas(kelas);
+                m.setMapel(mapel);
+                list.add(m);
             }
-        } catch (Exception e) {
-            System.out.println("Gagal menyimpan materi.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
-
-    public void loadFromFile() {
-        materiList.clear();
-        try {
-            File file = new File(FILE_PATH);
-            if (!file.exists()) return;
-
-            BufferedReader br = new BufferedReader(new FileReader(file));
-            String line;
-            while ((line = br.readLine()) != null) {
-                if (line.isBlank()) continue;
-                String[] d = line.split(";");
-                Materi m = new Materi(d[0], d[1]); 
-                materiList.add(m);
+    
+    public List<Materi> getByKelas(Kelas kelas) {
+        List<Materi> list = new ArrayList<>();
+        String sql = "SELECT * FROM materi WHERE id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, kelas.getIdKelas());
+            ResultSet rs = stmt.executeQuery();
+            while(rs.next()) {
+                Materi m = new Materi(rs.getString("id_materi"), rs.getString("judul"), rs.getString("deskripsi"), rs.getString("file_materi"));
+                m.setKelas(kelas);
+                list.add(m);
             }
-            br.close();
-        } catch (Exception e) {
-            System.out.println("Gagal memuat materi.txt: " + e.getMessage());
-        }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
     }
 }
