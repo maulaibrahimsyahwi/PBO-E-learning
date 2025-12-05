@@ -8,7 +8,7 @@ import java.util.stream.Collectors;
 public class JawabanRepository {
 
     private List<Jawaban> jawabanList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/jawaban.txt";
+    private final String FILE_PATH = "data/jawaban.txt";
 
     public JawabanRepository() {
         loadFromFile();

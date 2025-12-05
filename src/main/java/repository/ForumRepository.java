@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class ForumRepository {
 
     private List<ForumDiskusi> forumList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/forum.txt";
+    private final String FILE_PATH = "data/forum.txt";
 
     public ForumRepository() {
         loadFromFile();

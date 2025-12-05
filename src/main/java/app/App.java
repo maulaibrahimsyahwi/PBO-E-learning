@@ -4,11 +4,22 @@ import repository.*;
 import service.DataReconstructor;
 import view.GuiLogin;
 import javax.swing.SwingUtilities;
+import javax.swing.UIManager;
 import model.Admin;
+import com.formdev.flatlaf.FlatLightLaf;
 
 public class App {
 
     public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(new FlatLightLaf());
+            UIManager.put("Button.arc", 12);
+            UIManager.put("Component.arc", 12);
+            UIManager.put("TextComponent.arc", 12);
+        } catch (Exception ex) {
+            System.err.println("Gagal load FlatLaf.");
+        }
+
         UserRepository userRepo = new UserRepository();
         KelasRepository kelasRepo = new KelasRepository();
         MapelRepository mapelRepo = new MapelRepository();
@@ -18,6 +29,8 @@ public class App {
         JawabanRepository jawabanRepo = new JawabanRepository();
         NilaiRepository nilaiRepo = new NilaiRepository();
         ForumRepository forumRepo = new ForumRepository();
+        AbsensiRepository absensiRepo = new AbsensiRepository();
+        SoalRepository soalRepo = new SoalRepository();
 
         DataReconstructor recon = new DataReconstructor(
             userRepo, kelasRepo, mapelRepo, materiRepo,
@@ -25,14 +38,10 @@ public class App {
         );
         recon.reconstruct();
 
-        // KEMBALI KE PASSWORD BIASA
         if (userRepo.findByUsername("admin") == null) {
+            String passHash = utils.SecurityUtil.hashPassword("admin");
             Admin defaultAdmin = new Admin(
-                    "A001", 
-                    "admin", 
-                    "admin", // Password kembali ke "admin"
-                    "Administrator", 
-                    "admin@lms.com"
+                    "A001", "admin", passHash, "Administrator", "admin@lms.com"
             );
             userRepo.addUser(defaultAdmin);
         }
@@ -40,7 +49,8 @@ public class App {
         SwingUtilities.invokeLater(() -> {
             new GuiLogin(
                 userRepo, kelasRepo, mapelRepo, materiRepo,
-                tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, forumRepo
+                tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
+                forumRepo, absensiRepo, soalRepo
             ).setVisible(true);
         });
     }
