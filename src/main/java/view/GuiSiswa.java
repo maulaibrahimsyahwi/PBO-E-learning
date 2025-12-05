@@ -167,6 +167,10 @@ public class GuiSiswa extends JFrame {
         };
         JTable table = new JTable(tugasModel);
         
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+        
         refreshTugasTable(); 
 
         JButton btnSubmit = new JButton("Kerjakan / Submit");

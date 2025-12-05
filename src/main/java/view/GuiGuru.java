@@ -80,7 +80,6 @@ public class GuiGuru extends JFrame {
         JButton btnLoad = new JButton("Buka Kelas");
         topPanel.add(btnLoad);
         
-        // Tombol logout dan profil di panel terpisah agar rapi di kanan (opsional, tapi di sini saya biarkan di flow kiri sesuai asli)
         JButton btnProfil = new JButton("Profil");
         topPanel.add(btnProfil);
         
@@ -124,11 +123,14 @@ public class GuiGuru extends JFrame {
         tabbedContent.addTab("Forum", createForumPanel(k, m));
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL UJIAN ---
     private JPanel createUjianPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Nama", "Tipe", "Tanggal", "Info"}, 0);
         JTable table = new JTable(model);
+        
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
         
         for(Ujian u : ujianRepo.getByMapelAndKelas(m, k)) {
             String info = u.getTipeUjian().equals("KUIS") ? 
@@ -136,7 +138,6 @@ public class GuiGuru extends JFrame {
             model.addRow(new Object[]{u.getIdUjian(), u.getNamaUjian(), u.getTipeUjian(), u.getTanggal(), info});
         }
 
-        // Tata letak tombol diperbaiki
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
@@ -169,7 +170,7 @@ public class GuiGuru extends JFrame {
         txtWaktuPerSoal.setEnabled(false);
 
         comboTipe.addActionListener(e -> {
-            if (comboTipe.getSelectedIndex() == 3) { // Kuis
+            if (comboTipe.getSelectedIndex() == 3) { 
                 txtWaktuPerSoal.setEnabled(true);
                 txtDurasi.setEnabled(false); txtDurasi.setText("0");
             } else {
@@ -293,7 +294,6 @@ public class GuiGuru extends JFrame {
 
         d.add(inputPanel, BorderLayout.CENTER);
         
-        // Panel tombol dialog
         JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottom.add(lblInfo); 
         bottom.add(btnAdd);
@@ -301,15 +301,18 @@ public class GuiGuru extends JFrame {
         d.setVisible(true);
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL MATERI ---
     private JPanel createMateriPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
         JTable table = new JTable(model);
+        
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+        
         for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) 
             model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
         
-        // Tata letak tombol diperbaiki
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
@@ -352,14 +355,17 @@ public class GuiGuru extends JFrame {
         return panel;
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL TUGAS ---
     private JPanel createTugasPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "Deadline"}, 0);
         JTable table = new JTable(model);
+        
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+        
         for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
         
-        // Tata letak tombol diperbaiki
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
@@ -386,12 +392,15 @@ public class GuiGuru extends JFrame {
         return panel;
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL PENILAIAN ---
     private JPanel createNilaiPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) { public boolean isCellEditable(int row, int column) { return false; } };
         JTable table = new JTable(model);
+        
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
 
         for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) {
             for(Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
@@ -412,7 +421,6 @@ public class GuiGuru extends JFrame {
             }
         }
 
-        // Tata letak tombol diperbaiki
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
