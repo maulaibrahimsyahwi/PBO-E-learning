@@ -2,6 +2,8 @@ package view;
 
 import model.*;
 import repository.*;
+// Hapus import SecurityUtil
+
 import javax.swing.*;
 import java.awt.*;
 
@@ -55,11 +57,12 @@ public class GuiLogin extends JFrame {
 
     private void prosesLogin() {
         String username = txtUsername.getText();
-        String password = new String(txtPassword.getPassword());
+        String password = new String(txtPassword.getPassword()); // Ambil password biasa
 
         User user = userRepo.findByUsername(username);
 
-        if (user != null && user.login(username, password)) {
+        // HAPUS HASH: Cek langsung menggunakan method login() bawaan User atau equals biasa
+        if (user != null && user.getPassword().equals(password)) {
             JOptionPane.showMessageDialog(this, "Selamat datang, " + user.getNamaLengkap());
             this.dispose();
 

@@ -13,7 +13,7 @@ public class SiswaView {
     private TugasRepository tugasRepo;
     private UjianRepository ujianRepo;
     private JawabanRepository jawabanRepo;
-    private NilaiRepository nilaiRepo;
+    // nilaiRepo unused, removed
     private ForumRepository forumRepo;
     private UserRepository userRepo;
 
@@ -21,7 +21,7 @@ public class SiswaView {
                      TugasRepository tugasRepo,
                      UjianRepository ujianRepo,
                      JawabanRepository jawabanRepo,
-                     NilaiRepository nilaiRepo,
+                     NilaiRepository nilaiRepo, // Kept in constructor for compatibility
                      ForumRepository forumRepo,
                      UserRepository userRepo) {
 
@@ -29,7 +29,6 @@ public class SiswaView {
         this.tugasRepo = tugasRepo;
         this.ujianRepo = ujianRepo;
         this.jawabanRepo = jawabanRepo;
-        this.nilaiRepo = nilaiRepo;
         this.forumRepo = forumRepo;
         this.userRepo = userRepo;
     }
@@ -191,26 +190,30 @@ public class SiswaView {
                 for (ForumDiskusi f : chats) {
                     String senderName = (f.getPengirim() != null) ? f.getPengirim().getNamaLengkap() : "User Terhapus";
                     String role = (f.getPengirim() instanceof Guru) ? "[GURU]" : "[SISWA]";
+                    String titleInfo = f.isTopic() ? " [TOPIK: " + f.getJudul() + "]" : "";
                     
                     System.out.println("");
-                    System.out.println(role + " " + senderName + " (" + f.getWaktu() + ")");
+                    System.out.println(role + " " + senderName + titleInfo + " (" + f.getWaktu() + ")");
                     System.out.println("   \"" + f.getIsiPesan() + "\"");
                 }
             }
             System.out.println("========================================");
-            System.out.println("1. Tulis Pesan / Balas");
+            System.out.println("1. Buat Topik Baru");
             System.out.println("0. Kembali");
             
             int pilih = InputUtil.inputInt("Pilih: ");
             if (pilih == 0) return;
             
             if (pilih == 1) {
-                String pesan = InputUtil.inputString("Ketik pesan Anda: ");
-                if (!pesan.isBlank()) {
+                // PERBAIKAN: Input judul topik
+                String judul = InputUtil.inputString("Judul Topik: ");
+                String pesan = InputUtil.inputString("Isi Pesan: ");
+                if (!pesan.isBlank() && !judul.isBlank()) {
                     String idPesan = IdUtil.generate();
-                    ForumDiskusi fd = new ForumDiskusi(idPesan, s, pesan, s.getKelas(), mapel);
+                    // Constructor: id, user, judul, isi, kelas, mapel
+                    ForumDiskusi fd = new ForumDiskusi(idPesan, s, judul, pesan, s.getKelas(), mapel);
                     forumRepo.addPesan(fd);
-                    System.out.println(">> Pesan terkirim!");
+                    System.out.println(">> Topik berhasil dibuat!");
                 }
             }
         }

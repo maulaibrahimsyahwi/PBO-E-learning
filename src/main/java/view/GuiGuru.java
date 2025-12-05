@@ -3,13 +3,17 @@ package view;
 import model.*;
 import repository.*;
 import utils.IdUtil;
-import view.component.ForumPanel;
 import utils.DateUtil;
+// Hapus import SecurityUtil
 import view.component.ForumPanel;
+
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.util.List;
+import java.io.File;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
+import java.util.List; // Import List
 
 public class GuiGuru extends JFrame {
     private Guru guru;
@@ -89,18 +93,43 @@ public class GuiGuru extends JFrame {
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
         JTable table = new JTable(model);
         
-        for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
+        for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) 
+            model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
         
-        JButton btnAdd = new JButton("Tambah Materi");
+        JButton btnAdd = new JButton("Tambah Materi (Upload)");
         btnAdd.addActionListener(e -> {
-            String judul = JOptionPane.showInputDialog("Judul:");
-            String desk = JOptionPane.showInputDialog("Deskripsi:");
-            String file = JOptionPane.showInputDialog("Filename:");
-            if(judul != null) {
-                Materi mat = new Materi(IdUtil.generate(), judul, desk, file);
-                mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
-                materiRepo.addMateri(mat);
-                loadDashboard();
+            JTextField txtJudul = new JTextField();
+            JTextField txtDesk = new JTextField();
+            Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
+
+            int option = JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION);
+            
+            if (option == JOptionPane.OK_OPTION) {
+                JFileChooser fileChooser = new JFileChooser();
+                int select = fileChooser.showOpenDialog(this);
+                
+                if (select == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        File fileAsli = fileChooser.getSelectedFile();
+                        String namaFileBaru = System.currentTimeMillis() + "_" + fileAsli.getName();
+                        
+                        File folder = new File("src/main/java/data/uploads");
+                        if (!folder.exists()) folder.mkdirs();
+                        
+                        File dest = new File(folder, namaFileBaru);
+                        Files.copy(fileAsli.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        
+                        Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
+                        mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
+                        materiRepo.addMateri(mat);
+                        
+                        JOptionPane.showMessageDialog(this, "Upload Berhasil!");
+                        loadDashboard();
+                        
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage());
+                    }
+                }
             }
         });
         
@@ -114,7 +143,9 @@ public class GuiGuru extends JFrame {
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "Deadline"}, 0);
         JTable table = new JTable(model);
         
-        for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
+        List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(m, k);
+        for(Tugas t : listTugas) 
+            model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
         
         JButton btnAdd = new JButton("Buat Tugas");
         btnAdd.addActionListener(e -> {
@@ -122,10 +153,12 @@ public class GuiGuru extends JFrame {
                 String judul = JOptionPane.showInputDialog("Judul:");
                 String desk = JOptionPane.showInputDialog("Deskripsi:");
                 String tgl = JOptionPane.showInputDialog("Deadline (yyyy-MM-dd):");
-                Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
-                t.setGuru(guru); t.setKelas(k); t.setMapel(m);
-                tugasRepo.addTugas(t);
-                loadDashboard();
+                if (judul != null) {
+                    Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
+                    t.setGuru(guru); t.setKelas(k); t.setMapel(m);
+                    tugasRepo.addTugas(t);
+                    loadDashboard();
+                }
             } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Format salah."); }
         });
         
@@ -153,7 +186,7 @@ public class GuiGuru extends JFrame {
 
         JButton btnNilai = new JButton("Beri Nilai (via ID Siswa & ID Tugas)");
         btnNilai.addActionListener(e -> {
-             JOptionPane.showMessageDialog(this, "Fitur input nilai detail tersedia di versi lengkap.");
+             JOptionPane.showMessageDialog(this, "Gunakan fitur ini di menu CLI untuk saat ini.");
         });
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -161,17 +194,17 @@ public class GuiGuru extends JFrame {
         return panel;
     }
 
-private JPanel createForumPanel(Kelas k, MataPelajaran m) {
-    // Cukup 1 baris ini untuk memanggil fitur forum lengkap
-    return new ForumPanel(guru, k, m, forumRepo);
-}
+    private JPanel createForumPanel(Kelas k, MataPelajaran m) {
+        return new ForumPanel(guru, k, m, forumRepo);
+    }
 
     private void showProfil() {
         String newPass = JOptionPane.showInputDialog("Ganti Password (Kosongkan jika batal):");
         if(newPass != null && !newPass.isBlank()) {
+            // HAPUS HASH: Simpan password biasa
             guru.setPassword(newPass);
             userRepo.saveToFile();
-            JOptionPane.showMessageDialog(this, "Password diganti.");
+            JOptionPane.showMessageDialog(this, "Password berhasil diubah.");
         }
     }
 }

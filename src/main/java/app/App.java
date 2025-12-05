@@ -25,10 +25,14 @@ public class App {
         );
         recon.reconstruct();
 
+        // KEMBALI KE PASSWORD BIASA
         if (userRepo.findByUsername("admin") == null) {
             Admin defaultAdmin = new Admin(
-                    "A001", "admin", "admin",
-                    "Administrator", "admin@lms.com"
+                    "A001", 
+                    "admin", 
+                    "admin", // Password kembali ke "admin"
+                    "Administrator", 
+                    "admin@lms.com"
             );
             userRepo.addUser(defaultAdmin);
         }

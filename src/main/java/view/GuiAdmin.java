@@ -3,8 +3,13 @@ package view;
 import model.*;
 import repository.*;
 import utils.IdUtil;
+// Hapus import SecurityUtil
+
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.util.List;
 
@@ -35,7 +40,8 @@ public class GuiAdmin extends JFrame {
         btnLogout.addActionListener(e -> {
             dispose();
             JOptionPane.showMessageDialog(this, "Anda telah logout.");
-            System.exit(0);
+            // Kembali ke login screen (pastikan parameter null aman atau sesuaikan dengan App.java)
+            new GuiLogin(userRepo, kelasRepo, mapelRepo, null, null, null, null, null, null).setVisible(true);
         });
         add(btnLogout, BorderLayout.SOUTH);
     }
@@ -67,6 +73,7 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Guru", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
+                // HAPUS HASH: Simpan password langsung
                 Guru g = new Guru(IdUtil.generate(), txtUser.getText(), txtPass.getText(), 
                                   txtNama.getText(), txtEmail.getText(), txtNip.getText(), txtSpes.getText());
                 userRepo.addUser(g);
@@ -94,7 +101,29 @@ public class GuiAdmin extends JFrame {
         DefaultTableModel model = new DefaultTableModel(columns, 0);
         JTable table = new JTable(model);
         
+        // Fitur Search (Tetap Ada)
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+        
         refreshSiswaTable(model);
+
+        // Panel Search
+        JPanel searchPanel = new JPanel(new BorderLayout());
+        searchPanel.add(new JLabel(" Cari Siswa: "), BorderLayout.WEST);
+        JTextField txtSearch = new JTextField();
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+        panel.add(searchPanel, BorderLayout.NORTH);
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+            private void filter() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) sorter.setRowFilter(null);
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+            }
+        });
 
         JPanel btnPanel = new JPanel();
         JButton btnAdd = new JButton("Tambah Siswa");
@@ -117,6 +146,7 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
+                // HAPUS HASH: Simpan password langsung
                 Siswa s = new Siswa(IdUtil.generate(), txtUser.getText(), txtPass.getText(), 
                                     txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngkatan.getText());
                 userRepo.addUser(s);
