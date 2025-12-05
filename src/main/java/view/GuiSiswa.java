@@ -27,11 +27,9 @@ public class GuiSiswa extends JFrame {
     private AbsensiRepository absensiRepo;
     private SoalRepository soalRepo;
     
-    // Repository untuk kembali ke Login
     private KelasRepository kelasRepo;
     private MapelRepository mapelRepo;
 
-    // Table Model untuk Tugas/Ujian agar bisa di-refresh
     private DefaultTableModel tugasModel;
 
     public GuiSiswa(Siswa s, MateriRepository mr, TugasRepository tr, UjianRepository ur,
@@ -53,7 +51,7 @@ public class GuiSiswa extends JFrame {
         this.mapelRepo = mapelRepo;
 
         setTitle("Dashboard Siswa - " + s.getNamaLengkap());
-        setSize(950, 650); // Sedikit diperlebar
+        setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -66,7 +64,6 @@ public class GuiSiswa extends JFrame {
         
         add(tabs, BorderLayout.CENTER);
 
-        // --- Panel Atas ---
         JPanel topPanel = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
@@ -110,7 +107,6 @@ public class GuiSiswa extends JFrame {
         }
     }
 
-    // --- PANEL ABSENSI (Tetap) ---
     private JPanel createAbsensiPanel() {
         JPanel p = new JPanel(new GridBagLayout());
         JButton btn = new JButton("Presensi Hari Ini");
@@ -135,7 +131,6 @@ public class GuiSiswa extends JFrame {
         return p;
     }
 
-    // --- PANEL MATERI (Tetap) ---
     private JPanel createMateriPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"Mapel", "Judul", "Deskripsi", "File"}, 0);
@@ -164,21 +159,19 @@ public class GuiSiswa extends JFrame {
         return panel;
     }
 
-    // --- PANEL TUGAS & UJIAN (UPDATE UX) ---
     private JPanel createTugasPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        // Tambahkan kolom STATUS
         String[] cols = {"ID", "Tipe", "Mapel", "Judul", "Tanggal/Deadline", "Status"};
         tugasModel = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         JTable table = new JTable(tugasModel);
         
-        refreshTugasTable(); // Isi data awal
+        refreshTugasTable(); 
 
         JButton btnSubmit = new JButton("Kerjakan / Submit");
         btnSubmit.setFont(new Font("SansSerif", Font.BOLD, 12));
-        btnSubmit.setBackground(new Color(100, 200, 100)); // Hijau
+        btnSubmit.setBackground(new Color(100, 200, 100)); 
         btnSubmit.setForeground(Color.WHITE);
 
         btnSubmit.addActionListener(e -> {
@@ -192,7 +185,6 @@ public class GuiSiswa extends JFrame {
             String tipe = (String) table.getValueAt(row, 1);
             String status = (String) table.getValueAt(row, 5);
 
-            // UX Check: Jika sudah dikerjakan, tolak akses
             if (!status.equals("Belum Dikerjakan")) {
                 JOptionPane.showMessageDialog(this, "Anda sudah mengerjakan/mengumpulkan ini!\nStatus: " + status, 
                                               "Sudah Selesai", JOptionPane.WARNING_MESSAGE);
@@ -213,21 +205,17 @@ public class GuiSiswa extends JFrame {
         return panel;
     }
 
-    // Helper untuk refresh tabel tugas agar status update realtime
     private void refreshTugasTable() {
         tugasModel.setRowCount(0);
         if(siswa.getKelas() == null) return;
 
-        // Load Tugas
         for(Tugas t : tugasRepo.getByKelas(siswa.getKelas())) {
             String status = "Belum Dikerjakan";
-            // Cek Jawaban
             boolean submitted = jawabanRepo.findByTugas(t.getIdTugas()).stream()
                     .anyMatch(j -> j.getSiswa().getIdUser().equals(siswa.getIdUser()));
             
             if (submitted) {
                 status = "Sudah Submit";
-                // Cek Nilai
                 Optional<Nilai> n = nilaiRepo.getAll().stream()
                     .filter(nil -> nil.getTugas() != null && nil.getTugas().getIdTugas().equals(t.getIdTugas()) 
                             && nil.getSiswa().getIdUser().equals(siswa.getIdUser()))
@@ -239,7 +227,6 @@ public class GuiSiswa extends JFrame {
             tugasModel.addRow(new Object[]{t.getIdTugas(), "Tugas", t.getMapel().getNamaMapel(), t.getJudul(), t.getDeadline(), status});
         }
 
-        // Load Ujian
         for(Ujian u : ujianRepo.getByKelas(siswa.getKelas())) {
             String status = "Belum Dikerjakan";
             boolean submitted = jawabanRepo.findByUjian(u.getIdUjian()).stream()
@@ -262,10 +249,11 @@ public class GuiSiswa extends JFrame {
     private void submitTugasFile(Tugas t) {
         JFileChooser fc = new JFileChooser();
         if(fc.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            Jawaban j = new Jawaban(IdUtil.generate(), siswa, t, fc.getSelectedFile().getName());
-            jawabanRepo.addJawaban(j);
+            File fileAsli = fc.getSelectedFile();
+            Jawaban j = new Jawaban(IdUtil.generate(), siswa, t, fileAsli.getName());
+            jawabanRepo.addJawaban(j, fileAsli);
             JOptionPane.showMessageDialog(this, "Jawaban Tugas Terkirim!");
-            refreshTugasTable(); // Refresh UI
+            refreshTugasTable(); 
         }
     }
 
@@ -283,14 +271,12 @@ public class GuiSiswa extends JFrame {
         
         JPanel cardPanel = new JPanel(new CardLayout());
         
-        // Gunakan List<Object> untuk menampung komponen input (bisa ButtonGroup atau JTextArea)
         List<Object> inputComponents = new ArrayList<>();
         
         JLabel lblTimer = new JLabel("Waktu: -");
         lblTimer.setFont(new Font("Arial", Font.BOLD, 14));
         lblTimer.setForeground(Color.RED);
 
-        // Generate UI Soal
         for (int i = 0; i < soalList.size(); i++) {
             Soal s = soalList.get(i);
             JPanel pSoal = new JPanel(new BorderLayout(10, 10));
@@ -306,7 +292,6 @@ public class GuiSiswa extends JFrame {
 
             JPanel pJawab = new JPanel();
             
-            // Cek Tipe Soal per Item (Essay vs PG)
             if ("ESSAY".equals(s.getTipeSoal())) {
                 JTextArea txtJawab = new JTextArea(10, 20);
                 pJawab.setLayout(new BorderLayout());
@@ -332,7 +317,6 @@ public class GuiSiswa extends JFrame {
             cardPanel.add(pSoal, "SOAL_" + i);
         }
 
-        // Navigasi & Timer
         JPanel navPanel = new JPanel(new FlowLayout());
         JButton btnNext = new JButton("Selanjutnya >");
         CardLayout cl = (CardLayout) cardPanel.getLayout();
@@ -343,20 +327,17 @@ public class GuiSiswa extends JFrame {
         JButton btnFinish = new JButton("Selesai & Kumpulkan");
         btnFinish.setBackground(new Color(50, 200, 50));
         btnFinish.setForeground(Color.WHITE);
-        btnFinish.setVisible(false); // Sembunyikan di awal
+        btnFinish.setVisible(false); 
         
-        // Logic Tombol Next
         btnNext.addActionListener(e -> {
             if (currentSoalIndex[0] < soalList.size() - 1) {
                 currentSoalIndex[0]++;
                 cl.show(cardPanel, "SOAL_" + currentSoalIndex[0]);
                 
-                // Jika KUIS (Timer Per Soal), reset timer
                 if ("KUIS".equals(u.getTipeUjian())) {
                     timeLeft[0] = u.getWaktuPerSoal(); 
                 }
                 
-                // Jika soal terakhir, sembunyikan Next, tampilkan Finish
                 if (currentSoalIndex[0] == soalList.size() - 1) {
                     btnNext.setVisible(false);
                     btnFinish.setVisible(true);
@@ -364,26 +345,22 @@ public class GuiSiswa extends JFrame {
             }
         });
 
-        // Logic Submit
         Runnable submitAction = () -> {
             int score = hitungNilai(soalList, inputComponents);
             
-            // Simpan Nilai
             Nilai n = new Nilai(IdUtil.generate(), siswa, u, score, "Selesai");
             nilaiRepo.addNilai(n);
             siswa.tambahNilai(n);
             
-            // Simpan Jawaban (Flag sudah mengerjakan)
             Jawaban j = new Jawaban(IdUtil.generate(), siswa, u, "Digital (Skor: "+score+")");
-            jawabanRepo.addJawaban(j);
+            jawabanRepo.addJawaban(j, null);
 
             d.dispose();
             JOptionPane.showMessageDialog(this, "Ujian Selesai! Nilai Anda: " + score);
-            refreshTugasTable(); // Update status di tabel
+            refreshTugasTable(); 
         };
         btnFinish.addActionListener(e -> submitAction.run());
 
-        // Setup Timer
         Timer timer;
         if ("KUIS".equals(u.getTipeUjian())) {
             timeLeft[0] = u.getWaktuPerSoal();
@@ -391,7 +368,6 @@ public class GuiSiswa extends JFrame {
                 timeLeft[0]--;
                 lblTimer.setText("Sisa Waktu Soal: " + timeLeft[0] + " detik");
                 if (timeLeft[0] <= 0) {
-                    // Waktu habis, paksa next
                     if (currentSoalIndex[0] < soalList.size() - 1) {
                         currentSoalIndex[0]++;
                         cl.show(cardPanel, "SOAL_" + currentSoalIndex[0]);
@@ -402,7 +378,6 @@ public class GuiSiswa extends JFrame {
                             btnFinish.setVisible(true);
                         }
                     } else { 
-                        // Soal terakhir habis waktu -> submit
                         ((Timer)e.getSource()).stop();
                         JOptionPane.showMessageDialog(d, "Waktu Habis!");
                         submitAction.run(); 
@@ -410,7 +385,6 @@ public class GuiSiswa extends JFrame {
                 }
             });
         } else {
-            // Timer Global (PG/Hybrid/Essay)
             timeLeft[0] = u.getDurasiTotal() * 60;
             timer = new Timer(1000, e -> {
                 timeLeft[0]--;
@@ -427,7 +401,6 @@ public class GuiSiswa extends JFrame {
         }
         timer.start();
 
-        // Top Bar Layout
         JPanel topBar = new JPanel(new BorderLayout());
         JLabel lblTitle = new JLabel(" " + u.getNamaUjian() + " (" + u.getTipeUjian() + ")");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 14));
@@ -442,7 +415,6 @@ public class GuiSiswa extends JFrame {
         d.add(cardPanel, BorderLayout.CENTER);
         d.add(navPanel, BorderLayout.SOUTH);
         
-        // Handle window close (X)
         d.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
         d.addWindowListener(new java.awt.event.WindowAdapter() {
             @Override
@@ -471,15 +443,12 @@ public class GuiSiswa extends JFrame {
                 if (comp instanceof JTextArea) {
                     JTextArea area = (JTextArea) comp;
                     if(!area.getText().isBlank()) {
-                       // Logika Essay: Anggap benar jika tidak kosong (Guru harus koreksi nanti)
-                       // Atau cocokkan kunci jawaban sederhana
                        if(area.getText().trim().equalsIgnoreCase(s.getKunciJawaban())) {
                            benar++;
                        }
                     }
                 }
             } else {
-                // PG
                 if (comp instanceof ButtonGroup) {
                     ButtonGroup bg = (ButtonGroup) comp;
                     if (bg.getSelection() != null && bg.getSelection().getActionCommand().equals(s.getKunciJawaban())) {

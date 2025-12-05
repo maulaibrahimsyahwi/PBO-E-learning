@@ -5,6 +5,7 @@ import repository.*;
 import utils.IdUtil;
 import utils.InputUtil;
 
+import java.io.File;
 import java.util.List;
 
 public class SiswaView {
@@ -13,7 +14,6 @@ public class SiswaView {
     private TugasRepository tugasRepo;
     private UjianRepository ujianRepo;
     private JawabanRepository jawabanRepo;
-    // nilaiRepo unused, removed
     private ForumRepository forumRepo;
     private UserRepository userRepo;
 
@@ -21,7 +21,7 @@ public class SiswaView {
                      TugasRepository tugasRepo,
                      UjianRepository ujianRepo,
                      JawabanRepository jawabanRepo,
-                     NilaiRepository nilaiRepo, // Kept in constructor for compatibility
+                     NilaiRepository nilaiRepo,
                      ForumRepository forumRepo,
                      UserRepository userRepo) {
 
@@ -205,12 +205,10 @@ public class SiswaView {
             if (pilih == 0) return;
             
             if (pilih == 1) {
-                // PERBAIKAN: Input judul topik
                 String judul = InputUtil.inputString("Judul Topik: ");
                 String pesan = InputUtil.inputString("Isi Pesan: ");
                 if (!pesan.isBlank() && !judul.isBlank()) {
                     String idPesan = IdUtil.generate();
-                    // Constructor: id, user, judul, isi, kelas, mapel
                     ForumDiskusi fd = new ForumDiskusi(idPesan, s, judul, pesan, s.getKelas(), mapel);
                     forumRepo.addPesan(fd);
                     System.out.println(">> Topik berhasil dibuat!");
@@ -283,16 +281,24 @@ public class SiswaView {
     private void submitTugas(Siswa s) {
         String idTugas = InputUtil.inputString("Masukkan ID Tugas: ");
         Tugas tFound = null;
-        for (Tugas t : tugasRepo.getAll()) {
+        for (Tugas t : tugasRepo.getAll()) { 
             if (t.getIdTugas().equals(idTugas)) { tFound = t; break; }
         }
 
         if (tFound != null) {
-            String file = InputUtil.inputString("Nama File Jawaban: ");
-            String idJawab = IdUtil.generate();
-            Jawaban j = new Jawaban(idJawab, s, tFound, file);
-            jawabanRepo.addJawaban(j);
-            System.out.println("Jawaban Tugas berhasil dikirim!");
+            String pathFile = InputUtil.inputString("Path File Jawaban (cth: C:/tugas/jawab.pdf): ");
+            File fileAsli = new File(pathFile);
+
+            if (fileAsli.exists()) {
+                String idJawab = IdUtil.generate();
+                Jawaban j = new Jawaban(idJawab, s, tFound, fileAsli.getName());
+                
+                jawabanRepo.addJawaban(j, fileAsli);
+                
+                System.out.println("Jawaban Tugas berhasil dikirim ke Database!");
+            } else {
+                System.out.println("File tidak ditemukan!");
+            }
         } else {
             System.out.println("Tugas tidak ditemukan.");
         }
@@ -301,16 +307,24 @@ public class SiswaView {
     private void submitUjian(Siswa s) {
         String idUjian = InputUtil.inputString("Masukkan ID Ujian: ");
         Ujian uFound = null;
-        for (Ujian u : ujianRepo.getAll()) {
+        for (Ujian u : ujianRepo.getAll()) { 
             if (u.getIdUjian().equals(idUjian)) { uFound = u; break; }
         }
 
         if (uFound != null) {
-            String file = InputUtil.inputString("Nama File Jawaban Ujian: ");
-            String idJawab = IdUtil.generate();
-            Jawaban j = new Jawaban(idJawab, s, uFound, file);
-            jawabanRepo.addJawaban(j);
-            System.out.println("Jawaban Ujian berhasil dikirim!");
+            String pathFile = InputUtil.inputString("Path File Jawaban Ujian: ");
+            File fileAsli = new File(pathFile);
+
+            if (fileAsli.exists()) {
+                String idJawab = IdUtil.generate();
+                Jawaban j = new Jawaban(idJawab, s, uFound, fileAsli.getName());
+                
+                jawabanRepo.addJawaban(j, fileAsli);
+                
+                System.out.println("Jawaban Ujian berhasil dikirim ke Database!");
+            } else {
+                System.out.println("File tidak ditemukan!");
+            }
         } else {
             System.out.println("Ujian tidak ditemukan.");
         }

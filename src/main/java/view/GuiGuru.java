@@ -304,28 +304,37 @@ public class GuiGuru extends JFrame {
             model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
         
         JButton btnAdd = new JButton("Tambah Materi (Upload)");
-        btnAdd.addActionListener(e -> {
-            JTextField txtJudul = new JTextField();
-            JTextField txtDesk = new JTextField();
-            Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
-            if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                JFileChooser fileChooser = new JFileChooser();
-                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        File fileAsli = fileChooser.getSelectedFile();
-                        String namaFileBaru = System.currentTimeMillis() + "_" + fileAsli.getName();
-                        File folder = new File("data/uploads");
-                        if (!folder.exists()) folder.mkdirs();
-                        Files.copy(fileAsli.toPath(), new File(folder, namaFileBaru).toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        
-                        Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
-                        mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
-                        materiRepo.addMateri(mat);
-                        loadDashboard();
-                    } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); }
-                }
+btnAdd.addActionListener(e -> {
+    JTextField txtJudul = new JTextField();
+    JTextField txtDesk = new JTextField();
+    Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
+
+    if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+        JFileChooser fileChooser = new JFileChooser();
+        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+            try {
+                File fileAsli = fileChooser.getSelectedFile();
+                
+                // --- PERUBAHAN: Tidak ada Files.copy ke folder lokal ---
+                String namaFile = fileAsli.getName();
+                
+                Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFile);
+                mat.setGuru(guru); 
+                mat.setKelas(k); 
+                mat.setMapel(m);
+                
+                // Panggil repo baru dengan parameter File
+                materiRepo.addMateri(mat, fileAsli); 
+                
+                loadDashboard();
+                JOptionPane.showMessageDialog(this, "Berhasil upload ke Database!");
+                
+            } catch (Exception ex) { 
+                JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); 
             }
-        });
+        }
+    }
+});
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnAdd, BorderLayout.SOUTH);
         return panel;

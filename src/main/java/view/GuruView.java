@@ -6,6 +6,7 @@ import utils.IdUtil;
 import utils.InputUtil;
 import utils.DateUtil;
 
+import java.io.File;
 import java.util.List;
 
 public class GuruView {
@@ -25,7 +26,7 @@ public class GuruView {
                     JawabanRepository j,
                     NilaiRepository n,
                     KelasRepository k,
-                    MapelRepository mapelRepo, // mapelRepo unused, but kept for constructor compatibility
+                    MapelRepository mapelRepo, 
                     UserRepository userRepo,
                     ForumRepository forumRepo) {
         this.materiRepo = m;
@@ -98,7 +99,7 @@ public class GuruView {
             return;
         }
 
-        System.out.println("\n=== PILIH MATA PELAJARAN (Kelas " + kelas.getNamaKelas() + ") ===");
+        System.out.println("\n=== PILIH MATA PELAJANAN (Kelas " + kelas.getNamaKelas() + ") ===");
         int no = 1;
         for (MataPelajaran m : mapelGuru) {
             System.out.println(no++ + ". " + m.getNamaMapel());
@@ -146,16 +147,24 @@ public class GuruView {
         
         String judul = InputUtil.inputString("Judul Materi: ");
         String desk = InputUtil.inputString("Deskripsi: ");
-        String file = InputUtil.inputString("Nama File (contoh: slide.pdf): ");
+        
+        String pathFile = InputUtil.inputString("Path/Lokasi File (contoh: C:/dokumen/slide.pdf): ");
+        File fileAsli = new File(pathFile);
+
+        if (!fileAsli.exists()) {
+            System.out.println("File tidak ditemukan di lokasi tersebut! Materi gagal ditambahkan.");
+            return;
+        }
 
         String id = IdUtil.generate(); 
-        Materi m = new Materi(id, judul, desk, file);
+        Materi m = new Materi(id, judul, desk, fileAsli.getName());
         m.setGuru(guru);
         m.setMapel(mapel);
         m.setKelas(kelas);
 
-        materiRepo.addMateri(m);
-        System.out.println("Sukses! Materi ditambahkan (ID: " + id + ")");
+        materiRepo.addMateri(m, fileAsli);
+        
+        System.out.println("Sukses! Materi ditambahkan ke Database (ID: " + id + ")");
     }
 
     private void tambahTugas(Guru guru, Kelas kelas, MataPelajaran mapel) {
@@ -304,12 +313,10 @@ public class GuruView {
             if (pilih == 0) return;
             
             if (pilih == 1) {
-                // PERBAIKAN: Input judul topik
                 String judul = InputUtil.inputString("Judul Topik: ");
                 String pesan = InputUtil.inputString("Isi Pesan: ");
                 if (!pesan.isBlank() && !judul.isBlank()) {
                     String idPesan = IdUtil.generate();
-                    // Constructor: id, user, judul, isi, kelas, mapel
                     ForumDiskusi fd = new ForumDiskusi(idPesan, guru, judul, pesan, kelas, mapel);
                     forumRepo.addPesan(fd);
                     System.out.println(">> Topik berhasil dibuat!");
@@ -342,11 +349,7 @@ public class GuruView {
         System.out.println("\n--- Ubah Password ---");
         String oldPass = InputUtil.inputString("Masukkan password lama: ");
 
-        // Note: For full security fix, verify old password hash here too
-        // But for structure fix, we focus on saving logic.
         if (!guru.getPassword().equals(oldPass)) {
-            // Check if user is using old plaintext pass? 
-            // Skipping complex migration logic for simplicity.
         }
 
         String newPass = InputUtil.inputString("Masukkan password baru: ");
