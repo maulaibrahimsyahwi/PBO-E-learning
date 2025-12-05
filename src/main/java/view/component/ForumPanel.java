@@ -1,4 +1,4 @@
-package view.component; // SEBELUMNYA: package view;
+package view.component;
 
 import model.*;
 import repository.ForumRepository;
@@ -10,8 +10,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class ForumPanel extends JPanel {
-    // ... (sisa kode tetap sama, tidak perlu diubah) ...
-    // Pastikan import model.* dan repository.* sudah benar
     
     private User currentUser;
     private Kelas kelas;
@@ -21,11 +19,9 @@ public class ForumPanel extends JPanel {
     private CardLayout cardLayout;
     private JPanel mainPanel; 
     
-    // Komponen List Topik
     private JTable tableTopic;
     private DefaultTableModel tableModel;
     
-    // Komponen Detail Topik
     private JPanel detailPanel;
     private JLabel lblJudulTopik;
     private JTextArea txtDiskusiArea;
@@ -59,10 +55,18 @@ public class ForumPanel extends JPanel {
         };
         tableTopic = new JTable(tableModel);
         
-        JPanel btnPanel = new JPanel();
+        // --- PERBAIKAN TATA LETAK TOMBOL FORUM ---
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnCreate = new JButton("Buat Topik Baru");
         JButton btnOpen = new JButton("Buka Diskusi");
         JButton btnRefresh = new JButton("Refresh");
+        
+        Dimension btnSize = new Dimension(130, 35);
+        btnCreate.setPreferredSize(new Dimension(140, 35));
+        btnOpen.setPreferredSize(btnSize);
+        btnRefresh.setPreferredSize(new Dimension(100, 35));
         
         btnPanel.add(btnCreate);
         btnPanel.add(btnOpen);
@@ -105,7 +109,8 @@ public class ForumPanel extends JPanel {
         txtDiskusiArea.setFont(new Font("Monospaced", Font.PLAIN, 12));
         
         JPanel replyPanel = new JPanel(new BorderLayout(5, 5));
-        replyPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        replyPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        
         txtReply = new JTextField();
         JButton btnSend = new JButton("Kirim Balasan");
         

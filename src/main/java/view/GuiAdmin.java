@@ -43,7 +43,7 @@ public class GuiAdmin extends JFrame {
         this.soalRepo = soalRepo;
 
         setTitle("Dashboard Admin");
-        setSize(900, 600);
+        setSize(1000, 700); // Sedikit diperlebar agar tabel lebih lega
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -56,13 +56,20 @@ public class GuiAdmin extends JFrame {
 
         add(tabbedPane);
         
+        // Panel bawah untuk tombol Logout dengan styling yang lebih baik
+        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
+        
         JButton btnLogout = new JButton("Logout");
+        btnLogout.setBackground(new Color(255, 100, 100)); // Warna merah soft
+        btnLogout.setForeground(Color.WHITE);
         btnLogout.addActionListener(e -> {
             dispose();
             new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, 
                          jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
         });
-        add(btnLogout, BorderLayout.SOUTH);
+        bottomPanel.add(btnLogout);
+        add(bottomPanel, BorderLayout.SOUTH);
     }
 
     private JPanel createDashboardPanel() {
@@ -99,6 +106,7 @@ public class GuiAdmin extends JFrame {
         return card;
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA GURU ---
     private JPanel createPanelGuru() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIP", "Spesialisasi"};
@@ -107,8 +115,12 @@ public class GuiAdmin extends JFrame {
         
         refreshGuruTable(model);
 
-        JPanel btnPanel = new JPanel();
+        // Panel tombol dirapikan
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); // Rata kanan, gap 10px
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Padding luar
+        
         JButton btnAdd = new JButton("Tambah Guru");
+        btnAdd.setPreferredSize(new Dimension(120, 35)); // Ukuran seragam
         btnPanel.add(btnAdd);
 
         btnAdd.addActionListener(e -> {
@@ -148,6 +160,7 @@ public class GuiAdmin extends JFrame {
         }
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA SISWA ---
     private JPanel createPanelSiswa() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIS", "Kelas", "Angkatan", "Email"};
@@ -161,7 +174,9 @@ public class GuiAdmin extends JFrame {
         
         refreshSiswaTable(model);
 
-        JPanel searchPanel = new JPanel(new BorderLayout());
+        // Panel Search dirapikan
+        JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         searchPanel.add(new JLabel(" Cari Siswa: "), BorderLayout.WEST);
         JTextField txtSearch = new JTextField();
         searchPanel.add(txtSearch, BorderLayout.CENTER);
@@ -178,15 +193,25 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        JPanel btnPanel = new JPanel();
+        // Panel Tombol dirapikan
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
         JButton btnAdd = new JButton("Tambah");
         JButton btnEdit = new JButton("Edit Data"); 
         JButton btnAssign = new JButton("Assign Kelas");
+        
+        // Opsional: Set ukuran tombol seragam
+        Dimension btnSize = new Dimension(120, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnEdit.setPreferredSize(btnSize);
+        btnAssign.setPreferredSize(btnSize);
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);
 
+        // Logic Tambah Siswa
         btnAdd.addActionListener(e -> {
             JTextField txtUser = new JTextField();
             JTextField txtPass = new JTextField();
@@ -210,6 +235,7 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        // Logic Edit Siswa
         btnEdit.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
@@ -242,6 +268,7 @@ public class GuiAdmin extends JFrame {
 
             int opt = JOptionPane.showConfirmDialog(this, message, "Edit Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (opt == JOptionPane.OK_OPTION) {
+                // Password kosongkan agar tidak berubah (logic updateSiswa di UserRepository tidak update password)
                 Siswa sBaru = new Siswa(id, txtUser.getText(), "", txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngk.getText());
                 userRepo.updateSiswa(sBaru);
                 refreshSiswaTable(model);
@@ -249,6 +276,7 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        // Logic Assign Kelas
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(2, 2, 10, 10));
             
@@ -311,6 +339,7 @@ public class GuiAdmin extends JFrame {
         }
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA KELAS ---
     private JPanel createPanelKelas() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Kelas", "Tingkat"};
@@ -321,9 +350,17 @@ public class GuiAdmin extends JFrame {
         
         refreshKelasTable(model);
 
-        JPanel btnPanel = new JPanel();
+        // Panel Tombol dirapikan
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnAdd = new JButton("Tambah Kelas");
         JButton btnEdit = new JButton("Edit Kelas");
+        
+        Dimension btnSize = new Dimension(130, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnEdit.setPreferredSize(btnSize);
+        
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
 
@@ -377,6 +414,7 @@ public class GuiAdmin extends JFrame {
         for (Kelas k : kelasRepo.getAll()) model.addRow(new Object[]{k.getIdKelas(), k.getNamaKelas(), k.getTingkat()});
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA MAPEL ---
     private JPanel createPanelMapel() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Mapel", "Deskripsi", "Tingkat"};
@@ -387,10 +425,19 @@ public class GuiAdmin extends JFrame {
         
         refreshMapelTable(model);
 
-        JPanel btnPanel = new JPanel();
+        // Panel Tombol dirapikan
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnAdd = new JButton("Tambah Mapel");
         JButton btnEdit = new JButton("Edit Mapel");
         JButton btnAssign = new JButton("Assign Guru");
+        
+        Dimension btnSize = new Dimension(130, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnEdit.setPreferredSize(btnSize);
+        btnAssign.setPreferredSize(btnSize);
+        
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);

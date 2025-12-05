@@ -7,14 +7,9 @@ import utils.DateUtil;
 import view.component.ForumPanel;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
-import java.nio.file.Files;
-import java.nio.file.StandardCopyOption;
-import java.util.List;
 
 public class GuiGuru extends JFrame {
     private Guru guru;
@@ -52,7 +47,7 @@ public class GuiGuru extends JFrame {
         this.absensiRepo = absensiRepo;
 
         setTitle("Dashboard Guru - " + guru.getNamaLengkap());
-        setSize(1000, 650); 
+        setSize(1000, 700); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -85,6 +80,7 @@ public class GuiGuru extends JFrame {
         JButton btnLoad = new JButton("Buka Kelas");
         topPanel.add(btnLoad);
         
+        // Tombol logout dan profil di panel terpisah agar rapi di kanan (opsional, tapi di sini saya biarkan di flow kiri sesuai asli)
         JButton btnProfil = new JButton("Profil");
         topPanel.add(btnProfil);
         
@@ -128,7 +124,7 @@ public class GuiGuru extends JFrame {
         tabbedContent.addTab("Forum", createForumPanel(k, m));
     }
 
-    // --- Panel & Logic Pembuatan Ujian Baru ---
+    // --- PERBAIKAN TATA LETAK TOMBOL UJIAN ---
     private JPanel createUjianPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Nama", "Tipe", "Tanggal", "Info"}, 0);
@@ -140,17 +136,24 @@ public class GuiGuru extends JFrame {
             model.addRow(new Object[]{u.getIdUjian(), u.getNamaUjian(), u.getTipeUjian(), u.getTanggal(), info});
         }
 
+        // Tata letak tombol diperbaiki
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnAdd = new JButton("Buat Ujian & Soal");
+        btnAdd.setPreferredSize(new Dimension(150, 35));
+        
+        btnPanel.add(btnAdd);
         btnAdd.addActionListener(e -> tambahUjian(guru, k, m));
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
     private void tambahUjian(Guru guru, Kelas kelas, MataPelajaran mapel) {
         JDialog d = new JDialog(this, "Buat Ujian Baru", true);
-        d.setSize(450, 500);
+        d.setSize(450, 550);
         d.setLayout(new GridLayout(8, 2, 10, 10));
         d.setLocationRelativeTo(this);
 
@@ -224,7 +227,6 @@ public class GuiGuru extends JFrame {
         
         JComboBox<String> comboJenisSoal = new JComboBox<>(new String[]{"PG", "ESSAY"});
         
-        // Auto set tipe jika bukan Hybrid
         if(u.getTipeUjian().equals("PG") || u.getTipeUjian().equals("KUIS")) {
             comboJenisSoal.setSelectedItem("PG"); comboJenisSoal.setEnabled(false);
         } else if (u.getTipeUjian().equals("ESSAY")) {
@@ -290,12 +292,16 @@ public class GuiGuru extends JFrame {
         });
 
         d.add(inputPanel, BorderLayout.CENTER);
-        JPanel bottom = new JPanel(new FlowLayout());
-        bottom.add(lblInfo); bottom.add(btnAdd);
+        
+        // Panel tombol dialog
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottom.add(lblInfo); 
+        bottom.add(btnAdd);
         d.add(bottom, BorderLayout.SOUTH);
         d.setVisible(true);
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL MATERI ---
     private JPanel createMateriPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
@@ -303,50 +309,65 @@ public class GuiGuru extends JFrame {
         for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) 
             model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
         
+        // Tata letak tombol diperbaiki
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnAdd = new JButton("Tambah Materi (Upload)");
-btnAdd.addActionListener(e -> {
-    JTextField txtJudul = new JTextField();
-    JTextField txtDesk = new JTextField();
-    Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
+        btnAdd.setPreferredSize(new Dimension(180, 35));
+        
+        btnPanel.add(btnAdd);
+        
+        btnAdd.addActionListener(e -> {
+            JTextField txtJudul = new JTextField();
+            JTextField txtDesk = new JTextField();
+            Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
 
-    if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-        JFileChooser fileChooser = new JFileChooser();
-        if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            try {
-                File fileAsli = fileChooser.getSelectedFile();
-                
-                // --- PERUBAHAN: Tidak ada Files.copy ke folder lokal ---
-                String namaFile = fileAsli.getName();
-                
-                Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFile);
-                mat.setGuru(guru); 
-                mat.setKelas(k); 
-                mat.setMapel(m);
-                
-                // Panggil repo baru dengan parameter File
-                materiRepo.addMateri(mat, fileAsli); 
-                
-                loadDashboard();
-                JOptionPane.showMessageDialog(this, "Berhasil upload ke Database!");
-                
-            } catch (Exception ex) { 
-                JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); 
+            if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                JFileChooser fileChooser = new JFileChooser();
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        File fileAsli = fileChooser.getSelectedFile();
+                        String namaFile = fileAsli.getName();
+                        
+                        Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFile);
+                        mat.setGuru(guru); 
+                        mat.setKelas(k); 
+                        mat.setMapel(m);
+                        
+                        materiRepo.addMateri(mat, fileAsli); 
+                        
+                        loadDashboard();
+                        JOptionPane.showMessageDialog(this, "Berhasil upload ke Database!");
+                        
+                    } catch (Exception ex) { 
+                        JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); 
+                    }
+                }
             }
-        }
-    }
-});
+        });
+        
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL TUGAS ---
     private JPanel createTugasPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "Deadline"}, 0);
         JTable table = new JTable(model);
         for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
         
+        // Tata letak tombol diperbaiki
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnAdd = new JButton("Buat Tugas");
+        btnAdd.setPreferredSize(new Dimension(120, 35));
+        
+        btnPanel.add(btnAdd);
+        
         btnAdd.addActionListener(e -> {
             String judul = JOptionPane.showInputDialog("Judul:");
             String desk = JOptionPane.showInputDialog("Deskripsi:");
@@ -361,10 +382,11 @@ btnAdd.addActionListener(e -> {
             }
         });
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
+    // --- PERBAIKAN TATA LETAK TOMBOL PENILAIAN ---
     private JPanel createNilaiPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai"};
@@ -390,7 +412,15 @@ btnAdd.addActionListener(e -> {
             }
         }
 
+        // Tata letak tombol diperbaiki
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        
         JButton btnNilai = new JButton("Beri Nilai Manual");
+        btnNilai.setPreferredSize(new Dimension(150, 35));
+        
+        btnPanel.add(btnNilai);
+        
         btnNilai.addActionListener(e -> {
              int row = table.getSelectedRow();
              if (row == -1) { JOptionPane.showMessageDialog(this, "Pilih baris!"); return; }
@@ -411,7 +441,7 @@ btnAdd.addActionListener(e -> {
              }
         });
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnNilai, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 
