@@ -1,2 +1,11 @@
+<<<<<<< HEAD
 A001;admin;8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918;Administrator;admin@lms.com;ADMIN;-;-;-;-
 FVY4E;maula;560888f9ef19c811fa728db3bce86263d075b5098eff21d637a2b2f3ed890661;maula ibrahim syahwi;maula@gmail.com;SISWA;12312321345;2023;-;-
+=======
+A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-;-;-
+123123;maula;maula;maula ibrahim;maula@gmail.com;SISWA;1512623013;202;K3DAU;-
+123123123;akmal;akmal;akmal akmal;akmal@gmail.com;GURU;123123;IPA;1L2IB;K3DAU
+I3SCR;Djuanda;Djuanda;Djuanda Djuanda;Djuanda@gmail.com;SISWA;1512313;2021;U7RS8;-
+7FUJI;jaid;jaid;jaid jaid;jaid@gmail.com;GURU;18123132;MTK;-;-
+O9BB6;rafi;rafi;rafi rafi;rafi@gmail.com;GURU;123411245;TIK;-;-
+>>>>>>> 441f6d750a18ec7f1e854e385b415cb8f33fb89b
