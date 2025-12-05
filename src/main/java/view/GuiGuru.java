@@ -10,6 +10,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.io.File;
+import java.io.FileWriter;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.List;
@@ -41,7 +42,7 @@ public class GuiGuru extends JFrame {
         this.userRepo = uRepo;
 
         setTitle("Dashboard Guru - " + guru.getNamaLengkap());
-        setSize(1000, 650); // Diperlebar
+        setSize(1000, 650); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -49,7 +50,7 @@ public class GuiGuru extends JFrame {
         topPanel.add(new JLabel("Kelas:"));
         comboKelas = new JComboBox<>();
         for(Kelas k : guru.getDaftarKelas()) comboKelas.addItem(k);
-        // Custom Renderer untuk nama kelas
+        
         comboKelas.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -63,7 +64,7 @@ public class GuiGuru extends JFrame {
         topPanel.add(new JLabel("Mapel:"));
         comboMapel = new JComboBox<>();
         for(MataPelajaran m : guru.getMapelDiampu()) comboMapel.addItem(m);
-        // Custom Renderer untuk nama mapel
+        
         comboMapel.setRenderer(new DefaultListCellRenderer() {
             @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -136,7 +137,6 @@ public class GuiGuru extends JFrame {
                         File dest = new File(folder, namaFileBaru);
                         Files.copy(fileAsli.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         
-                        // ID Generated Automatically
                         Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
                         mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
                         materiRepo.addMateri(mat);
@@ -172,7 +172,6 @@ public class GuiGuru extends JFrame {
                 String desk = JOptionPane.showInputDialog("Deskripsi:");
                 String tgl = JOptionPane.showInputDialog("Deadline (yyyy-MM-dd):");
                 if (judul != null) {
-                    // ID Generated Automatically
                     Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
                     t.setGuru(guru); t.setKelas(k); t.setMapel(m);
                     tugasRepo.addTugas(t);
@@ -186,27 +185,22 @@ public class GuiGuru extends JFrame {
         return panel;
     }
 
-    // --- PERBAIKAN UX UTAMA: TABEL PENILAIAN DENGAN ID HIDDEN & SELEKSI BARIS ---
     private JPanel createNilaiPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
         
-        // Kolom 0: ID Jawaban (Kita sembunyikan atau biarkan terlihat tapi tidak perlu diketik)
-        // Kita tampilkan saja untuk debug, tapi user akan klik baris.
         String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai Saat Ini"};
         DefaultTableModel model = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false; // Tabel tidak bisa diedit langsung
+                return false; 
             }
         };
         JTable table = new JTable(model);
 
-        // Load Jawaban TUGAS
         List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(m, k);
         for(Tugas t : listTugas) {
             for(Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
                 String nilaiStr = "Belum Dinilai";
-                // Cari apakah sudah ada nilai
                 for(Nilai n : nilaiRepo.getAll()) {
                     if(n.getTugas() != null && n.getTugas().equals(t) && n.getSiswa().equals(j.getSiswa())) 
                         nilaiStr = String.valueOf(n.getNilaiAngka());
@@ -222,7 +216,6 @@ public class GuiGuru extends JFrame {
             }
         }
 
-        // Load Jawaban UJIAN (Tambahan agar lengkap)
         List<Ujian> listUjian = ujianRepo.getByMapelAndKelas(m, k);
         for(Ujian u : listUjian) {
             for(Jawaban j : jawabanRepo.findByUjian(u.getIdUjian())) {
@@ -242,6 +235,8 @@ public class GuiGuru extends JFrame {
             }
         }
 
+        JPanel btnPanel = new JPanel();
+        
         JButton btnNilai = new JButton("Beri Nilai (Pilih Baris)");
         btnNilai.addActionListener(e -> {
              int row = table.getSelectedRow();
@@ -250,14 +245,11 @@ public class GuiGuru extends JFrame {
                  return;
              }
 
-             // Ambil ID Jawaban dari kolom 0
              String idJawaban = (String) table.getValueAt(row, 0);
              String namaSiswa = (String) table.getValueAt(row, 3);
              String judulSoal = (String) table.getValueAt(row, 2);
 
-             // Cari Object Jawaban asli
              Jawaban selectedJawab = null;
-             // Cari di repo (cara brute force sederhana tapi aman)
              for(Jawaban j : jawabanRepo.getAll()) {
                  if(j.getIdJawaban().equals(idJawaban)) {
                      selectedJawab = j;
@@ -272,7 +264,6 @@ public class GuiGuru extends JFrame {
                          int nilaiAngka = Integer.parseInt(input);
                          String ket = (nilaiAngka >= 75) ? "Lulus" : "Remidi";
                          
-                         // Buat Nilai Baru
                          Nilai n;
                          if (selectedJawab.getTugas() != null) {
                              n = new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getTugas(), nilaiAngka, ket);
@@ -281,10 +272,10 @@ public class GuiGuru extends JFrame {
                          }
                          
                          nilaiRepo.addNilai(n);
-                         selectedJawab.getSiswa().tambahNilai(n); // Update data runtime siswa juga
+                         selectedJawab.getSiswa().tambahNilai(n); 
                          
                          JOptionPane.showMessageDialog(this, "Nilai berhasil disimpan!");
-                         loadDashboard(); // Refresh tabel
+                         loadDashboard(); 
                      } catch (NumberFormatException ex) {
                          JOptionPane.showMessageDialog(this, "Nilai harus angka!");
                      }
@@ -292,8 +283,40 @@ public class GuiGuru extends JFrame {
              }
         });
 
+        JButton btnExport = new JButton("Export ke CSV");
+        btnExport.addActionListener(e -> {
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Simpan Rekap Nilai");
+            int userSelection = fileChooser.showSaveDialog(this);
+            
+            if (userSelection == JFileChooser.APPROVE_OPTION) {
+                File fileToSave = fileChooser.getSelectedFile();
+                if (!fileToSave.getAbsolutePath().endsWith(".csv")) {
+                    fileToSave = new File(fileToSave.getAbsolutePath() + ".csv");
+                }
+                
+                try (FileWriter fw = new FileWriter(fileToSave)) {
+                    fw.write("ID Jawaban;Tipe;Judul Soal;Nama Siswa;Nilai;Keterangan\n");
+                    
+                    for (int i = 0; i < table.getRowCount(); i++) {
+                        for (int j = 0; j < table.getColumnCount(); j++) {
+                            Object val = table.getValueAt(i, j);
+                            fw.write((val != null ? val.toString() : "-") + ";");
+                        }
+                        fw.write("\n");
+                    }
+                    JOptionPane.showMessageDialog(this, "Data berhasil diexport ke: " + fileToSave.getAbsolutePath());
+                } catch (Exception ex) {
+                    JOptionPane.showMessageDialog(this, "Error export: " + ex.getMessage());
+                }
+            }
+        });
+
+        btnPanel.add(btnNilai);
+        btnPanel.add(btnExport);
+
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnNilai, BorderLayout.SOUTH);
+        panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
     }
 

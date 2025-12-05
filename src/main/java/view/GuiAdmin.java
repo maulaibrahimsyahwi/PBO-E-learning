@@ -10,7 +10,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.util.List;
 
 public class GuiAdmin extends JFrame {
     private UserRepository userRepo;
@@ -28,6 +27,7 @@ public class GuiAdmin extends JFrame {
         setLocationRelativeTo(null);
 
         JTabbedPane tabbedPane = new JTabbedPane();
+        tabbedPane.addTab("Dashboard", createDashboardPanel());
         tabbedPane.addTab("Kelola Guru", createPanelGuru());
         tabbedPane.addTab("Kelola Siswa", createPanelSiswa());
         tabbedPane.addTab("Kelola Kelas", createPanelKelas());
@@ -44,7 +44,40 @@ public class GuiAdmin extends JFrame {
         add(btnLogout, BorderLayout.SOUTH);
     }
 
-    // ================== PANEL GURU ==================
+    private JPanel createDashboardPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 2, 20, 20));
+        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        long jumlahGuru = userRepo.getAll().stream().filter(u -> u instanceof Guru).count();
+        long jumlahSiswa = userRepo.getAll().stream().filter(u -> u instanceof Siswa).count();
+        int jumlahKelas = kelasRepo.getAll().size();
+        int jumlahMapel = mapelRepo.getAll().size();
+
+        panel.add(createStatCard("Total Guru", String.valueOf(jumlahGuru), new Color(255, 200, 100)));
+        panel.add(createStatCard("Total Siswa", String.valueOf(jumlahSiswa), new Color(100, 200, 255)));
+        panel.add(createStatCard("Jumlah Kelas", String.valueOf(jumlahKelas), new Color(100, 255, 100)));
+        panel.add(createStatCard("Mata Pelajaran", String.valueOf(jumlahMapel), new Color(255, 100, 255)));
+
+        return panel;
+    }
+
+    private JPanel createStatCard(String title, String count, Color color) {
+        JPanel card = new JPanel(new BorderLayout());
+        card.setBackground(color);
+        card.setBorder(BorderFactory.createLineBorder(Color.BLACK, 1));
+        
+        JLabel lblTitle = new JLabel(title, SwingConstants.CENTER);
+        lblTitle.setFont(new Font("Arial", Font.BOLD, 18));
+        lblTitle.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        
+        JLabel lblCount = new JLabel(count, SwingConstants.CENTER);
+        lblCount.setFont(new Font("Arial", Font.BOLD, 48));
+        
+        card.add(lblTitle, BorderLayout.NORTH);
+        card.add(lblCount, BorderLayout.CENTER);
+        return card;
+    }
+
     private JPanel createPanelGuru() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIP", "Spesialisasi"};
@@ -93,7 +126,6 @@ public class GuiAdmin extends JFrame {
         }
     }
 
-    // ================== PANEL SISWA ==================
     private JPanel createPanelSiswa() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIS", "Kelas"};
@@ -150,16 +182,14 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // --- PERBAIKAN: GUNAKAN DROPDOWN UNTUK MEMILIH SISWA & KELAS ---
+        // UPDATE: MENGGUNAKAN COMBOBOX UNTUK MEMILIH SISWA DAN KELAS
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(2, 2, 10, 10));
             
-            // 1. Dropdown Siswa
             JComboBox<Siswa> comboSiswa = new JComboBox<>();
             for(User u : userRepo.getAll()) {
                 if(u instanceof Siswa) comboSiswa.addItem((Siswa) u);
             }
-            // Agar yang tampil adalah Nama Lengkap
             comboSiswa.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -169,10 +199,8 @@ public class GuiAdmin extends JFrame {
                 }
             });
 
-            // 2. Dropdown Kelas
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
-            // Agar yang tampil adalah Nama Kelas
             comboKelas.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
@@ -184,7 +212,7 @@ public class GuiAdmin extends JFrame {
 
             panelAssign.add(new JLabel("Pilih Siswa:"));
             panelAssign.add(comboSiswa);
-            panelAssign.add(new JLabel("Pilih Kelas:"));
+            panelAssign.add(new JLabel("Pilih Kelas Tujuan:"));
             panelAssign.add(comboKelas);
 
             int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Siswa ke Kelas", JOptionPane.OK_CANCEL_OPTION);
@@ -194,16 +222,13 @@ public class GuiAdmin extends JFrame {
                 Kelas k = (Kelas) comboKelas.getSelectedItem();
 
                 if (s != null && k != null) {
-                    // Update data
                     s.setKelas(k);
                     k.tambahSiswa(s);
-                    
-                    userRepo.saveToFile(); // Simpan ke file
-                    refreshSiswaTable(model); // Update tabel GUI
-                    
+                    userRepo.saveToFile();
+                    refreshSiswaTable(model);
                     JOptionPane.showMessageDialog(this, "Berhasil assign " + s.getNamaLengkap() + " ke kelas " + k.getNamaKelas());
                 } else {
-                    JOptionPane.showMessageDialog(this, "Data siswa atau kelas belum dipilih/kosong.");
+                    JOptionPane.showMessageDialog(this, "Data belum lengkap.");
                 }
             }
         });
@@ -223,7 +248,6 @@ public class GuiAdmin extends JFrame {
         }
     }
 
-    // ================== PANEL KELAS ==================
     private JPanel createPanelKelas() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Kelas", "Tingkat"};
@@ -254,7 +278,6 @@ public class GuiAdmin extends JFrame {
         for (Kelas k : kelasRepo.getAll()) model.addRow(new Object[]{k.getIdKelas(), k.getNamaKelas(), k.getTingkat()});
     }
 
-    // ================== PANEL MAPEL ==================
     private JPanel createPanelMapel() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Mapel", "Deskripsi", "Tingkat"};
@@ -278,7 +301,6 @@ public class GuiAdmin extends JFrame {
             if (JOptionPane.showConfirmDialog(this, msg, "Tambah Mapel", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 MataPelajaran m = new MataPelajaran(IdUtil.generate(), txtNama.getText(), txtDesk.getText(), txtTingkat.getText());
                 mapelRepo.addMapel(m);
-                // Distribusi otomatis ke kelas yang sesuai tingkatnya
                 for (Kelas k : kelasRepo.getAll()) {
                     if (k.getTingkat().equals(m.getTingkat())) k.tambahMapel(m);
                 }
@@ -286,11 +308,10 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // --- PERBAIKAN: GUNAKAN DROPDOWN UNTUK MEMILIH GURU, MAPEL, KELAS ---
+        // UPDATE: MENGGUNAKAN COMBOBOX UNTUK ASSIGN GURU
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(3, 2, 10, 10));
 
-            // 1. Dropdown Guru
             JComboBox<Guru> comboGuru = new JComboBox<>();
             for(User u : userRepo.getAll()) {
                 if(u instanceof Guru) comboGuru.addItem((Guru) u);
@@ -304,19 +325,20 @@ public class GuiAdmin extends JFrame {
                 }
             });
 
-            // 2. Dropdown Mapel
             JComboBox<MataPelajaran> comboMapel = new JComboBox<>();
             for(MataPelajaran m : mapelRepo.getAll()) comboMapel.addItem(m);
             comboMapel.setRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if(value instanceof MataPelajaran) setText(((MataPelajaran)value).getNamaMapel() + " (Kls " + ((MataPelajaran)value).getTingkat() + ")");
+                    if(value instanceof MataPelajaran) {
+                        MataPelajaran mp = (MataPelajaran) value;
+                        setText(mp.getNamaMapel() + " (Tingkat " + mp.getTingkat() + ")");
+                    }
                     return this;
                 }
             });
 
-            // 3. Dropdown Kelas
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new DefaultListCellRenderer() {
@@ -330,9 +352,9 @@ public class GuiAdmin extends JFrame {
 
             panelAssign.add(new JLabel("Pilih Guru:"));
             panelAssign.add(comboGuru);
-            panelAssign.add(new JLabel("Pilih Mapel:"));
+            panelAssign.add(new JLabel("Mengajar Mapel:"));
             panelAssign.add(comboMapel);
-            panelAssign.add(new JLabel("Pilih Kelas:"));
+            panelAssign.add(new JLabel("Di Kelas:"));
             panelAssign.add(comboKelas);
 
             int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar", JOptionPane.OK_CANCEL_OPTION);
@@ -343,14 +365,12 @@ public class GuiAdmin extends JFrame {
                 Kelas k = (Kelas) comboKelas.getSelectedItem();
 
                 if (g != null && m != null && k != null) {
-                    // Update data
                     g.tambahMapel(m);
                     g.tambahKelas(k);
-                    
-                    userRepo.saveToFile(); // Simpan
+                    userRepo.saveToFile();
                     JOptionPane.showMessageDialog(this, "Sukses assign Guru " + g.getNamaLengkap());
                 } else {
-                    JOptionPane.showMessageDialog(this, "Data belum lengkap dipilih.");
+                    JOptionPane.showMessageDialog(this, "Data belum lengkap.");
                 }
             }
         });
