@@ -1,3 +1,4 @@
-11XQ2;123123;Hallo kak;2025-11-29 20:16;K3DAU;PHBIX
-8Q6XY;123123123;Ini Adalah Pesan pertama;2025-11-29 20:31;K3DAU;1L2IB
-JOHZ1;123123;Hallo ibu;2025-11-29 20:34;K3DAU;1L2IB
+11XQ2;-;Diskusi Umum;Hallo kak;2025-11-29 20:16;-;-;ROOT
+8Q6XY;-;Diskusi Umum;Ini Adalah Pesan pertama;2025-11-29 20:31;-;-;ROOT
+JOHZ1;-;Diskusi Umum;Hallo ibu;2025-11-29 20:34;-;-;ROOT
+5WS88;R66M1;Pertumbuhan Manusia;Hallo selamat pagi semua !!!;2025-12-05 19:14;K3DAU;1L2IB;ROOT

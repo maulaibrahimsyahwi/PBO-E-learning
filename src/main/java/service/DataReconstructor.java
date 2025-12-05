@@ -141,7 +141,7 @@ public class DataReconstructor {
             }
         }
 
-        System.out.println(">> Rekonstruksi data lengkap SELESAI!");
+        System.out.println(">> SELAMAT DATANG DI Aplikasi E-Learning <<");
     }
 
     private void reconstructGuru(Object obj, List<User> users) {

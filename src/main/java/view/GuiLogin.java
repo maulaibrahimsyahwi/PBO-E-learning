@@ -73,18 +73,32 @@ public class GuiLogin extends JFrame {
         String password = new String(txtPassword.getPassword());
 
         User user = userRepo.findByUsername(username);
-        String hashedInput = SecurityUtil.hashPassword(password);
+        // Jika pakai hashing di production: SecurityUtil.hashPassword(password)
+        String passCheck = password; 
+        
+        // Cek login sederhana (password plain text sesuai data Anda saat ini)
+        // Jika data users.txt Anda sudah hash, gunakan: SecurityUtil.hashPassword(password)
+        boolean isPassValid = false;
+        if (user != null) {
+             if (user.getPassword().length() > 20) { // Asumsi hash panjang
+                 isPassValid = user.getPassword().equals(SecurityUtil.hashPassword(password));
+             } else {
+                 isPassValid = user.getPassword().equals(password);
+             }
+        }
 
-        if (user != null && user.getPassword().equals(hashedInput)) {
+        if (user != null && isPassValid) {
             this.dispose();
             if (user instanceof Admin) {
-                new GuiAdmin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
+                new GuiAdmin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, 
+                             ujianRepo, jawabanRepo, nilaiRepo, forumRepo, 
+                             absensiRepo, soalRepo).setVisible(true);
             } else if (user instanceof Guru) {
                 new GuiGuru((Guru) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
-                            kelasRepo, mapelRepo, forumRepo, userRepo, soalRepo).setVisible(true);
+                            kelasRepo, mapelRepo, forumRepo, userRepo, soalRepo, absensiRepo).setVisible(true);
             } else if (user instanceof Siswa) {
                 new GuiSiswa((Siswa) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
-                             forumRepo, userRepo, absensiRepo, soalRepo).setVisible(true);
+                             forumRepo, userRepo, absensiRepo, soalRepo, kelasRepo, mapelRepo).setVisible(true);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);

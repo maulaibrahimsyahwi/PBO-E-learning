@@ -26,6 +26,9 @@ public class GuiGuru extends JFrame {
     private ForumRepository forumRepo;
     private UserRepository userRepo;
     private SoalRepository soalRepo;
+    private KelasRepository kelasRepo;
+    private MapelRepository mapelRepo;
+    private AbsensiRepository absensiRepo;
 
     private JComboBox<Kelas> comboKelas;
     private JComboBox<MataPelajaran> comboMapel;
@@ -34,16 +37,19 @@ public class GuiGuru extends JFrame {
     public GuiGuru(Guru guru, MateriRepository mr, TugasRepository tr, UjianRepository ur,
                    JawabanRepository jr, NilaiRepository nr, KelasRepository kr, 
                    MapelRepository mapelRepo, ForumRepository fr, UserRepository uRepo,
-                   SoalRepository soalRepo) {
+                   SoalRepository soalRepo, AbsensiRepository absensiRepo) {
         this.guru = guru;
         this.materiRepo = mr;
         this.tugasRepo = tr;
         this.ujianRepo = ur;
         this.jawabanRepo = jr;
         this.nilaiRepo = nr;
+        this.kelasRepo = kr;
+        this.mapelRepo = mapelRepo;
         this.forumRepo = fr;
         this.userRepo = uRepo;
         this.soalRepo = soalRepo;
+        this.absensiRepo = absensiRepo;
 
         setTitle("Dashboard Guru - " + guru.getNamaLengkap());
         setSize(1000, 650); 
@@ -51,12 +57,11 @@ public class GuiGuru extends JFrame {
         setLocationRelativeTo(null);
 
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        
         topPanel.add(new JLabel("Kelas:"));
         comboKelas = new JComboBox<>();
         for(Kelas k : guru.getDaftarKelas()) comboKelas.addItem(k);
-        
         comboKelas.setRenderer(new DefaultListCellRenderer() {
-            @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
@@ -68,9 +73,7 @@ public class GuiGuru extends JFrame {
         topPanel.add(new JLabel("Mapel:"));
         comboMapel = new JComboBox<>();
         for(MataPelajaran m : guru.getMapelDiampu()) comboMapel.addItem(m);
-        
         comboMapel.setRenderer(new DefaultListCellRenderer() {
-            @Override
             public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                 super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                 if (value instanceof MataPelajaran) setText(((MataPelajaran)value).getNamaMapel());
@@ -86,6 +89,17 @@ public class GuiGuru extends JFrame {
         topPanel.add(btnProfil);
         
         JButton btnLogout = new JButton("Logout");
+        btnLogout.setBackground(new Color(255, 100, 100));
+        btnLogout.setForeground(Color.WHITE);
+        btnLogout.addActionListener(e -> {
+            int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin keluar?", "Logout", JOptionPane.YES_NO_OPTION);
+            if(confirm == JOptionPane.YES_OPTION) {
+                dispose();
+                new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, 
+                             ujianRepo, jawabanRepo, nilaiRepo, forumRepo, 
+                             absensiRepo, soalRepo).setVisible(true);
+            }
+        });
         topPanel.add(btnLogout);
 
         add(topPanel, BorderLayout.NORTH);
@@ -95,12 +109,6 @@ public class GuiGuru extends JFrame {
 
         btnLoad.addActionListener(e -> loadDashboard());
         btnProfil.addActionListener(e -> showProfil());
-        
-        btnLogout.addActionListener(e -> {
-            dispose();
-            JOptionPane.showMessageDialog(this, "Silakan jalankan ulang aplikasi untuk login kembali.");
-            System.exit(0); 
-        });
     }
 
     private void loadDashboard() {
@@ -120,92 +128,16 @@ public class GuiGuru extends JFrame {
         tabbedContent.addTab("Forum", createForumPanel(k, m));
     }
 
-    private JPanel createMateriPanel(Kelas k, MataPelajaran m) {
-        JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
-        JTable table = new JTable(model);
-        
-        for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) 
-            model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
-        
-        JButton btnAdd = new JButton("Tambah Materi (Upload)");
-        btnAdd.addActionListener(e -> {
-            JTextField txtJudul = new JTextField();
-            JTextField txtDesk = new JTextField();
-            Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
-
-            int option = JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION);
-            
-            if (option == JOptionPane.OK_OPTION) {
-                JFileChooser fileChooser = new JFileChooser();
-                int select = fileChooser.showOpenDialog(this);
-                
-                if (select == JFileChooser.APPROVE_OPTION) {
-                    try {
-                        File fileAsli = fileChooser.getSelectedFile();
-                        String namaFileBaru = System.currentTimeMillis() + "_" + fileAsli.getName();
-                        
-                        File folder = new File("data/uploads");
-                        if (!folder.exists()) folder.mkdirs();
-                        
-                        File dest = new File(folder, namaFileBaru);
-                        Files.copy(fileAsli.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-                        
-                        Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
-                        mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
-                        materiRepo.addMateri(mat);
-                        
-                        JOptionPane.showMessageDialog(this, "Upload Berhasil!");
-                        loadDashboard();
-                        
-                    } catch (Exception ex) {
-                        JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage());
-                    }
-                }
-            }
-        });
-        
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
-        return panel;
-    }
-
-    private JPanel createTugasPanel(Kelas k, MataPelajaran m) {
-        JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "Deadline"}, 0);
-        JTable table = new JTable(model);
-        
-        List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(m, k);
-        for(Tugas t : listTugas) 
-            model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
-        
-        JButton btnAdd = new JButton("Buat Tugas");
-        btnAdd.addActionListener(e -> {
-            try {
-                String judul = JOptionPane.showInputDialog("Judul:");
-                String desk = JOptionPane.showInputDialog("Deskripsi:");
-                String tgl = JOptionPane.showInputDialog("Deadline (yyyy-MM-dd):");
-                if (judul != null) {
-                    Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
-                    t.setGuru(guru); t.setKelas(k); t.setMapel(m);
-                    tugasRepo.addTugas(t);
-                    loadDashboard();
-                }
-            } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Format salah."); }
-        });
-        
-        panel.add(new JScrollPane(table), BorderLayout.CENTER);
-        panel.add(btnAdd, BorderLayout.SOUTH);
-        return panel;
-    }
-
+    // --- Panel & Logic Pembuatan Ujian Baru ---
     private JPanel createUjianPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Jenis", "Tanggal", "Durasi"}, 0);
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Nama", "Tipe", "Tanggal", "Info"}, 0);
         JTable table = new JTable(model);
         
         for(Ujian u : ujianRepo.getByMapelAndKelas(m, k)) {
-            model.addRow(new Object[]{u.getIdUjian(), u.getJenisUjian(), u.getTanggal(), u.getDurasi()});
+            String info = u.getTipeUjian().equals("KUIS") ? 
+                          u.getWaktuPerSoal() + "s/soal" : u.getDurasiTotal() + " menit";
+            model.addRow(new Object[]{u.getIdUjian(), u.getNamaUjian(), u.getTipeUjian(), u.getTanggal(), info});
         }
 
         JButton btnAdd = new JButton("Buat Ujian & Soal");
@@ -218,45 +150,60 @@ public class GuiGuru extends JFrame {
 
     private void tambahUjian(Guru guru, Kelas kelas, MataPelajaran mapel) {
         JDialog d = new JDialog(this, "Buat Ujian Baru", true);
-        d.setSize(400, 350);
-        d.setLayout(new GridLayout(6, 2, 10, 10));
+        d.setSize(450, 500);
+        d.setLayout(new GridLayout(8, 2, 10, 10));
         d.setLocationRelativeTo(this);
 
-        JTextField txtJenis = new JTextField();
-        JTextField txtTgl = new JTextField();
-        JTextField txtDurasi = new JTextField();
+        JTextField txtNama = new JTextField();
+        String[] types = {"Pilihan Ganda (PG)", "Essay", "Campuran (Hybrid)", "Kuis (Timer per Soal)"};
+        JComboBox<String> comboTipe = new JComboBox<>(types);
         
-        txtDurasi.getDocument().addDocumentListener(new DocumentListener() {
-            public void insertUpdate(DocumentEvent e) { validate(); }
-            public void removeUpdate(DocumentEvent e) { validate(); }
-            public void changedUpdate(DocumentEvent e) { validate(); }
-            void validate() {
-                if (!txtDurasi.getText().matches("\\d+")) {
-                    txtDurasi.putClientProperty("JComponent.outline", "error");
-                    txtDurasi.setToolTipText("Hanya angka!");
-                } else {
-                    txtDurasi.putClientProperty("JComponent.outline", null);
-                }
+        JTextField txtTgl = new JTextField(); 
+        JTextField txtDurasi = new JTextField("60"); 
+        JTextField txtWaktuPerSoal = new JTextField("0"); 
+        JTextField txtMaxSoal = new JTextField("10"); 
+        
+        txtWaktuPerSoal.setEnabled(false);
+
+        comboTipe.addActionListener(e -> {
+            if (comboTipe.getSelectedIndex() == 3) { // Kuis
+                txtWaktuPerSoal.setEnabled(true);
+                txtDurasi.setEnabled(false); txtDurasi.setText("0");
+            } else {
+                txtWaktuPerSoal.setEnabled(false); txtWaktuPerSoal.setText("0");
+                txtDurasi.setEnabled(true);
             }
         });
 
-        d.add(new JLabel("Jenis (UTS/UAS/Kuis):")); d.add(txtJenis);
+        d.add(new JLabel("Nama Ujian:")); d.add(txtNama);
+        d.add(new JLabel("Tipe Ujian:")); d.add(comboTipe);
         d.add(new JLabel("Tanggal (yyyy-MM-dd):")); d.add(txtTgl);
-        d.add(new JLabel("Durasi (menit):")); d.add(txtDurasi);
+        d.add(new JLabel("Durasi Total (menit):")); d.add(txtDurasi);
+        d.add(new JLabel("Waktu Per Soal (detik - Kuis):")); d.add(txtWaktuPerSoal);
+        d.add(new JLabel("Maksimal Soal:")); d.add(txtMaxSoal);
 
         JButton btnSimpan = new JButton("Simpan & Lanjut Buat Soal");
         btnSimpan.addActionListener(e -> {
             try {
                 String idUjian = IdUtil.generate();
-                Ujian ujian = new Ujian(idUjian, txtJenis.getText(), DateUtil.parse(txtTgl.getText()), Integer.parseInt(txtDurasi.getText()));
-                ujian.setGuru(guru);
-                ujian.setMapel(mapel);
-                ujian.setKelas(kelas);
+                String rawTipe = (String) comboTipe.getSelectedItem();
+                String kodeTipe = "PG";
+                if(rawTipe.contains("Essay")) kodeTipe = "ESSAY";
+                else if(rawTipe.contains("Campuran")) kodeTipe = "HYBRID";
+                else if(rawTipe.contains("Kuis")) kodeTipe = "KUIS";
+
+                Ujian ujian = new Ujian(
+                    idUjian, txtNama.getText(), kodeTipe,
+                    DateUtil.parse(txtTgl.getText()), 
+                    Integer.parseInt(txtDurasi.getText()),
+                    Integer.parseInt(txtWaktuPerSoal.getText()),
+                    Integer.parseInt(txtMaxSoal.getText())
+                );
+                ujian.setGuru(guru); ujian.setMapel(mapel); ujian.setKelas(kelas);
 
                 ujianRepo.addUjian(ujian);
-                
                 d.dispose();
-                kelolaSoal(idUjian); 
+                kelolaSoal(ujian); 
                 loadDashboard();
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(d, "Format input salah: " + ex.getMessage());
@@ -267,102 +214,193 @@ public class GuiGuru extends JFrame {
         d.setVisible(true);
     }
 
-    private void kelolaSoal(String idUjian) {
-        JDialog d = new JDialog(this, "Input Soal Pilihan Ganda", true);
-        d.setSize(500, 500);
-        d.setLayout(new GridLayout(8, 2, 5, 5));
+    private void kelolaSoal(Ujian u) {
+        JDialog d = new JDialog(this, "Input Soal (" + u.getTipeUjian() + ")", true);
+        d.setSize(600, 600);
+        d.setLayout(new BorderLayout(10, 10));
         d.setLocationRelativeTo(this);
+
+        JPanel inputPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+        
+        JComboBox<String> comboJenisSoal = new JComboBox<>(new String[]{"PG", "ESSAY"});
+        
+        // Auto set tipe jika bukan Hybrid
+        if(u.getTipeUjian().equals("PG") || u.getTipeUjian().equals("KUIS")) {
+            comboJenisSoal.setSelectedItem("PG"); comboJenisSoal.setEnabled(false);
+        } else if (u.getTipeUjian().equals("ESSAY")) {
+            comboJenisSoal.setSelectedItem("ESSAY"); comboJenisSoal.setEnabled(false);
+        }
 
         JTextField txtTanya = new JTextField();
         JTextField txtA = new JTextField();
         JTextField txtB = new JTextField();
         JTextField txtC = new JTextField();
         JTextField txtD = new JTextField();
-        JComboBox<String> comboKunci = new JComboBox<>(new String[]{"A", "B", "C", "D"});
+        
+        JPanel panelKunci = new JPanel(new CardLayout());
+        JComboBox<String> comboKunciPG = new JComboBox<>(new String[]{"A", "B", "C", "D"});
+        JTextField txtKunciEssay = new JTextField();
+        panelKunci.add(comboKunciPG, "PG");
+        panelKunci.add(txtKunciEssay, "ESSAY");
+        CardLayout cl = (CardLayout)(panelKunci.getLayout());
+
+        comboJenisSoal.addActionListener(e -> {
+            boolean isPG = comboJenisSoal.getSelectedItem().equals("PG");
+            txtA.setEnabled(isPG); txtB.setEnabled(isPG);
+            txtC.setEnabled(isPG); txtD.setEnabled(isPG);
+            cl.show(panelKunci, isPG ? "PG" : "ESSAY");
+        });
+        
+        if(u.getTipeUjian().equals("ESSAY")) {
+            txtA.setEnabled(false); txtB.setEnabled(false); 
+            txtC.setEnabled(false); txtD.setEnabled(false);
+            cl.show(panelKunci, "ESSAY");
+        }
+
+        inputPanel.add(new JLabel("Tipe Soal:")); inputPanel.add(comboJenisSoal);
+        inputPanel.add(new JLabel("Pertanyaan:")); inputPanel.add(txtTanya);
+        inputPanel.add(new JLabel("Opsi A:")); inputPanel.add(txtA);
+        inputPanel.add(new JLabel("Opsi B:")); inputPanel.add(txtB);
+        inputPanel.add(new JLabel("Opsi C:")); inputPanel.add(txtC);
+        inputPanel.add(new JLabel("Opsi D:")); inputPanel.add(txtD);
+        inputPanel.add(new JLabel("Kunci Jawaban:")); inputPanel.add(panelKunci);
 
         JButton btnAdd = new JButton("Simpan Soal");
+        JLabel lblInfo = new JLabel("Soal tersimpan: 0 / " + u.getMaxSoal());
+        
         btnAdd.addActionListener(e -> {
+            int currentCount = soalRepo.getByUjian(u.getIdUjian()).size();
+            if (currentCount >= u.getMaxSoal()) {
+                JOptionPane.showMessageDialog(d, "Maksimal soal tercapai!");
+                return;
+            }
             if(txtTanya.getText().isBlank()) return;
             
-            Soal s = new Soal(IdUtil.generate(), idUjian, 
-                              txtTanya.getText(), txtA.getText(), txtB.getText(), txtC.getText(), txtD.getText(), 
-                              (String)comboKunci.getSelectedItem());
-            soalRepo.addSoal(s);
-            JOptionPane.showMessageDialog(d, "Soal Tersimpan!");
+            String tipe = (String) comboJenisSoal.getSelectedItem();
+            String kunci = tipe.equals("PG") ? (String) comboKunciPG.getSelectedItem() : txtKunciEssay.getText();
             
-            txtTanya.setText(""); txtA.setText(""); txtB.setText(""); txtC.setText(""); txtD.setText("");
+            Soal s = new Soal(IdUtil.generate(), u.getIdUjian(), tipe,
+                              txtTanya.getText(), txtA.getText(), txtB.getText(), txtC.getText(), txtD.getText(), 
+                              kunci);
+            soalRepo.addSoal(s);
+            
+            txtTanya.setText(""); txtA.setText(""); txtB.setText(""); txtC.setText(""); txtD.setText(""); txtKunciEssay.setText("");
+            lblInfo.setText("Soal tersimpan: " + (currentCount + 1) + " / " + u.getMaxSoal());
+            JOptionPane.showMessageDialog(d, "Soal tersimpan!");
         });
 
-        d.add(new JLabel("Pertanyaan:")); d.add(txtTanya);
-        d.add(new JLabel("Opsi A:")); d.add(txtA);
-        d.add(new JLabel("Opsi B:")); d.add(txtB);
-        d.add(new JLabel("Opsi C:")); d.add(txtC);
-        d.add(new JLabel("Opsi D:")); d.add(txtD);
-        d.add(new JLabel("Kunci Jawaban:")); d.add(comboKunci);
-        d.add(new JLabel("")); d.add(btnAdd);
-        
+        d.add(inputPanel, BorderLayout.CENTER);
+        JPanel bottom = new JPanel(new FlowLayout());
+        bottom.add(lblInfo); bottom.add(btnAdd);
+        d.add(bottom, BorderLayout.SOUTH);
         d.setVisible(true);
+    }
+
+    private JPanel createMateriPanel(Kelas k, MataPelajaran m) {
+        JPanel panel = new JPanel(new BorderLayout());
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
+        JTable table = new JTable(model);
+        for(Materi mat : materiRepo.getByMapelAndKelas(m, k)) 
+            model.addRow(new Object[]{mat.getIdMateri(), mat.getJudul(), mat.getFileMateri()});
+        
+        JButton btnAdd = new JButton("Tambah Materi (Upload)");
+        btnAdd.addActionListener(e -> {
+            JTextField txtJudul = new JTextField();
+            JTextField txtDesk = new JTextField();
+            Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
+            if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+                JFileChooser fileChooser = new JFileChooser();
+                if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        File fileAsli = fileChooser.getSelectedFile();
+                        String namaFileBaru = System.currentTimeMillis() + "_" + fileAsli.getName();
+                        File folder = new File("data/uploads");
+                        if (!folder.exists()) folder.mkdirs();
+                        Files.copy(fileAsli.toPath(), new File(folder, namaFileBaru).toPath(), StandardCopyOption.REPLACE_EXISTING);
+                        
+                        Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
+                        mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
+                        materiRepo.addMateri(mat);
+                        loadDashboard();
+                    } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); }
+                }
+            }
+        });
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(btnAdd, BorderLayout.SOUTH);
+        return panel;
+    }
+
+    private JPanel createTugasPanel(Kelas k, MataPelajaran m) {
+        JPanel panel = new JPanel(new BorderLayout());
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Judul", "Deadline"}, 0);
+        JTable table = new JTable(model);
+        for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) model.addRow(new Object[]{t.getIdTugas(), t.getJudul(), t.getDeadline()});
+        
+        JButton btnAdd = new JButton("Buat Tugas");
+        btnAdd.addActionListener(e -> {
+            String judul = JOptionPane.showInputDialog("Judul:");
+            String desk = JOptionPane.showInputDialog("Deskripsi:");
+            String tgl = JOptionPane.showInputDialog("Deadline (yyyy-MM-dd):");
+            if (judul != null) {
+                try {
+                    Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
+                    t.setGuru(guru); t.setKelas(k); t.setMapel(m);
+                    tugasRepo.addTugas(t);
+                    loadDashboard();
+                } catch(Exception ex) { JOptionPane.showMessageDialog(this, "Format tanggal salah"); }
+            }
+        });
+        panel.add(new JScrollPane(table), BorderLayout.CENTER);
+        panel.add(btnAdd, BorderLayout.SOUTH);
+        return panel;
     }
 
     private JPanel createNilaiPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
-        
-        String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai Saat Ini"};
-        DefaultTableModel model = new DefaultTableModel(columns, 0) {
-            @Override public boolean isCellEditable(int row, int column) { return false; }
-        };
+        String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) { public boolean isCellEditable(int row, int column) { return false; } };
         JTable table = new JTable(model);
 
-        List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(m, k);
-        for(Tugas t : listTugas) {
+        for(Tugas t : tugasRepo.getByMapelAndKelas(m, k)) {
             for(Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
                 String nilaiStr = "Belum Dinilai";
                 for(Nilai n : nilaiRepo.getAll()) {
-                    if(n.getTugas() != null && n.getTugas().equals(t) && n.getSiswa().equals(j.getSiswa())) 
-                        nilaiStr = String.valueOf(n.getNilaiAngka());
+                    if(n.getTugas() != null && n.getTugas().equals(t) && n.getSiswa().equals(j.getSiswa())) nilaiStr = String.valueOf(n.getNilaiAngka());
                 }
                 model.addRow(new Object[]{j.getIdJawaban(), "Tugas", t.getJudul(), j.getSiswa().getNamaLengkap(), j.getFileJawaban(), nilaiStr});
             }
         }
-
-        List<Ujian> listUjian = ujianRepo.getByMapelAndKelas(m, k);
-        for(Ujian u : listUjian) {
+        for(Ujian u : ujianRepo.getByMapelAndKelas(m, k)) {
             for(Jawaban j : jawabanRepo.findByUjian(u.getIdUjian())) {
                 String nilaiStr = "Belum Dinilai";
                 for(Nilai n : nilaiRepo.getAll()) {
-                    if(n.getUjian() != null && n.getUjian().equals(u) && n.getSiswa().equals(j.getSiswa()))
-                        nilaiStr = String.valueOf(n.getNilaiAngka());
+                    if(n.getUjian() != null && n.getUjian().equals(u) && n.getSiswa().equals(j.getSiswa())) nilaiStr = String.valueOf(n.getNilaiAngka());
                 }
-                model.addRow(new Object[]{j.getIdJawaban(), "Ujian", u.getJenisUjian(), j.getSiswa().getNamaLengkap(), j.getFileJawaban(), nilaiStr});
+                model.addRow(new Object[]{j.getIdJawaban(), "Ujian", u.getNamaUjian(), j.getSiswa().getNamaLengkap(), j.getFileJawaban(), nilaiStr});
             }
         }
 
         JButton btnNilai = new JButton("Beri Nilai Manual");
         btnNilai.addActionListener(e -> {
              int row = table.getSelectedRow();
-             if (row == -1) { JOptionPane.showMessageDialog(this, "Pilih baris siswa!"); return; }
-
+             if (row == -1) { JOptionPane.showMessageDialog(this, "Pilih baris!"); return; }
              String idJawaban = (String) table.getValueAt(row, 0);
              Jawaban selectedJawab = jawabanRepo.getAll().stream().filter(j->j.getIdJawaban().equals(idJawaban)).findFirst().orElse(null);
-
              if (selectedJawab != null) {
                  String input = JOptionPane.showInputDialog(this, "Masukkan Nilai:");
                  if (input != null) {
                      try {
-                         int nilaiAngka = Integer.parseInt(input);
-                         Nilai n = (selectedJawab.getTugas() != null) ? 
-                             new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getTugas(), nilaiAngka, "Manual") :
-                             new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getUjian(), nilaiAngka, "Manual");
-                         
+                         int val = Integer.parseInt(input);
+                         Nilai n = (selectedJawab.getTugas()!=null) ? new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getTugas(), val, "Manual") 
+                                                                    : new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getUjian(), val, "Manual");
                          nilaiRepo.addNilai(n);
                          selectedJawab.getSiswa().tambahNilai(n);
-                         JOptionPane.showMessageDialog(this, "Tersimpan!");
                          loadDashboard();
-                     } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Input harus angka!"); }
+                     } catch(Exception ex) { JOptionPane.showMessageDialog(this, "Input angka!"); }
                  }
              }
         });
-
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnNilai, BorderLayout.SOUTH);
         return panel;
