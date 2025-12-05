@@ -4,4 +4,3 @@ A001;admin;admin;Administrator;admin@lms.com;ADMIN;-;-;-;-
 I3SCR;Djuanda;Djuanda;Djuanda Djuanda;Djuanda@gmail.com;SISWA;1512313;2021;U7RS8;-
 7FUJI;jaid;jaid;jaid jaid;jaid@gmail.com;GURU;18123132;MTK;-;-
 O9BB6;rafi;rafi;rafi rafi;rafi@gmail.com;GURU;123411245;TIK;-;-
-

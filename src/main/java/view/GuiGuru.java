@@ -4,7 +4,6 @@ import model.*;
 import repository.*;
 import utils.IdUtil;
 import utils.DateUtil;
-// Hapus import SecurityUtil
 import view.component.ForumPanel;
 
 import javax.swing.*;
@@ -13,7 +12,7 @@ import java.awt.*;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
-import java.util.List; // Import List
+import java.util.List;
 
 public class GuiGuru extends JFrame {
     private Guru guru;
@@ -42,7 +41,7 @@ public class GuiGuru extends JFrame {
         this.userRepo = uRepo;
 
         setTitle("Dashboard Guru - " + guru.getNamaLengkap());
-        setSize(900, 600);
+        setSize(1000, 650); // Diperlebar
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -50,11 +49,29 @@ public class GuiGuru extends JFrame {
         topPanel.add(new JLabel("Kelas:"));
         comboKelas = new JComboBox<>();
         for(Kelas k : guru.getDaftarKelas()) comboKelas.addItem(k);
+        // Custom Renderer untuk nama kelas
+        comboKelas.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
+                return this;
+            }
+        });
         topPanel.add(comboKelas);
 
         topPanel.add(new JLabel("Mapel:"));
         comboMapel = new JComboBox<>();
         for(MataPelajaran m : guru.getMapelDiampu()) comboMapel.addItem(m);
+        // Custom Renderer untuk nama mapel
+        comboMapel.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                if (value instanceof MataPelajaran) setText(((MataPelajaran)value).getNamaMapel());
+                return this;
+            }
+        });
         topPanel.add(comboMapel);
 
         JButton btnLoad = new JButton("Buka Kelas");
@@ -119,6 +136,7 @@ public class GuiGuru extends JFrame {
                         File dest = new File(folder, namaFileBaru);
                         Files.copy(fileAsli.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
                         
+                        // ID Generated Automatically
                         Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFileBaru);
                         mat.setGuru(guru); mat.setKelas(k); mat.setMapel(m);
                         materiRepo.addMateri(mat);
@@ -154,6 +172,7 @@ public class GuiGuru extends JFrame {
                 String desk = JOptionPane.showInputDialog("Deskripsi:");
                 String tgl = JOptionPane.showInputDialog("Deadline (yyyy-MM-dd):");
                 if (judul != null) {
+                    // ID Generated Automatically
                     Tugas t = new Tugas(IdUtil.generate(), judul, desk, DateUtil.parse(tgl));
                     t.setGuru(guru); t.setKelas(k); t.setMapel(m);
                     tugasRepo.addTugas(t);
@@ -167,26 +186,110 @@ public class GuiGuru extends JFrame {
         return panel;
     }
 
+    // --- PERBAIKAN UX UTAMA: TABEL PENILAIAN DENGAN ID HIDDEN & SELEKSI BARIS ---
     private JPanel createNilaiPanel(Kelas k, MataPelajaran m) {
         JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"Siswa", "File Jawaban", "Nilai"}, 0);
+        
+        // Kolom 0: ID Jawaban (Kita sembunyikan atau biarkan terlihat tapi tidak perlu diketik)
+        // Kita tampilkan saja untuk debug, tapi user akan klik baris.
+        String[] columns = {"ID Jawaban", "Tipe", "Judul Soal", "Siswa", "File Jawaban", "Nilai Saat Ini"};
+        DefaultTableModel model = new DefaultTableModel(columns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false; // Tabel tidak bisa diedit langsung
+            }
+        };
         JTable table = new JTable(model);
 
+        // Load Jawaban TUGAS
         List<Tugas> listTugas = tugasRepo.getByMapelAndKelas(m, k);
         for(Tugas t : listTugas) {
             for(Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
-                String nilaiStr = "-";
+                String nilaiStr = "Belum Dinilai";
+                // Cari apakah sudah ada nilai
                 for(Nilai n : nilaiRepo.getAll()) {
                     if(n.getTugas() != null && n.getTugas().equals(t) && n.getSiswa().equals(j.getSiswa())) 
                         nilaiStr = String.valueOf(n.getNilaiAngka());
                 }
-                model.addRow(new Object[]{j.getSiswa().getNamaLengkap(), j.getFileJawaban(), nilaiStr});
+                model.addRow(new Object[]{
+                    j.getIdJawaban(), 
+                    "Tugas", 
+                    t.getJudul(), 
+                    j.getSiswa().getNamaLengkap(), 
+                    j.getFileJawaban(), 
+                    nilaiStr
+                });
             }
         }
 
-        JButton btnNilai = new JButton("Beri Nilai (via ID Siswa & ID Tugas)");
+        // Load Jawaban UJIAN (Tambahan agar lengkap)
+        List<Ujian> listUjian = ujianRepo.getByMapelAndKelas(m, k);
+        for(Ujian u : listUjian) {
+            for(Jawaban j : jawabanRepo.findByUjian(u.getIdUjian())) {
+                String nilaiStr = "Belum Dinilai";
+                for(Nilai n : nilaiRepo.getAll()) {
+                    if(n.getUjian() != null && n.getUjian().equals(u) && n.getSiswa().equals(j.getSiswa()))
+                        nilaiStr = String.valueOf(n.getNilaiAngka());
+                }
+                model.addRow(new Object[]{
+                    j.getIdJawaban(),
+                    "Ujian",
+                    u.getJenisUjian(),
+                    j.getSiswa().getNamaLengkap(),
+                    j.getFileJawaban(),
+                    nilaiStr
+                });
+            }
+        }
+
+        JButton btnNilai = new JButton("Beri Nilai (Pilih Baris)");
         btnNilai.addActionListener(e -> {
-             JOptionPane.showMessageDialog(this, "Gunakan fitur ini di menu CLI untuk saat ini.");
+             int row = table.getSelectedRow();
+             if (row == -1) {
+                 JOptionPane.showMessageDialog(this, "Pilih baris siswa yang ingin dinilai terlebih dahulu!");
+                 return;
+             }
+
+             // Ambil ID Jawaban dari kolom 0
+             String idJawaban = (String) table.getValueAt(row, 0);
+             String namaSiswa = (String) table.getValueAt(row, 3);
+             String judulSoal = (String) table.getValueAt(row, 2);
+
+             // Cari Object Jawaban asli
+             Jawaban selectedJawab = null;
+             // Cari di repo (cara brute force sederhana tapi aman)
+             for(Jawaban j : jawabanRepo.getAll()) {
+                 if(j.getIdJawaban().equals(idJawaban)) {
+                     selectedJawab = j;
+                     break;
+                 }
+             }
+
+             if (selectedJawab != null) {
+                 String input = JOptionPane.showInputDialog(this, "Masukkan Nilai untuk " + namaSiswa + " (" + judulSoal + "):");
+                 if (input != null && !input.isBlank()) {
+                     try {
+                         int nilaiAngka = Integer.parseInt(input);
+                         String ket = (nilaiAngka >= 75) ? "Lulus" : "Remidi";
+                         
+                         // Buat Nilai Baru
+                         Nilai n;
+                         if (selectedJawab.getTugas() != null) {
+                             n = new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getTugas(), nilaiAngka, ket);
+                         } else {
+                             n = new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getUjian(), nilaiAngka, ket);
+                         }
+                         
+                         nilaiRepo.addNilai(n);
+                         selectedJawab.getSiswa().tambahNilai(n); // Update data runtime siswa juga
+                         
+                         JOptionPane.showMessageDialog(this, "Nilai berhasil disimpan!");
+                         loadDashboard(); // Refresh tabel
+                     } catch (NumberFormatException ex) {
+                         JOptionPane.showMessageDialog(this, "Nilai harus angka!");
+                     }
+                 }
+             }
         });
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -201,7 +304,6 @@ public class GuiGuru extends JFrame {
     private void showProfil() {
         String newPass = JOptionPane.showInputDialog("Ganti Password (Kosongkan jika batal):");
         if(newPass != null && !newPass.isBlank()) {
-            // HAPUS HASH: Simpan password biasa
             guru.setPassword(newPass);
             userRepo.saveToFile();
             JOptionPane.showMessageDialog(this, "Password berhasil diubah.");
