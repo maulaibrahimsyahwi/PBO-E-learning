@@ -23,27 +23,37 @@ public class ForumRepository {
         saveToFile();
     }
 
-    public List<ForumDiskusi> getAll() {
-        return forumList;
-    }
-
     public List<ForumDiskusi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         return forumList.stream()
                 .filter(f -> f.getMapel() != null && f.getMapel().equals(mapel))
                 .filter(f -> f.getKelas() != null && f.getKelas().equals(kelas))
                 .collect(Collectors.toList());
     }
+    
+    // Baru: Ambil semua balasan berdasarkan ID Topik
+    public List<ForumDiskusi> getReplies(String threadId) {
+        return forumList.stream()
+                .filter(f -> f.getParentId().equals(threadId))
+                .collect(Collectors.toList());
+    }
+
+    public List<ForumDiskusi> getAll() {
+        return forumList;
+    }
 
     public void saveToFile() {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(FILE_PATH))) {
             for (ForumDiskusi f : forumList) {
+                // Format: id;idUser;judul;isi;waktu;idKelas;idMapel;parentId
                 bw.write(
                         f.getIdPesan() + ";" +
                         (f.getPengirim() != null ? f.getPengirim().getIdUser() : "-") + ";" +
+                        f.getJudul() + ";" +
                         f.getIsiPesan() + ";" +
                         f.getWaktu() + ";" +
                         (f.getKelas() != null ? f.getKelas().getIdKelas() : "-") + ";" +
-                        (f.getMapel() != null ? f.getMapel().getIdMapel() : "-")
+                        (f.getMapel() != null ? f.getMapel().getIdMapel() : "-") + ";" +
+                        f.getParentId()
                 );
                 bw.newLine();
             }
@@ -64,8 +74,16 @@ public class ForumRepository {
                 if (line.isBlank()) continue;
                 String[] d = line.split(";");
                 
-                if (d.length >= 6) {
-                    ForumDiskusi f = new ForumDiskusi(d[0], d[2], d[3]);
+                // Support format lama (migrasi otomatis saat runtime) & baru
+                // Format Baru: id;idUser;judul;isi;waktu;idKelas;idMapel;parentId (len 8)
+                if (d.length >= 8) {
+                    ForumDiskusi f = new ForumDiskusi(d[0], d[2], d[3], d[4], d[7]);
+                    forumList.add(f);
+                } 
+                // Fallback format lama (jika ada data lama)
+                else if (d.length >= 6) {
+                    // Anggap data lama sebagai ROOT topic tanpa judul spesifik
+                    ForumDiskusi f = new ForumDiskusi(d[0], "Diskusi Umum", d[2], d[3], "ROOT"); 
                     forumList.add(f);
                 }
             }

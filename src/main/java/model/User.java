@@ -26,11 +26,10 @@ public abstract class User {
         return username;
     }
 
-    public String getPassword() {     
+    public String getPassword() {
         return password;
     }
 
-    // 🔥 METHOD BARU
     public void setPassword(String password) {
         this.password = password;
     }
@@ -39,28 +38,27 @@ public abstract class User {
         return namaLengkap;
     }
 
-    public String getEmail() {         
+    public void setNamaLengkap(String namaLengkap) {
+        this.namaLengkap = namaLengkap;
+    }
+
+    public String getEmail() {
         return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 
     public boolean isAktif() {
         return aktif;
     }
 
-    public void setNamaLengkap(String namaLengkap) {
-        this.namaLengkap = namaLengkap;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-    
     public boolean login(String username, String password) {
         return this.username.equals(username) && this.password.equals(password);
     }
 
     public void logout() {
-        System.out.println("Anda telah logout.");
     }
 
     public abstract void tampilkanMenu();
