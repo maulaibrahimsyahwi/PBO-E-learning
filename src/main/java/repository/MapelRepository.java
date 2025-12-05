@@ -8,7 +8,7 @@ import java.util.*;
 public class MapelRepository {
 
     private List<MataPelajaran> mapelList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/mapel.txt";
+    private final String FILE_PATH = "data/mapel.txt";
 
     public MapelRepository() {
         loadFromFile();

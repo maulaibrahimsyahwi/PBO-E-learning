@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
 public class MateriRepository {
 
     private List<Materi> materiList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/materi.txt";
+    private final String FILE_PATH = "data/materi.txt";
 
     public MateriRepository() {
         loadFromFile();

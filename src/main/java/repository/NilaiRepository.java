@@ -7,7 +7,7 @@ import java.util.*;
 public class NilaiRepository {
 
     private List<Nilai> nilaiList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/nilai.txt";
+    private final String FILE_PATH = "data/nilai.txt";
 
     public NilaiRepository() {
         loadFromFile();

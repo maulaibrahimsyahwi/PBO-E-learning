@@ -13,7 +13,7 @@ import java.util.stream.Collectors;
 public class TugasRepository {
 
     private List<Tugas> tugasList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/tugas.txt";
+    private final String FILE_PATH = "data/tugas.txt";
 
     public TugasRepository() {
         loadFromFile();

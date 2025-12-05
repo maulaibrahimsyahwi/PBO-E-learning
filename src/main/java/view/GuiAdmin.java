@@ -10,16 +10,39 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class GuiAdmin extends JFrame {
     private UserRepository userRepo;
     private KelasRepository kelasRepo;
     private MapelRepository mapelRepo;
+    
+    private MateriRepository materiRepo;
+    private TugasRepository tugasRepo;
+    private UjianRepository ujianRepo;
+    private JawabanRepository jawabanRepo;
+    private NilaiRepository nilaiRepo;
+    private ForumRepository forumRepo;
+    private AbsensiRepository absensiRepo;
+    private SoalRepository soalRepo;
 
-    public GuiAdmin(UserRepository userRepo, KelasRepository kelasRepo, MapelRepository mapelRepo) {
+    public GuiAdmin(UserRepository userRepo, KelasRepository kelasRepo, MapelRepository mapelRepo,
+                    MateriRepository materiRepo, TugasRepository tugasRepo, UjianRepository ujianRepo,
+                    JawabanRepository jawabanRepo, NilaiRepository nilaiRepo, ForumRepository forumRepo,
+                    AbsensiRepository absensiRepo, SoalRepository soalRepo) {
+        
         this.userRepo = userRepo;
         this.kelasRepo = kelasRepo;
         this.mapelRepo = mapelRepo;
+        this.materiRepo = materiRepo;
+        this.tugasRepo = tugasRepo;
+        this.ujianRepo = ujianRepo;
+        this.jawabanRepo = jawabanRepo;
+        this.nilaiRepo = nilaiRepo;
+        this.forumRepo = forumRepo;
+        this.absensiRepo = absensiRepo;
+        this.soalRepo = soalRepo;
 
         setTitle("Dashboard Admin");
         setSize(900, 600);
@@ -38,8 +61,8 @@ public class GuiAdmin extends JFrame {
         JButton btnLogout = new JButton("Logout");
         btnLogout.addActionListener(e -> {
             dispose();
-            JOptionPane.showMessageDialog(this, "Anda telah logout.");
-            new GuiLogin(userRepo, kelasRepo, mapelRepo, null, null, null, null, null, null).setVisible(true);
+            new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, 
+                         jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
         });
         add(btnLogout, BorderLayout.SOUTH);
     }
@@ -105,7 +128,8 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Guru", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                Guru g = new Guru(IdUtil.generate(), txtUser.getText(), txtPass.getText(), 
+                String passHash = utils.SecurityUtil.hashPassword(txtPass.getText());
+                Guru g = new Guru(IdUtil.generate(), txtUser.getText(), passHash, 
                                   txtNama.getText(), txtEmail.getText(), txtNip.getText(), txtSpes.getText());
                 userRepo.addUser(g);
                 refreshGuruTable(model);
@@ -175,14 +199,14 @@ public class GuiAdmin extends JFrame {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                Siswa s = new Siswa(IdUtil.generate(), txtUser.getText(), txtPass.getText(), 
+                String passHash = utils.SecurityUtil.hashPassword(txtPass.getText());
+                Siswa s = new Siswa(IdUtil.generate(), txtUser.getText(), passHash, 
                                     txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngkatan.getText());
                 userRepo.addUser(s);
                 refreshSiswaTable(model);
             }
         });
 
-        // UPDATE: MENGGUNAKAN COMBOBOX UNTUK MEMILIH SISWA DAN KELAS
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(2, 2, 10, 10));
             
@@ -227,8 +251,6 @@ public class GuiAdmin extends JFrame {
                     userRepo.saveToFile();
                     refreshSiswaTable(model);
                     JOptionPane.showMessageDialog(this, "Berhasil assign " + s.getNamaLengkap() + " ke kelas " + k.getNamaKelas());
-                } else {
-                    JOptionPane.showMessageDialog(this, "Data belum lengkap.");
                 }
             }
         });
@@ -308,7 +330,6 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // UPDATE: MENGGUNAKAN COMBOBOX UNTUK ASSIGN GURU
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(3, 2, 10, 10));
 
@@ -369,8 +390,6 @@ public class GuiAdmin extends JFrame {
                     g.tambahKelas(k);
                     userRepo.saveToFile();
                     JOptionPane.showMessageDialog(this, "Sukses assign Guru " + g.getNamaLengkap());
-                } else {
-                    JOptionPane.showMessageDialog(this, "Data belum lengkap.");
                 }
             }
         });

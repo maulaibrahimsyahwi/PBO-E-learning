@@ -7,7 +7,7 @@ import java.util.*;
 public class KelasRepository {
 
     private List<Kelas> kelasList = new ArrayList<>();
-    private final String FILE_PATH = "src/main/java/data/kelas.txt";
+    private final String FILE_PATH = "data/kelas.txt";
 
     public KelasRepository() {
         loadFromFile();

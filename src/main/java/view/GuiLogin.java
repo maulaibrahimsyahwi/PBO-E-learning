@@ -2,8 +2,7 @@ package view;
 
 import model.*;
 import repository.*;
-// Hapus import SecurityUtil
-
+import utils.SecurityUtil; 
 import javax.swing.*;
 import java.awt.*;
 
@@ -17,13 +16,17 @@ public class GuiLogin extends JFrame {
     private JawabanRepository jawabanRepo;
     private NilaiRepository nilaiRepo;
     private ForumRepository forumRepo;
+    private AbsensiRepository absensiRepo;
+    private SoalRepository soalRepo;
 
     private JTextField txtUsername;
     private JPasswordField txtPassword;
 
     public GuiLogin(UserRepository userRepo, KelasRepository kelasRepo, MapelRepository mapelRepo,
                     MateriRepository materiRepo, TugasRepository tugasRepo, UjianRepository ujianRepo,
-                    JawabanRepository jawabanRepo, NilaiRepository nilaiRepo, ForumRepository forumRepo) {
+                    JawabanRepository jawabanRepo, NilaiRepository nilaiRepo, ForumRepository forumRepo,
+                    AbsensiRepository absensiRepo, SoalRepository soalRepo) {
+        
         this.userRepo = userRepo;
         this.kelasRepo = kelasRepo;
         this.mapelRepo = mapelRepo;
@@ -33,45 +36,55 @@ public class GuiLogin extends JFrame {
         this.jawabanRepo = jawabanRepo;
         this.nilaiRepo = nilaiRepo;
         this.forumRepo = forumRepo;
+        this.absensiRepo = absensiRepo;
+        this.soalRepo = soalRepo;
 
         setTitle("Login LMS SMK Nusantara");
-        setSize(400, 250);
+        setSize(400, 280);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
-        setLayout(new GridLayout(4, 2, 10, 10));
+        
+        JPanel mainPanel = new JPanel(new GridLayout(4, 1, 10, 10));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
 
-        add(new JLabel("Username:", SwingConstants.CENTER));
         txtUsername = new JTextField();
-        add(txtUsername);
-
-        add(new JLabel("Password:", SwingConstants.CENTER));
+        txtUsername.putClientProperty("JTextField.placeholderText", "Username");
+        
         txtPassword = new JPasswordField();
-        add(txtPassword);
+        txtPassword.putClientProperty("JTextField.placeholderText", "Password");
 
         JButton btnLogin = new JButton("Login");
-        add(new JLabel(""));
-        add(btnLogin);
+        btnLogin.setFont(new Font("SansSerif", Font.BOLD, 14));
+        btnLogin.setBackground(new Color(60, 120, 200));
+        btnLogin.setForeground(Color.WHITE);
+
+        mainPanel.add(new JLabel("Selamat Datang di LMS", SwingConstants.CENTER));
+        mainPanel.add(txtUsername);
+        mainPanel.add(txtPassword);
+        mainPanel.add(btnLogin);
+
+        add(mainPanel);
 
         btnLogin.addActionListener(e -> prosesLogin());
     }
 
     private void prosesLogin() {
         String username = txtUsername.getText();
-        String password = new String(txtPassword.getPassword()); // Ambil password biasa
+        String password = new String(txtPassword.getPassword());
 
         User user = userRepo.findByUsername(username);
+        String hashedInput = SecurityUtil.hashPassword(password);
 
-        // HAPUS HASH: Cek langsung menggunakan method login() bawaan User atau equals biasa
-        if (user != null && user.getPassword().equals(password)) {
-            JOptionPane.showMessageDialog(this, "Selamat datang, " + user.getNamaLengkap());
+        if (user != null && user.getPassword().equals(hashedInput)) {
             this.dispose();
-
             if (user instanceof Admin) {
-                new GuiAdmin(userRepo, kelasRepo, mapelRepo).setVisible(true);
+                new GuiAdmin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
             } else if (user instanceof Guru) {
-                new GuiGuru((Guru) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, kelasRepo, mapelRepo, forumRepo, userRepo).setVisible(true);
+                new GuiGuru((Guru) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
+                            kelasRepo, mapelRepo, forumRepo, userRepo, soalRepo).setVisible(true);
             } else if (user instanceof Siswa) {
-                new GuiSiswa((Siswa) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, forumRepo, userRepo).setVisible(true);
+                new GuiSiswa((Siswa) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
+                             forumRepo, userRepo, absensiRepo, soalRepo).setVisible(true);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
