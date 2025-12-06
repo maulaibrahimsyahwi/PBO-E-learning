@@ -54,7 +54,6 @@ public class GuiGuru extends JFrame {
         JPanel topPanel = new JPanel(new BorderLayout());
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        // Left side: Selectors
         JPanel selectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
         selectorPanel.add(new JLabel("Kelas:"));
@@ -86,7 +85,6 @@ public class GuiGuru extends JFrame {
         
         topPanel.add(selectorPanel, BorderLayout.WEST);
 
-        // Right side: Profile and Logout Buttons
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         JButton btnProfil = new JButton("Profil");
