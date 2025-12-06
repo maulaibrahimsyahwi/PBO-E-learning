@@ -1,3 +1,5 @@
+// File: src/main/java/view/GuiAdmin.java
+
 package view;
 
 import model.*;
@@ -42,21 +44,11 @@ public class GuiAdmin extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JTabbedPane tabbedPane = new JTabbedPane();
-        
-        // Memuat panel-panel modular
-        tabbedPane.addTab("Dashboard", new AdminDashboardPanel(userRepo, kelasRepo, mapelRepo));
-        tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(userRepo));
-        tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(userRepo, kelasRepo));
-        tabbedPane.addTab("Kelola Kelas", new KelasManagementPanel(kelasRepo, mapelRepo));
-        tabbedPane.addTab("Kelola Mapel", new MapelManagementPanel(mapelRepo, kelasRepo, userRepo));
-        tabbedPane.addTab("Assignment Guru", new GuruAssignmentPanel(userRepo, mapelRepo, kelasRepo));
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
-        add(tabbedPane);
-        
-        JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
-        
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+
         JButton btnLogout = new JButton("Logout");
         btnLogout.setBackground(new Color(255, 100, 100)); 
         btnLogout.setForeground(Color.WHITE);
@@ -65,7 +57,20 @@ public class GuiAdmin extends JFrame {
             new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, 
                          jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
         });
-        bottomPanel.add(btnLogout);
-        add(bottomPanel, BorderLayout.SOUTH);
+        buttonPanel.add(btnLogout);
+        
+        topPanel.add(buttonPanel, BorderLayout.EAST);
+        add(topPanel, BorderLayout.NORTH);
+        
+        JTabbedPane tabbedPane = new JTabbedPane();
+        
+        tabbedPane.addTab("Dashboard", new AdminDashboardPanel(userRepo, kelasRepo, mapelRepo));
+        tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(userRepo));
+        tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(userRepo, kelasRepo));
+        tabbedPane.addTab("Kelola Kelas", new KelasManagementPanel(kelasRepo, mapelRepo));
+        tabbedPane.addTab("Kelola Mapel", new MapelManagementPanel(mapelRepo, kelasRepo, userRepo));
+        tabbedPane.addTab("Assignment Guru", new GuruAssignmentPanel(userRepo, mapelRepo, kelasRepo));
+
+        add(tabbedPane, BorderLayout.CENTER);
     }
 }

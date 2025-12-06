@@ -1,3 +1,5 @@
+// File: src/main/java/view/GuiGuru.java
+
 package view;
 
 import model.*;
@@ -51,9 +53,13 @@ public class GuiGuru extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        // Left side: Selectors
+        JPanel selectorPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         
-        topPanel.add(new JLabel("Kelas:"));
+        selectorPanel.add(new JLabel("Kelas:"));
         comboKelas = new JComboBox<>();
         for(Kelas k : guru.getDaftarKelas()) comboKelas.addItem(k);
         comboKelas.setRenderer(new DefaultListCellRenderer() {
@@ -63,9 +69,9 @@ public class GuiGuru extends JFrame {
                 return this;
             }
         });
-        topPanel.add(comboKelas);
+        selectorPanel.add(comboKelas);
 
-        topPanel.add(new JLabel("Mapel:"));
+        selectorPanel.add(new JLabel("Mapel:"));
         comboMapel = new JComboBox<>();
         for(MataPelajaran m : guru.getMapelDiampu()) comboMapel.addItem(m);
         comboMapel.setRenderer(new DefaultListCellRenderer() {
@@ -75,13 +81,18 @@ public class GuiGuru extends JFrame {
                 return this;
             }
         });
-        topPanel.add(comboMapel);
+        selectorPanel.add(comboMapel);
 
         JButton btnLoad = new JButton("Buka Kelas");
-        topPanel.add(btnLoad);
+        selectorPanel.add(btnLoad);
+        
+        topPanel.add(selectorPanel, BorderLayout.WEST);
+
+        // Right side: Profile and Logout Buttons
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         
         JButton btnProfil = new JButton("Profil");
-        topPanel.add(btnProfil);
+        buttonPanel.add(btnProfil);
         
         JButton btnLogout = new JButton("Logout");
         btnLogout.setBackground(new Color(255, 100, 100));
@@ -95,8 +106,10 @@ public class GuiGuru extends JFrame {
                              absensiRepo, soalRepo).setVisible(true);
             }
         });
-        topPanel.add(btnLogout);
-
+        buttonPanel.add(btnLogout);
+        
+        topPanel.add(buttonPanel, BorderLayout.EAST);
+        
         add(topPanel, BorderLayout.NORTH);
 
         tabbedContent = new JTabbedPane();
@@ -142,7 +155,7 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Buat Ujian & Soal");
-        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        JButton btnDelete = new JButton("Hapus");
         
         Dimension btnSize = new Dimension(150, 35);
         btnAdd.setPreferredSize(btnSize);
@@ -154,7 +167,6 @@ public class GuiGuru extends JFrame {
         
         btnAdd.addActionListener(e -> tambahUjian(guru, k, m));
         
-        // Logic Hapus Ujian
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
@@ -341,7 +353,7 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Tambah Materi (Upload)");
-        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        JButton btnDelete = new JButton("Hapus");
         
         Dimension btnSize = new Dimension(180, 35);
         btnAdd.setPreferredSize(btnSize);
@@ -380,7 +392,6 @@ public class GuiGuru extends JFrame {
             }
         });
         
-        // Logic Hapus Materi
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
@@ -417,7 +428,7 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Buat Tugas");
-        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        JButton btnDelete = new JButton("Hapus");
         
         Dimension btnSize = new Dimension(120, 35);
         btnAdd.setPreferredSize(btnSize);
@@ -441,7 +452,6 @@ public class GuiGuru extends JFrame {
             }
         });
         
-        // Logic Hapus Tugas
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
