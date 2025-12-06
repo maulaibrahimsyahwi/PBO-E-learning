@@ -11,6 +11,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.util.stream.Collectors;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GuiAdmin extends JFrame {
@@ -54,6 +56,8 @@ public class GuiAdmin extends JFrame {
         tabbedPane.addTab("Kelola Siswa", createPanelSiswa());
         tabbedPane.addTab("Kelola Kelas", createPanelKelas());
         tabbedPane.addTab("Kelola Mapel", createPanelMapel());
+        tabbedPane.addTab("Assignment Guru", createPanelAssignment());
+
 
         add(tabbedPane);
         
@@ -535,7 +539,6 @@ public class GuiAdmin extends JFrame {
                 else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
             }
         });
-        // --- END NEW CODE ---
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -745,4 +748,275 @@ public class GuiAdmin extends JFrame {
         model.setRowCount(0);
         for (MataPelajaran m : mapelRepo.getAll()) model.addRow(new Object[]{m.getIdMapel(), m.getNamaMapel(), m.getDeskripsi(), m.getTingkat()});
     }
+    // TAMBAHKAN METHOD INI DI CLASS GuiAdmin.java
+
+private JPanel createPanelAssignment() {
+    JPanel panel = new JPanel(new BorderLayout());
+    
+    String[] columns = {"Nama Guru", "NIP", "Mata Pelajaran yang Diajar", "Kelas yang Diajar"};
+    DefaultTableModel model = new DefaultTableModel(columns, 0) {
+        public boolean isCellEditable(int row, int column) { return false; }
+    };
+    JTable table = new JTable(model);
+    
+    // Set kolom wrap text
+    table.getColumnModel().getColumn(2).setPreferredWidth(250);
+    table.getColumnModel().getColumn(3).setPreferredWidth(200);
+    
+    refreshAssignmentTable(model);
+    
+    // Search functionality
+    TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+    table.setRowSorter(sorter);
+    
+    JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
+    searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+    searchPanel.add(new JLabel(" Cari Guru: "), BorderLayout.WEST);
+    JTextField txtSearch = new JTextField();
+    searchPanel.add(txtSearch, BorderLayout.CENTER);
+    panel.add(searchPanel, BorderLayout.NORTH);
+    
+    txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+        public void insertUpdate(DocumentEvent e) { filter(); }
+        public void removeUpdate(DocumentEvent e) { filter(); }
+        public void changedUpdate(DocumentEvent e) { filter(); }
+        private void filter() {
+            String text = txtSearch.getText();
+            if (text.trim().length() == 0) sorter.setRowFilter(null);
+            else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+        }
+    });
+    
+    JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
+    btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+    
+    JButton btnRefresh = new JButton("Refresh");
+    JButton btnEdit = new JButton("Edit Assignment");
+    JButton btnHapusAssignment = new JButton("Hapus Assignment");
+    
+    Dimension btnSize = new Dimension(150, 35);
+    btnRefresh.setPreferredSize(new Dimension(100, 35));
+    btnEdit.setPreferredSize(btnSize);
+    btnHapusAssignment.setPreferredSize(btnSize);
+    btnHapusAssignment.setBackground(new Color(255, 150, 150));
+    
+    btnPanel.add(btnRefresh);
+    btnPanel.add(btnEdit);
+    btnPanel.add(btnHapusAssignment);
+    
+    btnRefresh.addActionListener(e -> refreshAssignmentTable(model));
+    
+    btnEdit.addActionListener(e -> {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih guru yang assignment-nya ingin diedit!");
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        String namaGuru = (String) model.getValueAt(modelRow, 0);
+        
+        // Cari guru berdasarkan nama
+        Guru guruSelected = userRepo.getAll().stream()
+            .filter(u -> u instanceof Guru && u.getNamaLengkap().equals(namaGuru))
+            .map(u -> (Guru) u)
+            .findFirst().orElse(null);
+            
+        if (guruSelected != null) {
+            editGuruAssignment(guruSelected, model);
+        }
+    });
+    
+    btnHapusAssignment.addActionListener(e -> {
+        int row = table.getSelectedRow();
+        if (row == -1) {
+            JOptionPane.showMessageDialog(this, "Pilih guru yang assignment-nya ingin dihapus!");
+            return;
+        }
+        int modelRow = table.convertRowIndexToModel(row);
+        String namaGuru = (String) model.getValueAt(modelRow, 0);
+        
+        int confirm = JOptionPane.showConfirmDialog(this, 
+            "Hapus SEMUA assignment untuk guru " + namaGuru + "?\n(Mapel & Kelas akan dikosongkan)", 
+            "Konfirmasi", JOptionPane.YES_NO_OPTION);
+            
+        if (confirm == JOptionPane.YES_OPTION) {
+            Guru guruSelected = userRepo.getAll().stream()
+                .filter(u -> u instanceof Guru && u.getNamaLengkap().equals(namaGuru))
+                .map(u -> (Guru) u)
+                .findFirst().orElse(null);
+                
+            if (guruSelected != null) {
+                guruSelected.getMapelDiampu().clear();
+                guruSelected.getDaftarKelas().clear();
+                userRepo.updateGuru(guruSelected);
+                refreshAssignmentTable(model);
+                JOptionPane.showMessageDialog(this, "Assignment berhasil dihapus!");
+            }
+        }
+    });
+    
+    panel.add(new JScrollPane(table), BorderLayout.CENTER);
+    panel.add(btnPanel, BorderLayout.SOUTH);
+    return panel;
+}
+
+private void refreshAssignmentTable(DefaultTableModel model) {
+    model.setRowCount(0);
+    
+    for (User u : userRepo.getAll()) {
+        if (u instanceof Guru) {
+            Guru g = (Guru) u;
+            
+            // Gabungkan daftar mapel
+            String mapelStr = g.getMapelDiampu().isEmpty() ? 
+                "-" : 
+                g.getMapelDiampu().stream()
+                    .map(m -> m.getNamaMapel() + " (Kls " + m.getTingkat() + ")")
+                    .collect(Collectors.joining(", "));
+            
+            // Gabungkan daftar kelas
+            String kelasStr = g.getDaftarKelas().isEmpty() ? 
+                "-" : 
+                g.getDaftarKelas().stream()
+                    .map(k -> k.getNamaKelas())
+                    .collect(Collectors.joining(", "));
+            
+            model.addRow(new Object[]{
+                g.getNamaLengkap(),
+                g.getNip(),
+                mapelStr,
+                kelasStr
+            });
+        }
+    }
+}
+
+private void editGuruAssignment(Guru guru, DefaultTableModel model) {
+    JDialog dialog = new JDialog(this, "Edit Assignment - " + guru.getNamaLengkap(), true);
+    dialog.setSize(500, 400);
+    dialog.setLocationRelativeTo(this);
+    dialog.setLayout(new BorderLayout(10, 10));
+    
+    JPanel contentPanel = new JPanel();
+    contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+    contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+    
+    // Panel Mapel
+    JPanel mapelPanel = new JPanel(new BorderLayout());
+    mapelPanel.add(new JLabel("Mata Pelajaran yang Diajar:"), BorderLayout.NORTH);
+    
+    DefaultListModel<MataPelajaran> mapelListModel = new DefaultListModel<>();
+    for (MataPelajaran m : mapelRepo.getAll()) {
+        mapelListModel.addElement(m);
+    }
+    JList<MataPelajaran> listMapel = new JList<>(mapelListModel);
+    listMapel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    listMapel.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof MataPelajaran) {
+                MataPelajaran mp = (MataPelajaran) value;
+                setText(mp.getNamaMapel() + " (Tingkat " + mp.getTingkat() + ")");
+            }
+            return this;
+        }
+    });
+    
+    // Pre-select mapel yang sudah di-assign
+    List<Integer> selectedMapelIndices = new ArrayList<>();
+    for (int i = 0; i < mapelListModel.size(); i++) {
+        MataPelajaran mp = mapelListModel.get(i);
+        if (guru.getMapelDiampu().stream().anyMatch(m -> m.getIdMapel().equals(mp.getIdMapel()))) {
+            selectedMapelIndices.add(i);
+        }
+    }
+    int[] arrMapel = selectedMapelIndices.stream().mapToInt(Integer::intValue).toArray();
+    listMapel.setSelectedIndices(arrMapel);
+    
+    JScrollPane scrollMapel = new JScrollPane(listMapel);
+    scrollMapel.setPreferredSize(new Dimension(400, 120));
+    mapelPanel.add(scrollMapel, BorderLayout.CENTER);
+    
+    // Panel Kelas
+    JPanel kelasPanel = new JPanel(new BorderLayout());
+    kelasPanel.add(new JLabel("Kelas yang Diajar:"), BorderLayout.NORTH);
+    
+    DefaultListModel<Kelas> kelasListModel = new DefaultListModel<>();
+    for (Kelas k : kelasRepo.getAll()) {
+        kelasListModel.addElement(k);
+    }
+    JList<Kelas> listKelas = new JList<>(kelasListModel);
+    listKelas.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+    listKelas.setCellRenderer(new DefaultListCellRenderer() {
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof Kelas) {
+                setText(((Kelas) value).getNamaKelas());
+            }
+            return this;
+        }
+    });
+    
+    // Pre-select kelas yang sudah di-assign
+    List<Integer> selectedKelasIndices = new ArrayList<>();
+    for (int i = 0; i < kelasListModel.size(); i++) {
+        Kelas k = kelasListModel.get(i);
+        if (guru.getDaftarKelas().stream().anyMatch(kls -> kls.getIdKelas().equals(k.getIdKelas()))) {
+            selectedKelasIndices.add(i);
+        }
+    }
+    int[] arrKelas = selectedKelasIndices.stream().mapToInt(Integer::intValue).toArray();
+    listKelas.setSelectedIndices(arrKelas);
+    
+    JScrollPane scrollKelas = new JScrollPane(listKelas);
+    scrollKelas.setPreferredSize(new Dimension(400, 120));
+    kelasPanel.add(scrollKelas, BorderLayout.CENTER);
+    
+    contentPanel.add(mapelPanel);
+    contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+    contentPanel.add(kelasPanel);
+    
+    // Button Panel
+    JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+    JButton btnSimpan = new JButton("Simpan Perubahan");
+    JButton btnBatal = new JButton("Batal");
+    
+    btnSimpan.addActionListener(e -> {
+        // Clear assignment lama
+        guru.getMapelDiampu().clear();
+        guru.getDaftarKelas().clear();
+        
+        // Assign yang baru
+        List<MataPelajaran> selectedMapel = listMapel.getSelectedValuesList();
+        List<Kelas> selectedKelas = listKelas.getSelectedValuesList();
+        
+        for (MataPelajaran m : selectedMapel) {
+            guru.tambahMapel(m);
+        }
+        
+        for (Kelas k : selectedKelas) {
+            guru.tambahKelas(k);
+            // Link mapel ke kelas
+            for (MataPelajaran m : selectedMapel) {
+                kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
+            }
+        }
+        
+        userRepo.updateGuru(guru);
+        refreshAssignmentTable(model);
+        dialog.dispose();
+        JOptionPane.showMessageDialog(this, "Assignment berhasil diupdate!");
+    });
+    
+    btnBatal.addActionListener(e -> dialog.dispose());
+    
+    btnPanel.add(btnSimpan);
+    btnPanel.add(btnBatal);
+    
+    dialog.add(contentPanel, BorderLayout.CENTER);
+    dialog.add(btnPanel, BorderLayout.SOUTH);
+    dialog.setVisible(true);
+}
 }
