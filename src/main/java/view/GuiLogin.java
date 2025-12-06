@@ -52,6 +52,7 @@ public class GuiLogin extends JFrame {
         
         txtPassword = new JPasswordField();
         txtPassword.putClientProperty("JTextField.placeholderText", "Password");
+        txtPassword.putClientProperty("JPasswordField.showRevealButton", true);
 
         JButton btnLogin = new JButton("Login");
         btnLogin.setFont(new Font("SansSerif", Font.BOLD, 14));

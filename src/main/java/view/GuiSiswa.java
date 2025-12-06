@@ -77,6 +77,7 @@ public class GuiSiswa extends JFrame {
         nilaiPanel = new SiswaNilaiPanel(siswa, nilaiRepo, tugasRepo, ujianRepo); 
         
         JTabbedPane tabs = new JTabbedPane();
+        tabs.putClientProperty("JTabbedPane.tabType", "card");
         tabs.addTab("Absensi", new SiswaAbsensiPanel(siswa, absensiRepo));
         tabs.addTab("Materi", materiPanel);
         tabs.addTab("Tugas & Ujian", tugasPanel);
@@ -152,6 +153,7 @@ public class GuiSiswa extends JFrame {
         
         if (siswa.getKelas() != null && !siswa.getKelas().getDaftarMapel().isEmpty()) {
             JTabbedPane forumTabs = new JTabbedPane();
+            forumTabs.putClientProperty("JTabbedPane.tabType", "card");
             for (MataPelajaran m : siswa.getKelas().getDaftarMapel()) {
                 forumTabs.addTab(m.getNamaMapel(), new ForumPanel(siswa, siswa.getKelas(), m, forumRepo));
             }

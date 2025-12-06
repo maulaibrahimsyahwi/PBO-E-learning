@@ -4,7 +4,7 @@ import repository.*;
 import view.GuiLogin;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
-import com.formdev.flatlaf.FlatLightLaf;
+import com.formdev.flatlaf.themes.FlatMacLightLaf;
 import model.Admin;
 import utils.SecurityUtil;
 
@@ -12,11 +12,11 @@ public class App {
     public static void main(String[] args) {
         // 1. Setup Tema Tampilan (FlatLaf)
         try {
-            UIManager.setLookAndFeel(new FlatLightLaf());
-            // Opsional: Kustomisasi tampilan tombol melengkung
+            UIManager.setLookAndFeel(new FlatMacLightLaf());
             UIManager.put("Button.arc", 12);
             UIManager.put("Component.arc", 12);
             UIManager.put("TextComponent.arc", 12);
+            UIManager.put("TabbedPane.showTabSeparators", true);
         } catch (Exception ex) { 
             ex.printStackTrace();
         }

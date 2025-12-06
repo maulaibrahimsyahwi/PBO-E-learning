@@ -63,6 +63,7 @@ public class GuiAdmin extends JFrame {
         
         JTabbedPane tabbedPane = new JTabbedPane();
         
+        tabbedPane.putClientProperty("JTabbedPane.tabType", "card");
         tabbedPane.addTab("Dashboard", new AdminDashboardPanel(userRepo, kelasRepo, mapelRepo));
         tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(userRepo));
         tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(userRepo, kelasRepo));

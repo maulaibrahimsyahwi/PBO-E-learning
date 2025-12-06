@@ -109,6 +109,7 @@ public class GuiGuru extends JFrame {
         add(topPanel, BorderLayout.NORTH);
 
         tabbedContent = new JTabbedPane();
+        tabbedContent.putClientProperty("JTabbedPane.tabType", "card");
         add(tabbedContent, BorderLayout.CENTER);
 
         btnLoad.addActionListener(e -> loadDashboard());
