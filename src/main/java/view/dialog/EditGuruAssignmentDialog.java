@@ -148,15 +148,13 @@ public class EditGuruAssignmentDialog extends JDialog {
         // Memaksa refresh pada parent panel
         if (getParent() instanceof JFrame) {
             JFrame parentFrame = (JFrame) getParent();
-            // Cari GuruAssignmentPanel dan panggil refreshTable()
             for (Component comp : parentFrame.getContentPane().getComponents()) {
-                if (comp instanceof JTabbedPane) {
-                    JTabbedPane tabs = (JTabbedPane) comp;
+                if (comp instanceof JTabbedPane tabs) {
                     for (int i = 0; i < tabs.getTabCount(); i++) {
                         if (tabs.getTitleAt(i).equals("Assignment Guru")) {
                             Component panel = tabs.getComponentAt(i);
-                            if (panel instanceof GuruAssignmentPanel) {
-                                ((GuruAssignmentPanel) panel).refreshTable();
+                            if (panel instanceof GuruAssignmentPanel guruAssignmentPanel) {
+                                guruAssignmentPanel.refreshTable();
                             }
                         }
                     }
