@@ -118,7 +118,6 @@ public class GuiAdmin extends JFrame {
         
         refreshGuruTable(model);
 
-        // --- NEW CODE: Search Functionality (Similar to Siswa) --- 
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model); 
         table.setRowSorter(sorter); 
         
@@ -139,7 +138,6 @@ public class GuiAdmin extends JFrame {
                 else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text)); 
             } 
         }); 
-        // --- END NEW CODE ---
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); 
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); 
@@ -334,21 +332,27 @@ public class GuiAdmin extends JFrame {
         });
 
         btnAssign.addActionListener(e -> {
-            JPanel panelAssign = new JPanel(new GridLayout(2, 2, 10, 10));
-            JComboBox<Siswa> comboSiswa = new JComboBox<>();
-            
-            for(Siswa s : userRepo.getAllSiswa()) {
-                comboSiswa.addItem(s);
-            }
-            
-            comboSiswa.setRenderer(new DefaultListCellRenderer() {
+            // 1. Setup Siswa List (Multi-Select - JList)
+            DefaultListModel<Siswa> siswaListModel = new DefaultListModel<>();
+            for (Siswa s : userRepo.getAllSiswa()) siswaListModel.addElement(s);
+            JList<Siswa> listSiswa = new JList<>(siswaListModel);
+            listSiswa.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            listSiswa.setCellRenderer(new DefaultListCellRenderer() {
                 @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if(value instanceof Siswa) setText(((Siswa)value).getNamaLengkap());
+                    if(value instanceof Siswa) {
+                        Siswa s = (Siswa) value;
+                        String kelasStr = (s.getKelas() != null) ? s.getKelas().getNamaKelas() : "-";
+                        setText(s.getNamaLengkap() + " (" + s.getNis() + ") - Kelas: " + kelasStr);
+                    }
                     return this;
                 }
             });
+            JScrollPane scrollSiswa = new JScrollPane(listSiswa);
+            scrollSiswa.setPreferredSize(new Dimension(350, 200));
+
+            // 2. Setup Kelas Dropdown (Single Select - JComboBox)
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new DefaultListCellRenderer() {
@@ -360,18 +364,43 @@ public class GuiAdmin extends JFrame {
                 }
             });
 
-            panelAssign.add(new JLabel("Pilih Siswa:")); panelAssign.add(comboSiswa);
-            panelAssign.add(new JLabel("Pilih Kelas Tujuan:")); panelAssign.add(comboKelas);
+            // 3. Combine components in a dialog panel (BoxLayout for vertical alignment)
+            JPanel panelAssign = new JPanel();
+            panelAssign.setLayout(new BoxLayout(panelAssign, BoxLayout.Y_AXIS));
+            panelAssign.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
-            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Siswa ke Kelas", JOptionPane.OK_CANCEL_OPTION);
+            // Kelas Panel (FlowLayout for single row)
+            JPanel kelasPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            kelasPanel.add(new JLabel("Pilih Kelas Tujuan:"));
+            kelasPanel.add(comboKelas);
+            kelasPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            panelAssign.add(kelasPanel);
+            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
+            panelAssign.add(new JLabel("Pilih Siswa (Ctrl+Klik untuk multi-pilih):"));
+            panelAssign.add(scrollSiswa);
+
+            // Show Dialog
+            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Siswa ke Kelas (Multi-Select)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
             if (result == JOptionPane.OK_OPTION) {
-                Siswa s = (Siswa) comboSiswa.getSelectedItem();
                 Kelas k = (Kelas) comboKelas.getSelectedItem();
-                if (s != null && k != null) {
-                    s.setKelas(k);
-                    userRepo.updateSiswa(s); 
+                List<Siswa> selectedSiswa = listSiswa.getSelectedValuesList();
+                
+                if (k != null && !selectedSiswa.isEmpty()) {
+                    int count = 0;
+                    for (Siswa s : selectedSiswa) {
+                        s.setKelas(k);
+                        userRepo.updateSiswa(s); 
+                        count++;
+                    }
+                    
                     refreshSiswaTable(model);
-                    JOptionPane.showMessageDialog(this, "Berhasil assign " + s.getNamaLengkap() + " ke kelas " + k.getNamaKelas());
+                    JOptionPane.showMessageDialog(this, "Berhasil assign " + count + " Siswa ke kelas " + k.getNamaKelas());
+                } else if (k == null) {
+                    JOptionPane.showMessageDialog(this, "Pilih Kelas Tujuan.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Pilih minimal 1 Siswa.");
                 }
             }
         });
@@ -399,7 +428,6 @@ public class GuiAdmin extends JFrame {
         
         refreshKelasTable(model);
 
-        // --- NEW CODE: Search Functionality (Similar to Siswa) ---
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
 
@@ -420,7 +448,6 @@ public class GuiAdmin extends JFrame {
                 else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
             }
         });
-        // --- END NEW CODE ---
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
@@ -449,7 +476,6 @@ public class GuiAdmin extends JFrame {
                 Kelas kBaru = new Kelas(idKelas, txtNama.getText(), txtTingkat.getText());
                 kelasRepo.addKelas(kBaru);
                 
-                // Distribusikan Mapel ke Kelas secara otomatis berdasarkan tingkat
                 for (MataPelajaran m : mapelRepo.getAll()) {
                     if (m.getTingkat().equals(kBaru.getTingkat())) {
                         kelasRepo.addMapelToKelas(idKelas, m.getIdMapel());
@@ -518,7 +544,6 @@ public class GuiAdmin extends JFrame {
         
         refreshMapelTable(model);
 
-        // --- NEW CODE: Search Functionality (Similar to Siswa) ---
         TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
         table.setRowSorter(sorter);
 
@@ -574,7 +599,7 @@ public class GuiAdmin extends JFrame {
                 for (Kelas k : kelasRepo.getAll()) {
                     if (k.getTingkat().equals(m.getTingkat())) {
                         k.tambahMapel(m); 
-                        kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel()); // Simpan ke DB
+                        kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
                         count++;
                     }
                 }
@@ -607,7 +632,6 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // START OF MODIFIED BLOCK FOR btnAssign.addActionListener
         btnAssign.addActionListener(e -> {
             // 1. Setup Guru Dropdown (Single Select - JComboBox)
             JComboBox<Guru> comboGuru = new JComboBox<>();
@@ -640,7 +664,7 @@ public class GuiAdmin extends JFrame {
                 }
             });
             JScrollPane scrollMapel = new JScrollPane(listMapel);
-            scrollMapel.setPreferredSize(new Dimension(300, 150)); // Set preferred size for list
+            scrollMapel.setPreferredSize(new Dimension(300, 150));
 
             // 3. Setup Kelas List (Multi-Select - JList)
             DefaultListModel<Kelas> kelasListModel = new DefaultListModel<>();
@@ -656,7 +680,7 @@ public class GuiAdmin extends JFrame {
                 }
             });
             JScrollPane scrollKelas = new JScrollPane(listKelas);
-            scrollKelas.setPreferredSize(new Dimension(300, 150)); // Set preferred size for list
+            scrollKelas.setPreferredSize(new Dimension(300, 150));
 
             // 4. Combine components in a dialog panel (BoxLayout for vertical alignment)
             JPanel panelAssign = new JPanel();
@@ -690,24 +714,20 @@ public class GuiAdmin extends JFrame {
                     int mapelCount = 0;
                     int kelasCount = 0;
                     
-                    // Assign Mapel ke Guru
                     for (MataPelajaran m : selectedMapel) {
                         g.tambahMapel(m);
                         mapelCount++;
                     }
 
-                    // Assign Kelas ke Guru & Link Mapel-Kelas
                     for (Kelas k : selectedKelas) {
                         g.tambahKelas(k);
                         kelasCount++;
                         
-                        // Hubungkan SEMUA Mapel yang dipilih ke SEMUA Kelas yang dipilih
                         for (MataPelajaran m : selectedMapel) {
-                            kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel()); // Simpan relasi Mapel-Kelas
+                            kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
                         }
                     }
                     
-                    // Simpan data Guru (termasuk relasi mapel & kelas) ke DB
                     userRepo.updateGuru(g); 
                     
                     JOptionPane.showMessageDialog(this, 
@@ -721,7 +741,6 @@ public class GuiAdmin extends JFrame {
                 }
             }
         });
-        // END OF MODIFIED BLOCK FOR btnAssign.addActionListener
 
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
@@ -748,7 +767,6 @@ public class GuiAdmin extends JFrame {
         model.setRowCount(0);
         for (MataPelajaran m : mapelRepo.getAll()) model.addRow(new Object[]{m.getIdMapel(), m.getNamaMapel(), m.getDeskripsi(), m.getTingkat()});
     }
-    // TAMBAHKAN METHOD INI DI CLASS GuiAdmin.java
 
 private JPanel createPanelAssignment() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -759,13 +777,11 @@ private JPanel createPanelAssignment() {
     };
     JTable table = new JTable(model);
     
-    // Set kolom wrap text
     table.getColumnModel().getColumn(2).setPreferredWidth(250);
     table.getColumnModel().getColumn(3).setPreferredWidth(200);
     
     refreshAssignmentTable(model);
     
-    // Search functionality
     TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
     table.setRowSorter(sorter);
     
@@ -815,7 +831,6 @@ private JPanel createPanelAssignment() {
         int modelRow = table.convertRowIndexToModel(row);
         String namaGuru = (String) model.getValueAt(modelRow, 0);
         
-        // Cari guru berdasarkan nama
         Guru guruSelected = userRepo.getAll().stream()
             .filter(u -> u instanceof Guru && u.getNamaLengkap().equals(namaGuru))
             .map(u -> (Guru) u)
@@ -867,14 +882,12 @@ private void refreshAssignmentTable(DefaultTableModel model) {
         if (u instanceof Guru) {
             Guru g = (Guru) u;
             
-            // Gabungkan daftar mapel
             String mapelStr = g.getMapelDiampu().isEmpty() ? 
                 "-" : 
                 g.getMapelDiampu().stream()
                     .map(m -> m.getNamaMapel() + " (Kls " + m.getTingkat() + ")")
                     .collect(Collectors.joining(", "));
             
-            // Gabungkan daftar kelas
             String kelasStr = g.getDaftarKelas().isEmpty() ? 
                 "-" : 
                 g.getDaftarKelas().stream()
@@ -923,7 +936,6 @@ private void editGuruAssignment(Guru guru, DefaultTableModel model) {
         }
     });
     
-    // Pre-select mapel yang sudah di-assign
     List<Integer> selectedMapelIndices = new ArrayList<>();
     for (int i = 0; i < mapelListModel.size(); i++) {
         MataPelajaran mp = mapelListModel.get(i);
@@ -959,7 +971,6 @@ private void editGuruAssignment(Guru guru, DefaultTableModel model) {
         }
     });
     
-    // Pre-select kelas yang sudah di-assign
     List<Integer> selectedKelasIndices = new ArrayList<>();
     for (int i = 0; i < kelasListModel.size(); i++) {
         Kelas k = kelasListModel.get(i);
@@ -984,11 +995,9 @@ private void editGuruAssignment(Guru guru, DefaultTableModel model) {
     JButton btnBatal = new JButton("Batal");
     
     btnSimpan.addActionListener(e -> {
-        // Clear assignment lama
         guru.getMapelDiampu().clear();
         guru.getDaftarKelas().clear();
         
-        // Assign yang baru
         List<MataPelajaran> selectedMapel = listMapel.getSelectedValuesList();
         List<Kelas> selectedKelas = listKelas.getSelectedValuesList();
         
@@ -998,7 +1007,6 @@ private void editGuruAssignment(Guru guru, DefaultTableModel model) {
         
         for (Kelas k : selectedKelas) {
             guru.tambahKelas(k);
-            // Link mapel ke kelas
             for (MataPelajaran m : selectedMapel) {
                 kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
             }
