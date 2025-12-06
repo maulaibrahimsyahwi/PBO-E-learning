@@ -55,21 +55,29 @@ public class ForumPanel extends JPanel {
         };
         tableTopic = new JTable(tableModel);
         
-        // --- PERBAIKAN TATA LETAK TOMBOL FORUM ---
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnCreate = new JButton("Buat Topik Baru");
         JButton btnOpen = new JButton("Buka Diskusi");
         JButton btnRefresh = new JButton("Refresh");
+        JButton btnDelete = new JButton("Hapus Topik"); // Tombol Hapus Baru
         
         Dimension btnSize = new Dimension(130, 35);
         btnCreate.setPreferredSize(new Dimension(140, 35));
         btnOpen.setPreferredSize(btnSize);
         btnRefresh.setPreferredSize(new Dimension(100, 35));
+        btnDelete.setPreferredSize(new Dimension(110, 35));
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnCreate);
         btnPanel.add(btnOpen);
+        
+        // Tampilkan tombol Hapus hanya jika user adalah Guru atau Admin
+        if (currentUser instanceof Guru || currentUser instanceof Admin) {
+            btnPanel.add(btnDelete);
+        }
+        
         btnPanel.add(btnRefresh);
         
         btnCreate.addActionListener(e -> actionCreateTopic());
@@ -81,6 +89,23 @@ public class ForumPanel extends JPanel {
                 openTopic(idTopic);
             } else {
                 JOptionPane.showMessageDialog(this, "Pilih topik dulu!");
+            }
+        });
+        
+        // Logic Hapus Topik
+        btnDelete.addActionListener(e -> {
+            int row = tableTopic.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih topik yang akan dihapus!");
+                return;
+            }
+            String idTopic = (String) tableModel.getValueAt(row, 0);
+            String judul = (String) tableModel.getValueAt(row, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus topik '" + judul + "'?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                forumRepo.deletePesan(idTopic);
+                loadTopics();
             }
         });
         

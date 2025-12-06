@@ -43,7 +43,7 @@ public class GuiAdmin extends JFrame {
         this.soalRepo = soalRepo;
 
         setTitle("Dashboard Admin");
-        setSize(1000, 700); // Sedikit diperlebar agar tabel lebih lega
+        setSize(1000, 700); 
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
@@ -56,12 +56,11 @@ public class GuiAdmin extends JFrame {
 
         add(tabbedPane);
         
-        // Panel bawah untuk tombol Logout dengan styling yang lebih baik
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 10, 10));
         
         JButton btnLogout = new JButton("Logout");
-        btnLogout.setBackground(new Color(255, 100, 100)); // Warna merah soft
+        btnLogout.setBackground(new Color(255, 100, 100)); 
         btnLogout.setForeground(Color.WHITE);
         btnLogout.addActionListener(e -> {
             dispose();
@@ -106,7 +105,6 @@ public class GuiAdmin extends JFrame {
         return card;
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA GURU ---
     private JPanel createPanelGuru() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIP", "Spesialisasi"};
@@ -115,13 +113,19 @@ public class GuiAdmin extends JFrame {
         
         refreshGuruTable(model);
 
-        // Panel tombol dirapikan
-        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); // Rata kanan, gap 10px
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); // Padding luar
+        JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); 
+        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); 
         
         JButton btnAdd = new JButton("Tambah Guru");
-        btnAdd.setPreferredSize(new Dimension(120, 35)); // Ukuran seragam
+        JButton btnDelete = new JButton("Hapus"); 
+        
+        Dimension btnSize = new Dimension(120, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(btnSize);
+        btnDelete.setBackground(new Color(255, 150, 150)); 
+
         btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
 
         btnAdd.addActionListener(e -> {
             JTextField txtUser = new JTextField();
@@ -146,6 +150,22 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih guru yang akan dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String nama = (String) model.getValueAt(row, 2);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus guru " + nama + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                userRepo.deleteUser(id);
+                refreshGuruTable(model);
+            }
+        });
+
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
@@ -160,7 +180,6 @@ public class GuiAdmin extends JFrame {
         }
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA SISWA ---
     private JPanel createPanelSiswa() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Username", "Nama", "NIS", "Kelas", "Angkatan", "Email"};
@@ -174,7 +193,6 @@ public class GuiAdmin extends JFrame {
         
         refreshSiswaTable(model);
 
-        // Panel Search dirapikan
         JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         searchPanel.add(new JLabel(" Cari Siswa: "), BorderLayout.WEST);
@@ -193,25 +211,26 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // Panel Tombol dirapikan
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JButton btnAdd = new JButton("Tambah");
         JButton btnEdit = new JButton("Edit Data"); 
         JButton btnAssign = new JButton("Assign Kelas");
+        JButton btnDelete = new JButton("Hapus"); 
         
-        // Opsional: Set ukuran tombol seragam
-        Dimension btnSize = new Dimension(120, 35);
+        Dimension btnSize = new Dimension(110, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
         btnAssign.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(btnSize);
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);
+        btnPanel.add(btnDelete);
 
-        // Logic Tambah Siswa
         btnAdd.addActionListener(e -> {
             JTextField txtUser = new JTextField();
             JTextField txtPass = new JTextField();
@@ -235,16 +254,13 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // Logic Edit Siswa
         btnEdit.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
                 JOptionPane.showMessageDialog(this, "Pilih siswa dulu!");
                 return;
             }
-            
             int modelRow = table.convertRowIndexToModel(row);
-
             String id = (String) model.getValueAt(modelRow, 0);
             String user = (String) model.getValueAt(modelRow, 1);
             String nama = (String) model.getValueAt(modelRow, 2);
@@ -259,16 +275,12 @@ public class GuiAdmin extends JFrame {
             JTextField txtEmail = new JTextField(email);
 
             Object[] message = {
-                "Username:", txtUser, 
-                "Nama Lengkap:", txtNama,
-                "NIS:", txtNis,
-                "Angkatan:", txtAngk,
-                "Email:", txtEmail
+                "Username:", txtUser, "Nama Lengkap:", txtNama,
+                "NIS:", txtNis, "Angkatan:", txtAngk, "Email:", txtEmail
             };
 
             int opt = JOptionPane.showConfirmDialog(this, message, "Edit Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (opt == JOptionPane.OK_OPTION) {
-                // Password kosongkan agar tidak berubah (logic updateSiswa di UserRepository tidak update password)
                 Siswa sBaru = new Siswa(id, txtUser.getText(), "", txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngk.getText());
                 userRepo.updateSiswa(sBaru);
                 refreshSiswaTable(model);
@@ -276,27 +288,41 @@ public class GuiAdmin extends JFrame {
             }
         });
 
-        // Logic Assign Kelas
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih siswa dulu!");
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(row);
+            String id = (String) model.getValueAt(modelRow, 0);
+            String nama = (String) model.getValueAt(modelRow, 2);
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus siswa " + nama + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                userRepo.deleteUser(id);
+                refreshSiswaTable(model);
+            }
+        });
+
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(2, 2, 10, 10));
-            
             JComboBox<Siswa> comboSiswa = new JComboBox<>();
-            for(User u : userRepo.getAll()) {
-                if(u instanceof Siswa) comboSiswa.addItem((Siswa) u);
+            
+            for(Siswa s : userRepo.getAllSiswa()) {
+                comboSiswa.addItem(s);
             }
+            
             comboSiswa.setRenderer(new DefaultListCellRenderer() {
-                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Siswa) setText(((Siswa)value).getNamaLengkap());
                     return this;
                 }
             });
-
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new DefaultListCellRenderer() {
-                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
@@ -304,20 +330,16 @@ public class GuiAdmin extends JFrame {
                 }
             });
 
-            panelAssign.add(new JLabel("Pilih Siswa:"));
-            panelAssign.add(comboSiswa);
-            panelAssign.add(new JLabel("Pilih Kelas Tujuan:"));
-            panelAssign.add(comboKelas);
+            panelAssign.add(new JLabel("Pilih Siswa:")); panelAssign.add(comboSiswa);
+            panelAssign.add(new JLabel("Pilih Kelas Tujuan:")); panelAssign.add(comboKelas);
 
             int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Siswa ke Kelas", JOptionPane.OK_CANCEL_OPTION);
-            
             if (result == JOptionPane.OK_OPTION) {
                 Siswa s = (Siswa) comboSiswa.getSelectedItem();
                 Kelas k = (Kelas) comboKelas.getSelectedItem();
-
                 if (s != null && k != null) {
                     s.setKelas(k);
-                    userRepo.addUser(s); 
+                    userRepo.updateSiswa(s); 
                     refreshSiswaTable(model);
                     JOptionPane.showMessageDialog(this, "Berhasil assign " + s.getNamaLengkap() + " ke kelas " + k.getNamaKelas());
                 }
@@ -331,15 +353,12 @@ public class GuiAdmin extends JFrame {
 
     private void refreshSiswaTable(DefaultTableModel model) {
         model.setRowCount(0);
-        for (User u : userRepo.getAll()) {
-            if (u instanceof Siswa s) {
-                String kls = (s.getKelas() != null) ? s.getKelas().getNamaKelas() : "-";
-                model.addRow(new Object[]{s.getIdUser(), s.getUsername(), s.getNamaLengkap(), s.getNis(), kls, s.getAngkatan(), s.getEmail()});
-            }
+        for (Siswa s : userRepo.getAllSiswa()) {
+            String kls = (s.getKelas() != null) ? s.getKelas().getNamaKelas() : "-";
+            model.addRow(new Object[]{s.getIdUser(), s.getUsername(), s.getNamaLengkap(), s.getNis(), kls, s.getAngkatan(), s.getEmail()});
         }
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA KELAS ---
     private JPanel createPanelKelas() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Kelas", "Tingkat"};
@@ -350,19 +369,22 @@ public class GuiAdmin extends JFrame {
         
         refreshKelasTable(model);
 
-        // Panel Tombol dirapikan
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Tambah Kelas");
         JButton btnEdit = new JButton("Edit Kelas");
+        JButton btnDelete = new JButton("Hapus"); 
         
-        Dimension btnSize = new Dimension(130, 35);
+        Dimension btnSize = new Dimension(120, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(btnSize);
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
+        btnPanel.add(btnDelete);
 
         btnAdd.addActionListener(e -> {
             JTextField txtNama = new JTextField();
@@ -370,7 +392,17 @@ public class GuiAdmin extends JFrame {
             Object[] message = {"Nama Kelas:", txtNama, "Tingkat (10/11/12):", txtTingkat};
 
             if (JOptionPane.showConfirmDialog(this, message, "Tambah Kelas", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
-                kelasRepo.addKelas(new Kelas(IdUtil.generate(), txtNama.getText(), txtTingkat.getText()));
+                String idKelas = IdUtil.generate();
+                Kelas kBaru = new Kelas(idKelas, txtNama.getText(), txtTingkat.getText());
+                kelasRepo.addKelas(kBaru);
+                
+                // Distribusikan Mapel ke Kelas secara otomatis berdasarkan tingkat
+                for (MataPelajaran m : mapelRepo.getAll()) {
+                    if (m.getTingkat().equals(kBaru.getTingkat())) {
+                        kelasRepo.addMapelToKelas(idKelas, m.getIdMapel());
+                    }
+                }
+                
                 refreshKelasTable(model);
             }
         });
@@ -381,26 +413,35 @@ public class GuiAdmin extends JFrame {
                 JOptionPane.showMessageDialog(this, "Pilih kelas yang mau diedit!");
                 return;
             }
-
             String idKelas = (String) model.getValueAt(row, 0);
             String namaLama = (String) model.getValueAt(row, 1);
             String tingkatLama = (String) model.getValueAt(row, 2);
 
             JTextField txtNama = new JTextField(namaLama);
             JTextField txtTingkat = new JTextField(tingkatLama);
-            
-            Object[] message = {
-                "ID: " + idKelas,
-                "Nama Kelas:", txtNama, 
-                "Tingkat (10/11/12):", txtTingkat
-            };
+            Object[] message = {"ID: " + idKelas, "Nama Kelas:", txtNama, "Tingkat (10/11/12):", txtTingkat};
 
-            int option = JOptionPane.showConfirmDialog(this, message, "Edit Kelas", JOptionPane.OK_CANCEL_OPTION);
-            if (option == JOptionPane.OK_OPTION) {
+            if (JOptionPane.showConfirmDialog(this, message, "Edit Kelas", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 Kelas kBaru = new Kelas(idKelas, txtNama.getText(), txtTingkat.getText());
                 kelasRepo.updateKelas(kBaru);
                 refreshKelasTable(model);
                 JOptionPane.showMessageDialog(this, "Data Kelas berhasil diubah!");
+            }
+        });
+
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih kelas yang mau dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String nama = (String) model.getValueAt(row, 1);
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus kelas " + nama + "? (Data siswa di kelas ini mungkin terpengaruh)", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                kelasRepo.deleteKelas(id);
+                refreshKelasTable(model);
             }
         });
 
@@ -414,7 +455,6 @@ public class GuiAdmin extends JFrame {
         for (Kelas k : kelasRepo.getAll()) model.addRow(new Object[]{k.getIdKelas(), k.getNamaKelas(), k.getTingkat()});
     }
 
-    // --- PERBAIKAN TATA LETAK TOMBOL KELOLA MAPEL ---
     private JPanel createPanelMapel() {
         JPanel panel = new JPanel(new BorderLayout());
         String[] columns = {"ID", "Nama Mapel", "Deskripsi", "Tingkat"};
@@ -425,22 +465,25 @@ public class GuiAdmin extends JFrame {
         
         refreshMapelTable(model);
 
-        // Panel Tombol dirapikan
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Tambah Mapel");
         JButton btnEdit = new JButton("Edit Mapel");
         JButton btnAssign = new JButton("Assign Guru");
+        JButton btnDelete = new JButton("Hapus"); 
         
-        Dimension btnSize = new Dimension(130, 35);
+        Dimension btnSize = new Dimension(120, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
         btnAssign.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(btnSize);
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
         btnPanel.add(btnAssign);
+        btnPanel.add(btnDelete);
 
         btnAdd.addActionListener(e -> {
             JTextField txtNama = new JTextField();
@@ -451,10 +494,17 @@ public class GuiAdmin extends JFrame {
             if (JOptionPane.showConfirmDialog(this, msg, "Tambah Mapel", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
                 MataPelajaran m = new MataPelajaran(IdUtil.generate(), txtNama.getText(), txtDesk.getText(), txtTingkat.getText());
                 mapelRepo.addMapel(m);
+                
+                int count = 0;
                 for (Kelas k : kelasRepo.getAll()) {
-                    if (k.getTingkat().equals(m.getTingkat())) k.tambahMapel(m);
+                    if (k.getTingkat().equals(m.getTingkat())) {
+                        k.tambahMapel(m); 
+                        kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel()); // Simpan ke DB
+                        count++;
+                    }
                 }
                 refreshMapelTable(model);
+                JOptionPane.showMessageDialog(this, "Mapel ditambahkan dan didistribusikan ke " + count + " kelas.");
             }
         });
 
@@ -464,7 +514,6 @@ public class GuiAdmin extends JFrame {
                 JOptionPane.showMessageDialog(this, "Pilih mapel yang mau diedit!");
                 return;
             }
-
             String id = (String) model.getValueAt(row, 0);
             String nama = (String) model.getValueAt(row, 1);
             String desk = (String) model.getValueAt(row, 2);
@@ -473,7 +522,6 @@ public class GuiAdmin extends JFrame {
             JTextField txtNama = new JTextField(nama);
             JTextField txtDesk = new JTextField(desk);
             JTextField txtTingkat = new JTextField(tkt);
-            
             Object[] msg = {"Nama:", txtNama, "Deskripsi:", txtDesk, "Tingkat:", txtTingkat};
             
             if (JOptionPane.showConfirmDialog(this, msg, "Edit Mapel", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
@@ -484,26 +532,38 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih mapel yang mau dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String nama = (String) model.getValueAt(row, 1);
+
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus mapel " + nama + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                mapelRepo.deleteMapel(id);
+                refreshMapelTable(model);
+            }
+        });
+
         btnAssign.addActionListener(e -> {
             JPanel panelAssign = new JPanel(new GridLayout(3, 2, 10, 10));
-
             JComboBox<Guru> comboGuru = new JComboBox<>();
             for(User u : userRepo.getAll()) {
                 if(u instanceof Guru) comboGuru.addItem((Guru) u);
             }
             comboGuru.setRenderer(new DefaultListCellRenderer() {
-                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Guru) setText(((Guru)value).getNamaLengkap());
                     return this;
                 }
             });
-
             JComboBox<MataPelajaran> comboMapel = new JComboBox<>();
             for(MataPelajaran m : mapelRepo.getAll()) comboMapel.addItem(m);
             comboMapel.setRenderer(new DefaultListCellRenderer() {
-                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof MataPelajaran) {
@@ -513,11 +573,9 @@ public class GuiAdmin extends JFrame {
                     return this;
                 }
             });
-
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new DefaultListCellRenderer() {
-                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
@@ -525,24 +583,25 @@ public class GuiAdmin extends JFrame {
                 }
             });
 
-            panelAssign.add(new JLabel("Pilih Guru:"));
-            panelAssign.add(comboGuru);
-            panelAssign.add(new JLabel("Mengajar Mapel:"));
-            panelAssign.add(comboMapel);
-            panelAssign.add(new JLabel("Di Kelas:"));
-            panelAssign.add(comboKelas);
+            panelAssign.add(new JLabel("Pilih Guru:")); panelAssign.add(comboGuru);
+            panelAssign.add(new JLabel("Mengajar Mapel:")); panelAssign.add(comboMapel);
+            panelAssign.add(new JLabel("Di Kelas:")); panelAssign.add(comboKelas);
 
             int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar", JOptionPane.OK_CANCEL_OPTION);
-
             if (result == JOptionPane.OK_OPTION) {
                 Guru g = (Guru) comboGuru.getSelectedItem();
                 MataPelajaran m = (MataPelajaran) comboMapel.getSelectedItem();
                 Kelas k = (Kelas) comboKelas.getSelectedItem();
-
                 if (g != null && m != null && k != null) {
                     g.tambahMapel(m);
                     g.tambahKelas(k);
-                    userRepo.addUser(g); 
+                    
+                    // FIX 1: Gunakan updateGuru agar data guru tersimpan (termasuk relasinya)
+                    userRepo.updateGuru(g); 
+                    
+                    // FIX 2: Hubungkan Mapel ke Kelas agar muncul di Dashboard Siswa
+                    kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
+                    
                     JOptionPane.showMessageDialog(this, "Sukses assign Guru " + g.getNamaLengkap());
                 }
             }

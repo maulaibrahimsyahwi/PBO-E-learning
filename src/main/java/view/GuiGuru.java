@@ -142,10 +142,34 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Buat Ujian & Soal");
-        btnAdd.setPreferredSize(new Dimension(150, 35));
+        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        
+        Dimension btnSize = new Dimension(150, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(new Dimension(100, 35));
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
+        
         btnAdd.addActionListener(e -> tambahUjian(guru, k, m));
+        
+        // Logic Hapus Ujian
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih ujian yang akan dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String nama = (String) model.getValueAt(row, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus ujian '" + nama + "'? (Semua soal & nilai akan terhapus)", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                ujianRepo.deleteUjian(id);
+                loadDashboard();
+            }
+        });
 
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
@@ -317,9 +341,15 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Tambah Materi (Upload)");
-        btnAdd.setPreferredSize(new Dimension(180, 35));
+        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        
+        Dimension btnSize = new Dimension(180, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(new Dimension(100, 35));
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
         
         btnAdd.addActionListener(e -> {
             JTextField txtJudul = new JTextField();
@@ -350,6 +380,23 @@ public class GuiGuru extends JFrame {
             }
         });
         
+        // Logic Hapus Materi
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih materi yang akan dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String judul = (String) model.getValueAt(row, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus materi '" + judul + "'?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                materiRepo.deleteMateri(id);
+                loadDashboard();
+            }
+        });
+        
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;
@@ -370,9 +417,15 @@ public class GuiGuru extends JFrame {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnAdd = new JButton("Buat Tugas");
-        btnAdd.setPreferredSize(new Dimension(120, 35));
+        JButton btnDelete = new JButton("Hapus"); // Tombol Hapus Baru
+        
+        Dimension btnSize = new Dimension(120, 35);
+        btnAdd.setPreferredSize(btnSize);
+        btnDelete.setPreferredSize(new Dimension(100, 35));
+        btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
+        btnPanel.add(btnDelete);
         
         btnAdd.addActionListener(e -> {
             String judul = JOptionPane.showInputDialog("Judul:");
@@ -387,6 +440,24 @@ public class GuiGuru extends JFrame {
                 } catch(Exception ex) { JOptionPane.showMessageDialog(this, "Format tanggal salah"); }
             }
         });
+        
+        // Logic Hapus Tugas
+        btnDelete.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih tugas yang akan dihapus!");
+                return;
+            }
+            String id = (String) model.getValueAt(row, 0);
+            String judul = (String) model.getValueAt(row, 1);
+            
+            int confirm = JOptionPane.showConfirmDialog(this, "Hapus tugas '" + judul + "'? (Data nilai & jawaban siswa akan terhapus)", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+            if (confirm == JOptionPane.YES_OPTION) {
+                tugasRepo.deleteTugas(id);
+                loadDashboard();
+            }
+        });
+        
         panel.add(new JScrollPane(table), BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
         return panel;

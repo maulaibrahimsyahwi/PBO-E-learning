@@ -26,6 +26,24 @@ public class UjianRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    // --- FITUR HAPUS UJIAN ---
+    public void deleteUjian(String idUjian) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Hapus data terkait (soal, jawaban, nilai)
+            try (Statement st = conn.createStatement()) {
+                st.executeUpdate("DELETE FROM soal WHERE id_ujian = '" + idUjian + "'");
+                st.executeUpdate("DELETE FROM jawaban WHERE id_ujian = '" + idUjian + "'");
+                st.executeUpdate("DELETE FROM nilai WHERE id_ujian = '" + idUjian + "'");
+            }
+            // Hapus ujian utama
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM ujian WHERE id_ujian = ?")) {
+                ps.setString(1, idUjian);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    // ------------------------
+
     public List<Ujian> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         List<Ujian> list = new ArrayList<>();
         String sql = "SELECT * FROM ujian WHERE id_mapel = ? AND id_kelas = ?";
@@ -45,12 +63,25 @@ public class UjianRepository {
     }
     
     public List<Ujian> getAll() { 
-        return new ArrayList<>(); 
+        List<Ujian> list = new ArrayList<>();
+        String sql = "SELECT * FROM ujian";
+        try (Connection conn = DatabaseConnection.getConnection();
+             ResultSet rs = conn.createStatement().executeQuery(sql)) {
+            while (rs.next()) {
+                 Ujian u = new Ujian(rs.getString("id_ujian"), rs.getString("nama_ujian"), rs.getString("tipe_ujian"),
+                        rs.getDate("tanggal").toLocalDate(), rs.getInt("durasi_total"), rs.getInt("waktu_per_soal"), rs.getInt("max_soal"));
+                 list.add(u);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list; 
     } 
     
     public List<Ujian> getByKelas(Kelas k) { 
         List<Ujian> list = new ArrayList<>();
-        String sql = "SELECT * FROM ujian WHERE id_kelas = ?";
+        String sql = "SELECT u.*, mp.nama_mapel, mp.deskripsi AS mp_desk, mp.tingkat " + 
+                     "FROM ujian u " + 
+                     "JOIN mapel mp ON u.id_mapel = mp.id_mapel " + 
+                     "WHERE u.id_kelas = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, k.getIdKelas());
@@ -59,6 +90,13 @@ public class UjianRepository {
                 Ujian u = new Ujian(rs.getString("id_ujian"), rs.getString("nama_ujian"), rs.getString("tipe_ujian"),
                         rs.getDate("tanggal").toLocalDate(), rs.getInt("durasi_total"), rs.getInt("waktu_per_soal"), rs.getInt("max_soal"));
                 u.setKelas(k);
+                MataPelajaran mp = new MataPelajaran(
+                    rs.getString("id_mapel"),
+                    rs.getString("nama_mapel"),
+                    rs.getString("mp_desk"),
+                    rs.getString("tingkat")
+                );
+                u.setMapel(mp);
                 list.add(u);
             }
         } catch (SQLException e) { e.printStackTrace(); }

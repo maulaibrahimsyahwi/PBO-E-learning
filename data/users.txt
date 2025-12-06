@@ -1,3 +1,0 @@
-A001;admin;8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918;Administrator;admin@lms.com;ADMIN;-;-;-;-
-FVY4E;maula;560888f9ef19c811fa728db3bce86263d075b5098eff21d637a2b2f3ed890661;maula ibrahim syahwi;maula@gmail.com;SISWA;12312321345;2023;K3DAU;-
-R66M1;akmal;4594b249d2488e00e15df2f2c4d8b2be35e146ba6e7d8e11cf67e56b99d44dd8;akmal hidayat;akmal@gmail.com;GURU;12312591075;Matematika;1L2IB;K3DAU

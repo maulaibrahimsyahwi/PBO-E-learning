@@ -131,13 +131,25 @@ public class GuiSiswa extends JFrame {
         return p;
     }
 
+    // --- PERBAIKAN UTAMA DI SINI ---
     private JPanel createMateriPanel() {
         JPanel panel = new JPanel(new BorderLayout());
-        DefaultTableModel model = new DefaultTableModel(new String[]{"Mapel", "Judul", "Deskripsi", "File"}, 0);
+        
+        // Tambahkan kolom ID (kolom ke-0)
+        DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Mapel", "Judul", "Deskripsi", "File"}, 0) {
+            public boolean isCellEditable(int row, int column) { return false; }
+        };
         JTable table = new JTable(model);
+        
+        // Sembunyikan kolom ID
+        table.getColumnModel().getColumn(0).setMinWidth(0);
+        table.getColumnModel().getColumn(0).setMaxWidth(0);
+        table.getColumnModel().getColumn(0).setWidth(0);
+
         if(siswa.getKelas() != null) {
             for(Materi m : materiRepo.getByKelas(siswa.getKelas())) {
-                model.addRow(new Object[]{m.getMapel().getNamaMapel(), m.getJudul(), m.getDeskripsi(), m.getFileMateri()});
+                String namaMapel = (m.getMapel() != null) ? m.getMapel().getNamaMapel() : "-";
+                model.addRow(new Object[]{m.getIdMateri(), namaMapel, m.getJudul(), m.getDeskripsi(), m.getFileMateri()});
             }
         }
         
@@ -145,12 +157,31 @@ public class GuiSiswa extends JFrame {
         btnOpen.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row != -1) {
-                String filename = (String) table.getValueAt(row, 3);
+                String idMateri = (String) table.getValueAt(row, 0);
+                String filename = (String) table.getValueAt(row, 4);
+                
+                // Folder lokal untuk menyimpan file sementara
+                File folderUploads = new File("data/uploads/");
+                if (!folderUploads.exists()) folderUploads.mkdirs();
+                
+                File fileTujuan = new File(folderUploads, filename);
+                
+                // Cek apakah file sudah ada di lokal, jika belum, download dari DB
+                if (!fileTujuan.exists()) {
+                    boolean success = materiRepo.downloadFile(idMateri, fileTujuan);
+                    if (!success) {
+                        JOptionPane.showMessageDialog(this, "Gagal mengunduh file dari database atau file tidak ada.");
+                        return;
+                    }
+                }
+                
+                // Buka file
                 try {
-                    File file = new File("data/uploads/" + filename);
-                    if (file.exists()) Desktop.getDesktop().open(file);
-                    else JOptionPane.showMessageDialog(this, "File tidak ditemukan.");
-                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Error: " + ex.getMessage()); }
+                    if (fileTujuan.exists()) Desktop.getDesktop().open(fileTujuan);
+                    else JOptionPane.showMessageDialog(this, "File error.");
+                } catch (Exception ex) { JOptionPane.showMessageDialog(this, "Error membuka file: " + ex.getMessage()); }
+            } else {
+                JOptionPane.showMessageDialog(this, "Pilih materi terlebih dahulu.");
             }
         });
 
@@ -158,6 +189,7 @@ public class GuiSiswa extends JFrame {
         panel.add(btnOpen, BorderLayout.SOUTH);
         return panel;
     }
+    // --------------------------------
 
     private JPanel createTugasPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -228,7 +260,8 @@ public class GuiSiswa extends JFrame {
                     status = "Selesai (Nilai: " + n.get().getNilaiAngka() + ")";
                 }
             }
-            tugasModel.addRow(new Object[]{t.getIdTugas(), "Tugas", t.getMapel().getNamaMapel(), t.getJudul(), t.getDeadline(), status});
+            String namaMapel = (t.getMapel() != null) ? t.getMapel().getNamaMapel() : "-";
+            tugasModel.addRow(new Object[]{t.getIdTugas(), "Tugas", namaMapel, t.getJudul(), t.getDeadline(), status});
         }
 
         for(Ujian u : ujianRepo.getByKelas(siswa.getKelas())) {
@@ -246,7 +279,8 @@ public class GuiSiswa extends JFrame {
                     status = "Selesai (Nilai: " + n.get().getNilaiAngka() + ")";
                 }
             }
-            tugasModel.addRow(new Object[]{u.getIdUjian(), "Ujian", u.getMapel().getNamaMapel(), u.getNamaUjian(), u.getTanggal(), status});
+            String namaMapel = (u.getMapel() != null) ? u.getMapel().getNamaMapel() : "-";
+            tugasModel.addRow(new Object[]{u.getIdUjian(), "Ujian", namaMapel, u.getNamaUjian(), u.getTanggal(), status});
         }
     }
 

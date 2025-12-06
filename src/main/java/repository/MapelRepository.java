@@ -31,6 +31,22 @@ public class MapelRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    // --- BARU: Method Delete Mapel ---
+    public void deleteMapel(String idMapel) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Hapus relasi di kelas_mapel dan guru_mapel dulu
+            conn.createStatement().executeUpdate("DELETE FROM kelas_mapel WHERE id_mapel='" + idMapel + "'");
+            conn.createStatement().executeUpdate("DELETE FROM guru_mapel WHERE id_mapel='" + idMapel + "'");
+            
+            // Hapus data mapel utama
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM mapel WHERE id_mapel = ?")) {
+                ps.setString(1, idMapel);
+                ps.executeUpdate();
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    // --------------------------------
+
     public List<MataPelajaran> getAll() {
         List<MataPelajaran> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

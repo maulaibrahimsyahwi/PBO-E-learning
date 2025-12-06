@@ -31,6 +31,23 @@ public class KelasRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
+    // --- BARU: Method Delete Kelas ---
+    public void deleteKelas(String idKelas) {
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            // Hapus relasi di kelas_mapel dulu
+            try (PreparedStatement psRel = conn.prepareStatement("DELETE FROM kelas_mapel WHERE id_kelas = ?")) {
+                psRel.setString(1, idKelas);
+                psRel.executeUpdate();
+            }
+            // Hapus data kelas utama
+            try (PreparedStatement psMain = conn.prepareStatement("DELETE FROM kelas WHERE id_kelas = ?")) {
+                psMain.setString(1, idKelas);
+                psMain.executeUpdate();
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    // --------------------------------
+
     public List<Kelas> getAll() {
         List<Kelas> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();
