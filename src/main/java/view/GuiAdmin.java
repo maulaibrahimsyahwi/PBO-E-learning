@@ -2,7 +2,6 @@
 
 package view;
 
-import model.*;
 import repository.*;
 import view.panel.*;
 

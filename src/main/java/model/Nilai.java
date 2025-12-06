@@ -59,4 +59,4 @@ public class Nilai {
     public void setKeterangan(String keterangan) {
         this.keterangan = keterangan;
     }
-}
+}       

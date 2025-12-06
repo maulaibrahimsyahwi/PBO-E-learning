@@ -5,8 +5,6 @@ import model.Absensi;
 import model.Siswa;
 import java.sql.*;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 public class AbsensiRepository {
 

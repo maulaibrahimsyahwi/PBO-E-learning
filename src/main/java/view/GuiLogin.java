@@ -73,11 +73,7 @@ public class GuiLogin extends JFrame {
         String password = new String(txtPassword.getPassword());
 
         User user = userRepo.findByUsername(username);
-        // Jika pakai hashing di production: SecurityUtil.hashPassword(password)
-        String passCheck = password; 
         
-        // Cek login sederhana (password plain text sesuai data Anda saat ini)
-        // Jika data users.txt Anda sudah hash, gunakan: SecurityUtil.hashPassword(password)
         boolean isPassValid = false;
         if (user != null) {
              if (user.getPassword().length() > 20) { // Asumsi hash panjang

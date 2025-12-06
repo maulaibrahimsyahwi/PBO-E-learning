@@ -8,7 +8,6 @@ import repository.UserRepository;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.stream.Collectors;
 
 public class AdminDashboardPanel extends JPanel {
     private UserRepository userRepo;

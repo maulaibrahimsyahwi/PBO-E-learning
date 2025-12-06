@@ -14,4 +14,7 @@ public class Jadwal {
     }
 
     public String getHari() { return hari; }
+    public String getIdJadwal() { return idJadwal; }
+    public String getJamMulai() { return jamMulai; }
+    public String getJamSelesai() { return jamSelesai; }
 }

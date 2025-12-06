@@ -10,4 +10,7 @@ public class GuruAssignment {
         this.guru = guru;
         this.mapel = mapel;
     }
+    public String getIdAssign() { return idAssign; }
+    public Guru getGuru() { return guru; }
+    public MataPelajaran getMapel() { return mapel; }
 }

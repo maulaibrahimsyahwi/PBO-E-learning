@@ -1,7 +1,6 @@
 package view.panel;
 
 import model.Guru;
-import model.MataPelajaran;
 import model.User;
 import repository.KelasRepository;
 import repository.MapelRepository;
