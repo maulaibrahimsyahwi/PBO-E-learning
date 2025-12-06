@@ -30,6 +30,8 @@ public class GuiSiswa extends JFrame {
     private SiswaTugasUjianPanel tugasPanel;
     private SiswaMateriPanel materiPanel;
     private SiswaNilaiPanel nilaiPanel;
+    
+    private JLabel lblNotifikasiTugas;
 
     public GuiSiswa(Siswa s, MateriRepository mr, TugasRepository tr, UjianRepository ur,
                     JawabanRepository jr, NilaiRepository nr, ForumRepository fr, UserRepository uRepo,
@@ -71,7 +73,8 @@ public class GuiSiswa extends JFrame {
 
         materiPanel = new SiswaMateriPanel(this, siswa, materiRepo);
         tugasPanel = new SiswaTugasUjianPanel(this, siswa, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, soalRepo);
-        nilaiPanel = new SiswaNilaiPanel(siswa, nilaiRepo);
+        // Perbaikan: Meneruskan TugasRepo dan UjianRepo
+        nilaiPanel = new SiswaNilaiPanel(siswa, nilaiRepo, tugasRepo, ujianRepo); 
         
         JTabbedPane tabs = new JTabbedPane();
         tabs.addTab("Absensi", new SiswaAbsensiPanel(siswa, absensiRepo));
@@ -117,17 +120,30 @@ public class GuiSiswa extends JFrame {
 
     private void cekNotifikasi(JPanel container) {
         if(siswa.getKelas() == null) return;
+        
         long count = tugasRepo.getByKelas(siswa.getKelas()).stream()
             .filter(t -> !jawabanRepo.findByTugas(t.getIdTugas()).stream()
                 .anyMatch(j -> j.getSiswa().getIdUser().equals(siswa.getIdUser())))
             .count();
         
         if(count > 0) {
-            JLabel lbl = new JLabel("🔔 Ada " + count + " tugas belum dikerjakan!");
-            lbl.setForeground(Color.RED);
-            lbl.setFont(new Font("SansSerif", Font.BOLD, 14));
-            lbl.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
-            container.add(lbl, BorderLayout.WEST);
+            if (lblNotifikasiTugas == null) {
+                lblNotifikasiTugas = new JLabel();
+                lblNotifikasiTugas.setForeground(Color.RED);
+                lblNotifikasiTugas.setFont(new Font("SansSerif", Font.BOLD, 14));
+                lblNotifikasiTugas.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+                container.add(lblNotifikasiTugas, BorderLayout.WEST); 
+                container.revalidate();
+                container.repaint();
+            }
+            lblNotifikasiTugas.setText("🔔 Ada " + count + " tugas belum dikerjakan!");
+        } else {
+            if (lblNotifikasiTugas != null) {
+                container.remove(lblNotifikasiTugas);
+                lblNotifikasiTugas = null;
+                container.revalidate();
+                container.repaint();
+            }
         }
     }
 
@@ -156,6 +172,13 @@ public class GuiSiswa extends JFrame {
             siswa.setPassword(newPass);
             userRepo.saveToFile();
             JOptionPane.showMessageDialog(this, "Password diubah.");
+        }
+    }
+    
+    public void refreshNotification() {
+        JPanel topPanel = (JPanel) getContentPane().getComponent(0);
+        if (topPanel.getLayout() instanceof BorderLayout) {
+            cekNotifikasi(topPanel);
         }
     }
 }

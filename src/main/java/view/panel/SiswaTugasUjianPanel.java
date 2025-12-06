@@ -12,6 +12,7 @@ import repository.TugasRepository;
 import repository.UjianRepository;
 import utils.IdUtil;
 import view.dialog.SiswaUjianDialog;
+import view.GuiSiswa;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -149,6 +150,10 @@ public class SiswaTugasUjianPanel extends JPanel {
             jawabanRepo.addJawaban(j, fileAsli);
             JOptionPane.showMessageDialog(parentFrame, "Jawaban Tugas Terkirim!");
             refreshTable(); 
+            
+            if (parentFrame instanceof GuiSiswa guiSiswa) {
+                guiSiswa.refreshNotification();
+            }
         }
     }
 }

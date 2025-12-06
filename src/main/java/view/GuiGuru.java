@@ -130,7 +130,7 @@ public class GuiGuru extends JFrame {
         GuruUjianPanel ujianPanel = new GuruUjianPanel(this, guru, k, m, ujianRepo, soalRepo);
         GuruMateriPanel materiPanel = new GuruMateriPanel(guru, k, m, materiRepo);
         GuruTugasPanel tugasPanel = new GuruTugasPanel(guru, k, m, tugasRepo, ujianPanel);
-        GuruNilaiPanel nilaiPanel = new GuruNilaiPanel(k, m, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo);
+        GuruNilaiPanel nilaiPanel = new GuruNilaiPanel(k, m, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, userRepo);
         
         tabbedContent.addTab("Materi", materiPanel);
         tabbedContent.addTab("Tugas", tugasPanel);

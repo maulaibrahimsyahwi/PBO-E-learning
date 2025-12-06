@@ -50,4 +50,13 @@ public class Nilai {
     public void setSiswa(Siswa s) { this.siswa = s; }
     public void setTugas(Tugas t) { this.tugas = t; }
     public void setUjian(Ujian u) { this.ujian = u; }
+    
+    // Setter baru untuk fitur update
+    public void setNilaiAngka(int nilaiAngka) {
+        this.nilaiAngka = nilaiAngka;
+    }
+
+    public void setKeterangan(String keterangan) {
+        this.keterangan = keterangan;
+    }
 }
