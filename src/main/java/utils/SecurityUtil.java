@@ -4,7 +4,6 @@ import java.security.MessageDigest;
 
 public class SecurityUtil {
     
-    // Fungsi untuk mengubah teks password menjadi Hash SHA-256
     public static String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");

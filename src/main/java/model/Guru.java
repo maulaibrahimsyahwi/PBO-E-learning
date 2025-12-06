@@ -6,11 +6,10 @@ import java.util.List;
 public class Guru extends User {
     private String nip;
     private String spesialisasi;
+    
+    // Relasi Runtime (untuk GUI)
     private List<MataPelajaran> mapelDiampu = new ArrayList<>();
     private List<Kelas> daftarKelas = new ArrayList<>();
-
-    private List<String> tempIdMapel = new ArrayList<>();
-    private List<String> tempIdKelas = new ArrayList<>();
 
     public Guru(String idUser, String username, String password,
                 String namaLengkap, String email,
@@ -19,11 +18,6 @@ public class Guru extends User {
         super(idUser, username, password, namaLengkap, email);
         this.nip = nip;
         this.spesialisasi = spesialisasi;
-    }
-
-    @Override
-    public void tampilkanMenu() {
-        System.out.println("=== Menu Guru ===");
     }
 
     public String getNip() {
@@ -52,21 +46,5 @@ public class Guru extends User {
         if (!daftarKelas.contains(kelas)) {
             daftarKelas.add(kelas);
         }
-    }
-
-    public List<String> getTempIdMapel() {
-        return tempIdMapel;
-    }
-
-    public void addTempIdMapel(String id) {
-        this.tempIdMapel.add(id);
-    }
-
-    public List<String> getTempIdKelas() {
-        return tempIdKelas;
-    }
-
-    public void addTempIdKelas(String id) {
-        this.tempIdKelas.add(id);
     }
 }

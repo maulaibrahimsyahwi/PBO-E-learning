@@ -59,7 +59,6 @@ public abstract class User {
     }
 
     public void logout() {
+        // Logika logout tambahan jika perlu (misal: catat log waktu)
     }
-
-    public abstract void tampilkanMenu();
 }

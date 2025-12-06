@@ -10,8 +10,10 @@ import utils.SecurityUtil;
 
 public class App {
     public static void main(String[] args) {
+        // 1. Setup Tema Tampilan (FlatLaf)
         try {
             UIManager.setLookAndFeel(new FlatLightLaf());
+            // Opsional: Kustomisasi tampilan tombol melengkung
             UIManager.put("Button.arc", 12);
             UIManager.put("Component.arc", 12);
             UIManager.put("TextComponent.arc", 12);
@@ -19,6 +21,7 @@ public class App {
             ex.printStackTrace();
         }
 
+        // 2. Inisialisasi Semua Repository (Koneksi Database)
         UserRepository userRepo = new UserRepository();
         KelasRepository kelasRepo = new KelasRepository();
         MapelRepository mapelRepo = new MapelRepository();
@@ -31,12 +34,15 @@ public class App {
         AbsensiRepository absensiRepo = new AbsensiRepository();
         SoalRepository soalRepo = new SoalRepository();
 
+        // 3. Cek & Buat Admin Default jika belum ada di database
         if (userRepo.findByUsername("admin") == null) {
+            System.out.println("Membuat akun admin default...");
             String passHash = SecurityUtil.hashPassword("admin");
             Admin defaultAdmin = new Admin("A001", "admin", passHash, "Administrator", "admin@lms.com");
             userRepo.addUser(defaultAdmin);
         }
 
+        // 4. Jalankan GUI Login
         SwingUtilities.invokeLater(() -> {
             new GuiLogin(
                 userRepo, kelasRepo, mapelRepo, materiRepo,

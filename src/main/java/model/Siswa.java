@@ -3,13 +3,14 @@ package model;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Siswa extends User implements IReportable {
+public class Siswa extends User {
 
     private String nis;
     private String angkatan;
 
-    // relasi ke kelas (objek) dan penyimpanan idKelas untuk ke file
+    // Relasi objek ke Kelas
     private Kelas kelas;
+    // ID Kelas untuk referensi database
     private String idKelas;
 
     private List<Nilai> daftarNilai = new ArrayList<>();
@@ -21,32 +22,6 @@ public class Siswa extends User implements IReportable {
         super(idUser, username, password, namaLengkap, email);
         this.nis = nis;
         this.angkatan = angkatan;
-    }
-
-    @Override
-    public void tampilkanMenu() {
-        System.out.println("=== Menu Siswa ===");
-        System.out.println("1. Akses Materi");
-        System.out.println("2. Lihat Tugas/Ujian");
-        System.out.println("3. Submit Jawaban");
-        System.out.println("4. Lihat Nilai");
-        System.out.println("0. Logout");
-    }
-
-    @Override
-    public void generateReport() {
-        System.out.println("=== Laporan Nilai Siswa ===");
-        if (daftarNilai.isEmpty()) {
-            System.out.println("Belum ada nilai.");
-            return;
-        }
-
-        for (Nilai n : daftarNilai) {
-            String namaTugas = (n.getTugas() != null) ? n.getTugas().getJudul() : "-";
-            System.out.println("Tugas: " + namaTugas +
-                    " | Nilai: " + n.getNilaiAngka() +
-                    " (" + n.getNilaiHuruf() + ")");
-        }
     }
 
     public void tambahNilai(Nilai n) {
@@ -65,18 +40,20 @@ public class Siswa extends User implements IReportable {
         return kelas;
     }
 
-    /** dipakai di runtime (object relationship) */
     public void setKelas(Kelas kelas) {
         this.kelas = kelas;
         this.idKelas = (kelas != null ? kelas.getIdKelas() : null);
     }
 
-    /** disimpan ke file, lalu dipakai saat reconstruct */
     public String getIdKelas() {
         return idKelas;
     }
 
     public void setIdKelas(String idKelas) {
         this.idKelas = idKelas;
+    }
+    
+    public List<Nilai> getDaftarNilai() {
+        return daftarNilai;
     }
 }
