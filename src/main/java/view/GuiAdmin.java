@@ -11,6 +11,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.util.List;
 
 public class GuiAdmin extends JFrame {
     private UserRepository userRepo;
@@ -337,6 +338,7 @@ public class GuiAdmin extends JFrame {
             }
             
             comboSiswa.setRenderer(new DefaultListCellRenderer() {
+                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Siswa) setText(((Siswa)value).getNamaLengkap());
@@ -346,6 +348,7 @@ public class GuiAdmin extends JFrame {
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new DefaultListCellRenderer() {
+                @Override
                 public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
                     super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
                     if(value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
@@ -601,6 +604,122 @@ public class GuiAdmin extends JFrame {
             }
         });
 
+        // START OF MODIFIED BLOCK FOR btnAssign.addActionListener
+        btnAssign.addActionListener(e -> {
+            // 1. Setup Guru Dropdown (Single Select - JComboBox)
+            JComboBox<Guru> comboGuru = new JComboBox<>();
+            for(User u : userRepo.getAll()) {
+                if(u instanceof Guru) comboGuru.addItem((Guru) u);
+            }
+            comboGuru.setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if(value instanceof Guru) setText(((Guru)value).getNamaLengkap());
+                    return this;
+                }
+            });
+            
+            // 2. Setup Mapel List (Multi-Select - JList)
+            DefaultListModel<MataPelajaran> mapelListModel = new DefaultListModel<>();
+            for(MataPelajaran m : mapelRepo.getAll()) mapelListModel.addElement(m);
+            JList<MataPelajaran> listMapel = new JList<>(mapelListModel);
+            listMapel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            listMapel.setCellRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if(value instanceof MataPelajaran) {
+                        MataPelajaran mp = (MataPelajaran) value;
+                        setText(mp.getNamaMapel() + " (Tingkat " + mp.getTingkat() + ")");
+                    }
+                    return this;
+                }
+            });
+            JScrollPane scrollMapel = new JScrollPane(listMapel);
+            scrollMapel.setPreferredSize(new Dimension(300, 150)); // Set preferred size for list
+
+            // 3. Setup Kelas List (Multi-Select - JList)
+            DefaultListModel<Kelas> kelasListModel = new DefaultListModel<>();
+            for(Kelas k : kelasRepo.getAll()) kelasListModel.addElement(k);
+            JList<Kelas> listKelas = new JList<>(kelasListModel);
+            listKelas.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            listKelas.setCellRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                    if(value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
+                    return this;
+                }
+            });
+            JScrollPane scrollKelas = new JScrollPane(listKelas);
+            scrollKelas.setPreferredSize(new Dimension(300, 150)); // Set preferred size for list
+
+            // 4. Combine components in a dialog panel (BoxLayout for vertical alignment)
+            JPanel panelAssign = new JPanel();
+            panelAssign.setLayout(new BoxLayout(panelAssign, BoxLayout.Y_AXIS));
+            panelAssign.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            // Guru Panel (FlowLayout for single row)
+            JPanel guruPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            guruPanel.add(new JLabel("Pilih Guru:"));
+            guruPanel.add(comboGuru);
+            guruPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            panelAssign.add(guruPanel);
+            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
+            panelAssign.add(new JLabel("Pilih Mapel (Ctrl+Klik untuk multi-pilih):"));
+            panelAssign.add(scrollMapel);
+            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
+            panelAssign.add(new JLabel("Pilih Kelas (Ctrl+Klik untuk multi-pilih):"));
+            panelAssign.add(scrollKelas);
+
+            // Show Dialog
+            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar (Multi-Select)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                Guru g = (Guru) comboGuru.getSelectedItem();
+                List<MataPelajaran> selectedMapel = listMapel.getSelectedValuesList();
+                List<Kelas> selectedKelas = listKelas.getSelectedValuesList();
+                
+                if (g != null && !selectedMapel.isEmpty() && !selectedKelas.isEmpty()) {
+                    
+                    int mapelCount = 0;
+                    int kelasCount = 0;
+                    
+                    // Assign Mapel ke Guru
+                    for (MataPelajaran m : selectedMapel) {
+                        g.tambahMapel(m);
+                        mapelCount++;
+                    }
+
+                    // Assign Kelas ke Guru & Link Mapel-Kelas
+                    for (Kelas k : selectedKelas) {
+                        g.tambahKelas(k);
+                        kelasCount++;
+                        
+                        // Hubungkan SEMUA Mapel yang dipilih ke SEMUA Kelas yang dipilih
+                        for (MataPelajaran m : selectedMapel) {
+                            kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel()); // Simpan relasi Mapel-Kelas
+                        }
+                    }
+                    
+                    // Simpan data Guru (termasuk relasi mapel & kelas) ke DB
+                    userRepo.updateGuru(g); 
+                    
+                    JOptionPane.showMessageDialog(this, 
+                        "Sukses assign Guru " + g.getNamaLengkap() + "\n" +
+                        "Mengajar " + mapelCount + " Mapel di " + kelasCount + " Kelas."
+                    );
+                } else if (g == null) {
+                    JOptionPane.showMessageDialog(this, "Pilih Guru yang akan di-assign.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Pilih minimal 1 Mapel dan 1 Kelas.");
+                }
+            }
+        });
+        // END OF MODIFIED BLOCK FOR btnAssign.addActionListener
+
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
@@ -614,65 +733,6 @@ public class GuiAdmin extends JFrame {
             if (confirm == JOptionPane.YES_OPTION) {
                 mapelRepo.deleteMapel(id);
                 refreshMapelTable(model);
-            }
-        });
-
-        btnAssign.addActionListener(e -> {
-            JPanel panelAssign = new JPanel(new GridLayout(3, 2, 10, 10));
-            JComboBox<Guru> comboGuru = new JComboBox<>();
-            for(User u : userRepo.getAll()) {
-                if(u instanceof Guru) comboGuru.addItem((Guru) u);
-            }
-            comboGuru.setRenderer(new DefaultListCellRenderer() {
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if(value instanceof Guru) setText(((Guru)value).getNamaLengkap());
-                    return this;
-                }
-            });
-            JComboBox<MataPelajaran> comboMapel = new JComboBox<>();
-            for(MataPelajaran m : mapelRepo.getAll()) comboMapel.addItem(m);
-            comboMapel.setRenderer(new DefaultListCellRenderer() {
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if(value instanceof MataPelajaran) {
-                        MataPelajaran mp = (MataPelajaran) value;
-                        setText(mp.getNamaMapel() + " (Tingkat " + mp.getTingkat() + ")");
-                    }
-                    return this;
-                }
-            });
-            JComboBox<Kelas> comboKelas = new JComboBox<>();
-            for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
-            comboKelas.setRenderer(new DefaultListCellRenderer() {
-                public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                    super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                    if(value instanceof Kelas) setText(((Kelas)value).getNamaKelas());
-                    return this;
-                }
-            });
-
-            panelAssign.add(new JLabel("Pilih Guru:")); panelAssign.add(comboGuru);
-            panelAssign.add(new JLabel("Mengajar Mapel:")); panelAssign.add(comboMapel);
-            panelAssign.add(new JLabel("Di Kelas:")); panelAssign.add(comboKelas);
-
-            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar", JOptionPane.OK_CANCEL_OPTION);
-            if (result == JOptionPane.OK_OPTION) {
-                Guru g = (Guru) comboGuru.getSelectedItem();
-                MataPelajaran m = (MataPelajaran) comboMapel.getSelectedItem();
-                Kelas k = (Kelas) comboKelas.getSelectedItem();
-                if (g != null && m != null && k != null) {
-                    g.tambahMapel(m);
-                    g.tambahKelas(k);
-                    
-                    // FIX 1: Gunakan updateGuru agar data guru tersimpan (termasuk relasinya)
-                    userRepo.updateGuru(g); 
-                    
-                    // FIX 2: Hubungkan Mapel ke Kelas agar muncul di Dashboard Siswa
-                    kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
-                    
-                    JOptionPane.showMessageDialog(this, "Sukses assign Guru " + g.getNamaLengkap());
-                }
             }
         });
 
