@@ -50,6 +50,21 @@ public class GuiSiswa extends JFrame {
         this.kelasRepo = kelasRepo;
         this.mapelRepo = mapelRepo;
 
+        if (this.siswa.getKelas() != null) {
+            Kelas kRefresh = kelasRepo.findById(this.siswa.getKelas().getIdKelas());
+            if (kRefresh != null) {
+                if (kRefresh.getDaftarMapel().isEmpty()) {
+                    List<MataPelajaran> allMapel = mapelRepo.getAll();
+                    for (MataPelajaran mp : allMapel) {
+                        if (mp.getTingkat().equals(kRefresh.getTingkat()) || mp.getTingkat().equals("-")) {
+                            kRefresh.tambahMapel(mp);
+                        }
+                    }
+                }
+                this.siswa.setKelas(kRefresh);
+            }
+        }
+
         setTitle("Dashboard Siswa - " + s.getNamaLengkap());
         setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -131,17 +146,14 @@ public class GuiSiswa extends JFrame {
         return p;
     }
 
-    // --- PERBAIKAN UTAMA DI SINI ---
     private JPanel createMateriPanel() {
         JPanel panel = new JPanel(new BorderLayout());
         
-        // Tambahkan kolom ID (kolom ke-0)
         DefaultTableModel model = new DefaultTableModel(new String[]{"ID", "Mapel", "Judul", "Deskripsi", "File"}, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         JTable table = new JTable(model);
         
-        // Sembunyikan kolom ID
         table.getColumnModel().getColumn(0).setMinWidth(0);
         table.getColumnModel().getColumn(0).setMaxWidth(0);
         table.getColumnModel().getColumn(0).setWidth(0);
@@ -160,13 +172,11 @@ public class GuiSiswa extends JFrame {
                 String idMateri = (String) table.getValueAt(row, 0);
                 String filename = (String) table.getValueAt(row, 4);
                 
-                // Folder lokal untuk menyimpan file sementara
                 File folderUploads = new File("data/uploads/");
                 if (!folderUploads.exists()) folderUploads.mkdirs();
                 
                 File fileTujuan = new File(folderUploads, filename);
                 
-                // Cek apakah file sudah ada di lokal, jika belum, download dari DB
                 if (!fileTujuan.exists()) {
                     boolean success = materiRepo.downloadFile(idMateri, fileTujuan);
                     if (!success) {
@@ -175,7 +185,6 @@ public class GuiSiswa extends JFrame {
                     }
                 }
                 
-                // Buka file
                 try {
                     if (fileTujuan.exists()) Desktop.getDesktop().open(fileTujuan);
                     else JOptionPane.showMessageDialog(this, "File error.");
@@ -189,7 +198,6 @@ public class GuiSiswa extends JFrame {
         panel.add(btnOpen, BorderLayout.SOUTH);
         return panel;
     }
-    // --------------------------------
 
     private JPanel createTugasPanel() {
         JPanel panel = new JPanel(new BorderLayout());
@@ -523,7 +531,10 @@ public class GuiSiswa extends JFrame {
             }
             panel.add(forumTabs, BorderLayout.CENTER);
         } else {
-            panel.add(new JLabel("Belum ada mata pelajaran.", SwingConstants.CENTER), BorderLayout.CENTER);
+            String msg = (siswa.getKelas() == null) ? "Anda belum masuk kelas manapun. Hubungi admin untuk assignment kelas." : "Belum ada mata pelajaran di kelas ini.";
+            JLabel lbl = new JLabel(msg, SwingConstants.CENTER);
+            lbl.setFont(new Font("Arial", Font.BOLD, 14));
+            panel.add(lbl, BorderLayout.CENTER);
         }
         
         return panel;
