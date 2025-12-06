@@ -113,6 +113,29 @@ public class GuiAdmin extends JFrame {
         
         refreshGuruTable(model);
 
+        // --- NEW CODE: Search Functionality (Similar to Siswa) --- 
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model); 
+        table.setRowSorter(sorter); 
+        
+        JPanel searchPanel = new JPanel(new BorderLayout(10, 10)); 
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10)); 
+        searchPanel.add(new JLabel(" Cari Guru: "), BorderLayout.WEST); 
+        JTextField txtSearch = new JTextField(); 
+        searchPanel.add(txtSearch, BorderLayout.CENTER); 
+        panel.add(searchPanel, BorderLayout.NORTH); 
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() { 
+            public void insertUpdate(DocumentEvent e) { filter(); } 
+            public void removeUpdate(DocumentEvent e) { filter(); } 
+            public void changedUpdate(DocumentEvent e) { filter(); } 
+            private void filter() { 
+                String text = txtSearch.getText(); 
+                if (text.trim().length() == 0) sorter.setRowFilter(null); 
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text)); 
+            } 
+        }); 
+        // --- END NEW CODE ---
+
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10)); 
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); 
         
@@ -216,10 +239,10 @@ public class GuiAdmin extends JFrame {
 
         JButton btnAdd = new JButton("Tambah");
         JButton btnEdit = new JButton("Edit Data"); 
-        JButton btnAssign = new JButton("Assign Kelas");
+        JButton btnAssign = new JButton("Assign ke Kelas");
         JButton btnDelete = new JButton("Hapus"); 
         
-        Dimension btnSize = new Dimension(110, 35);
+        Dimension btnSize = new Dimension(130, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
         btnAssign.setPreferredSize(btnSize);
@@ -369,6 +392,29 @@ public class GuiAdmin extends JFrame {
         
         refreshKelasTable(model);
 
+        // --- NEW CODE: Search Functionality (Similar to Siswa) ---
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
+        JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        searchPanel.add(new JLabel(" Cari Kelas: "), BorderLayout.WEST);
+        JTextField txtSearch = new JTextField();
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+        panel.add(searchPanel, BorderLayout.NORTH);
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+            private void filter() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) sorter.setRowFilter(null);
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+            }
+        });
+        // --- END NEW CODE ---
+
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
@@ -464,6 +510,29 @@ public class GuiAdmin extends JFrame {
         JTable table = new JTable(model);
         
         refreshMapelTable(model);
+
+        // --- NEW CODE: Search Functionality (Similar to Siswa) ---
+        TableRowSorter<DefaultTableModel> sorter = new TableRowSorter<>(model);
+        table.setRowSorter(sorter);
+
+        JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
+        searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        searchPanel.add(new JLabel(" Cari Mapel: "), BorderLayout.WEST);
+        JTextField txtSearch = new JTextField();
+        searchPanel.add(txtSearch, BorderLayout.CENTER);
+        panel.add(searchPanel, BorderLayout.NORTH);
+
+        txtSearch.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+            private void filter() {
+                String text = txtSearch.getText();
+                if (text.trim().length() == 0) sorter.setRowFilter(null);
+                else sorter.setRowFilter(RowFilter.regexFilter("(?i)" + text));
+            }
+        });
+        // --- END NEW CODE ---
 
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
