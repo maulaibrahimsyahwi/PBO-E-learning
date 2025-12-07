@@ -7,7 +7,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class ForumPanel extends JPanel {
     
@@ -22,11 +21,11 @@ public class ForumPanel extends JPanel {
     private JTable tableTopic;
     private DefaultTableModel tableModel;
     
-    private JPanel detailPanel;
+    // Detail Components
     private JLabel lblJudulTopik;
     private JTextArea txtDiskusiArea;
     private JTextField txtReply;
-    private ForumDiskusi currentTopic; 
+    private ForumThread currentThread; // Berubah dari ForumDiskusi ke ForumThread
 
     public ForumPanel(User user, Kelas k, MataPelajaran m, ForumRepository repo) {
         this.currentUser = user;
@@ -54,62 +53,52 @@ public class ForumPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tableTopic = new JTable(tableModel);
+        // Sembunyikan kolom ID
+        tableTopic.getColumnModel().getColumn(0).setMinWidth(0);
+        tableTopic.getColumnModel().getColumn(0).setMaxWidth(0);
+        tableTopic.getColumnModel().getColumn(0).setWidth(0);
         
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
         JButton btnCreate = new JButton("Buat Topik Baru");
         JButton btnOpen = new JButton("Buka Diskusi");
         JButton btnRefresh = new JButton("Refresh");
-        JButton btnDelete = new JButton("Hapus Topik"); // Tombol Hapus Baru
+        JButton btnDelete = new JButton("Hapus Topik");
         
-        Dimension btnSize = new Dimension(130, 35);
-        btnCreate.setPreferredSize(new Dimension(140, 35));
-        btnOpen.setPreferredSize(btnSize);
-        btnRefresh.setPreferredSize(new Dimension(100, 35));
-        btnDelete.setPreferredSize(new Dimension(110, 35));
         btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnCreate);
         btnPanel.add(btnOpen);
-        
-        // Tampilkan tombol Hapus hanya jika user adalah Guru atau Admin
         if (currentUser instanceof Guru || currentUser instanceof Admin) {
             btnPanel.add(btnDelete);
         }
-        
         btnPanel.add(btnRefresh);
         
+        // Listeners
         btnCreate.addActionListener(e -> actionCreateTopic());
+        btnRefresh.addActionListener(e -> loadTopics());
         
         btnOpen.addActionListener(e -> {
             int row = tableTopic.getSelectedRow();
             if (row != -1) {
-                String idTopic = (String) tableModel.getValueAt(row, 0);
-                openTopic(idTopic);
+                String idThread = (String) tableModel.getValueAt(row, 0);
+                String judul = (String) tableModel.getValueAt(row, 1);
+                // Kita ambil object lengkap nanti di openTopic
+                openTopic(idThread, judul);
             } else {
                 JOptionPane.showMessageDialog(this, "Pilih topik dulu!");
             }
         });
         
-        // Logic Hapus Topik
         btnDelete.addActionListener(e -> {
             int row = tableTopic.getSelectedRow();
-            if (row == -1) {
-                JOptionPane.showMessageDialog(this, "Pilih topik yang akan dihapus!");
-                return;
-            }
-            String idTopic = (String) tableModel.getValueAt(row, 0);
-            String judul = (String) tableModel.getValueAt(row, 1);
-            
-            int confirm = JOptionPane.showConfirmDialog(this, "Hapus topik '" + judul + "'?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                forumRepo.deletePesan(idTopic);
+            if (row == -1) return;
+            String idThread = (String) tableModel.getValueAt(row, 0);
+            if (JOptionPane.showConfirmDialog(this, "Hapus topik ini beserta balasannya?", "Konfirmasi", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                forumRepo.deleteThread(idThread);
                 loadTopics();
             }
         });
-        
-        btnRefresh.addActionListener(e -> loadTopics());
         
         panel.add(new JScrollPane(tableTopic), BorderLayout.CENTER);
         panel.add(btnPanel, BorderLayout.SOUTH);
@@ -117,7 +106,7 @@ public class ForumPanel extends JPanel {
     }
     
     private JPanel createDetailPanel() {
-        detailPanel = new JPanel(new BorderLayout());
+        JPanel detailPanel = new JPanel(new BorderLayout());
         
         JPanel header = new JPanel(new BorderLayout());
         JButton btnBack = new JButton("<< Kembali");
@@ -159,21 +148,16 @@ public class ForumPanel extends JPanel {
     
     private void loadTopics() {
         tableModel.setRowCount(0);
-        List<ForumDiskusi> allData = forumRepo.getByMapelAndKelas(mapel, kelas);
+        // Mengambil data dari Tabel Header (ForumThread)
+        List<ForumThread> threads = forumRepo.getThreadsByKelasMapel(kelas, mapel);
         
-        List<ForumDiskusi> topics = allData.stream()
-                .filter(ForumDiskusi::isTopic)
-                .collect(Collectors.toList());
-                
-        for (ForumDiskusi t : topics) {
-            long replyCount = allData.stream()
-                    .filter(f -> f.getParentId().equals(t.getIdPesan()))
-                    .count();
-            
+        for (ForumThread t : threads) {
+            // Hitung jumlah balasan dari Tabel Detail (ForumReply)
+            int replyCount = forumRepo.countReplies(t.getIdThread());
             String sender = (t.getPengirim() != null) ? t.getPengirim().getNamaLengkap() : "Unknown";
             
             tableModel.addRow(new Object[]{
-                t.getIdPesan(), 
+                t.getIdThread(), 
                 t.getJudul(), 
                 sender, 
                 t.getWaktu(), 
@@ -182,39 +166,48 @@ public class ForumPanel extends JPanel {
         }
     }
     
-    private void openTopic(String idTopic) {
-        this.currentTopic = forumRepo.getAll().stream()
-                .filter(f -> f.getIdPesan().equals(idTopic))
+    private void openTopic(String idThread, String judul) {
+        // Cari object thread lengkap (bisa dioptimasi dengan caching list, tapi find lagi juga oke)
+        this.currentThread = forumRepo.getThreadsByKelasMapel(kelas, mapel).stream()
+                .filter(t -> t.getIdThread().equals(idThread))
                 .findFirst().orElse(null);
                 
-        if (currentTopic == null) return;
+        if (currentThread == null) return;
         
-        lblJudulTopik.setText(currentTopic.getJudul());
+        lblJudulTopik.setText(currentThread.getJudul());
         refreshDetailArea();
         
         cardLayout.show(mainPanel, "DETAIL");
     }
     
     private void refreshDetailArea() {
-        if (currentTopic == null) return;
+        if (currentThread == null) return;
         txtDiskusiArea.setText("");
         
-        appendPost(currentTopic);
+        // Tampilkan Postingan Utama (Header)
+        appendHeader(currentThread);
         txtDiskusiArea.append("--------------------------------------------------\n");
         
-        List<ForumDiskusi> replies = forumRepo.getReplies(currentTopic.getIdPesan());
-        for (ForumDiskusi r : replies) {
-            appendPost(r);
+        // Tampilkan Balasan (Detail)
+        List<ForumReply> replies = forumRepo.getRepliesByThread(currentThread.getIdThread());
+        for (ForumReply r : replies) {
+            appendReply(r);
             txtDiskusiArea.append("\n");
         }
     }
     
-    private void appendPost(ForumDiskusi f) {
-        String sender = (f.getPengirim() != null) ? f.getPengirim().getNamaLengkap() : "User Terhapus";
-        String role = (f.getPengirim() instanceof Guru) ? "[GURU]" : "[SISWA]";
-        
-        txtDiskusiArea.append(role + " " + sender + " (" + f.getWaktu() + ")\n");
-        txtDiskusiArea.append(f.getIsiPesan() + "\n");
+    private void appendHeader(ForumThread t) {
+        String sender = (t.getPengirim() != null) ? t.getPengirim().getNamaLengkap() : "User Terhapus";
+        String role = (t.getPengirim() instanceof Guru) ? "[GURU]" : "[SISWA]";
+        txtDiskusiArea.append(role + " " + sender + " (" + t.getWaktu() + ") - POST UTAMA\n");
+        txtDiskusiArea.append(t.getIsiUtama() + "\n");
+    }
+
+    private void appendReply(ForumReply r) {
+        String sender = (r.getPenjawab() != null) ? r.getPenjawab().getNamaLengkap() : "User Terhapus";
+        String role = (r.getPenjawab() instanceof Guru) ? "[GURU]" : "[SISWA]";
+        txtDiskusiArea.append(role + " " + sender + " (" + r.getWaktu() + ")\n");
+        txtDiskusiArea.append(r.getIsiReply() + "\n");
     }
     
     private void actionCreateTopic() {
@@ -224,8 +217,9 @@ public class ForumPanel extends JPanel {
         String isi = JOptionPane.showInputDialog(this, "Isi Postingan Pertama:");
         if (isi == null || isi.isBlank()) return;
         
-        ForumDiskusi fd = new ForumDiskusi(IdUtil.generate(), currentUser, judul, isi, kelas, mapel);
-        forumRepo.addPesan(fd);
+        ForumThread t = new ForumThread(IdUtil.generate(), currentUser, judul, isi, kelas, mapel);
+        forumRepo.createThread(t);
+        
         loadTopics();
         JOptionPane.showMessageDialog(this, "Topik berhasil dibuat!");
     }
@@ -234,8 +228,8 @@ public class ForumPanel extends JPanel {
         String isi = txtReply.getText();
         if (isi.isBlank()) return;
         
-        ForumDiskusi reply = new ForumDiskusi(IdUtil.generate(), currentUser, isi, kelas, mapel, currentTopic.getIdPesan());
-        forumRepo.addPesan(reply);
+        ForumReply r = new ForumReply(IdUtil.generate(), currentThread.getIdThread(), currentUser, isi);
+        forumRepo.addReply(r);
         
         txtReply.setText("");
         refreshDetailArea(); 
