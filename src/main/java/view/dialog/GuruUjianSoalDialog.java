@@ -170,27 +170,45 @@ public class GuruUjianSoalDialog extends JDialog {
         inputPanel.add(new JLabel("Opsi D:")); inputPanel.add(txtD);
         inputPanel.add(new JLabel("Kunci Jawaban:")); inputPanel.add(panelKunci);
 
-        JButton btnAdd = new JButton("Simpan Soal");
+        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JLabel lblInfo = new JLabel("Soal tersimpan: " + soalRepo.getByUjian(u.getIdUjian()).size() + " / " + u.getMaxSoal());
         
-        btnAdd.addActionListener(e -> simpanSoal(u, d, lblInfo, lblPreview, comboJenisSoal, comboKunciPG, txtKunciEssay, txtTanya, txtA, txtB, txtC, txtD));
+        JButton btnAdd = new JButton("Simpan Soal");
+        JButton btnSelesai = new JButton("Selesai / Tutup"); // Tombol baru
+        
+        btnAdd.addActionListener(e -> simpanSoal(u, d, lblInfo, lblPreview, comboJenisSoal, comboKunciPG, txtKunciEssay, txtTanya, txtA, txtB, txtC, txtD, btnAdd));
+        
+        btnSelesai.addActionListener(e -> d.dispose()); // Tutup dialog hanya lewat tombol ini atau X
 
         d.add(inputPanel, BorderLayout.CENTER);
         
-        JPanel bottom = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         bottom.add(lblInfo); 
         bottom.add(btnAdd);
+        bottom.add(btnSelesai);
+        
         d.add(bottom, BorderLayout.SOUTH);
+        
+        if (soalRepo.getByUjian(u.getIdUjian()).size() >= u.getMaxSoal()) {
+            btnAdd.setEnabled(false);
+            btnAdd.setText("Batas Tercapai");
+        }
+
         d.setVisible(true);
     }
     
-    private void simpanSoal(Ujian u, JDialog d, JLabel lblInfo, JLabel lblPreview, JComboBox<String> comboJenisSoal, JComboBox<String> comboKunciPG, JTextField txtKunciEssay, JTextField txtTanya, JTextField txtA, JTextField txtB, JTextField txtC, JTextField txtD) {
+    private void simpanSoal(Ujian u, JDialog d, JLabel lblInfo, JLabel lblPreview, JComboBox<String> comboJenisSoal, JComboBox<String> comboKunciPG, JTextField txtKunciEssay, JTextField txtTanya, JTextField txtA, JTextField txtB, JTextField txtC, JTextField txtD, JButton btnAdd) {
         int currentCount = soalRepo.getByUjian(u.getIdUjian()).size();
+        
         if (currentCount >= u.getMaxSoal()) {
             JOptionPane.showMessageDialog(d, "Maksimal soal tercapai!");
+            btnAdd.setEnabled(false);
             return;
         }
-        if(txtTanya.getText().isBlank()) return;
+        
+        if(txtTanya.getText().isBlank()) {
+            JOptionPane.showMessageDialog(d, "Pertanyaan tidak boleh kosong!");
+            return;
+        }
         
         String tipe = (String) comboJenisSoal.getSelectedItem();
         String kunci = tipe.equals("PG") ? (String) comboKunciPG.getSelectedItem() : txtKunciEssay.getText();
@@ -221,7 +239,15 @@ public class GuruUjianSoalDialog extends JDialog {
         selectedImageFile = null;
         lblPreview.setText("Tidak ada gambar");
         
-        lblInfo.setText("Soal tersimpan: " + (currentCount + 1) + " / " + u.getMaxSoal());
-        JOptionPane.showMessageDialog(d, "Soal tersimpan!");
+        int newCount = currentCount + 1;
+        lblInfo.setText("Soal tersimpan: " + newCount + " / " + u.getMaxSoal());
+        
+        if (newCount >= u.getMaxSoal()) {
+            btnAdd.setEnabled(false);
+            btnAdd.setText("Batas Tercapai");
+            JOptionPane.showMessageDialog(d, "Soal tersimpan! Anda telah mencapai batas maksimal soal (" + u.getMaxSoal() + ").");
+        } else {
+            JOptionPane.showMessageDialog(d, "Soal tersimpan!");
+        }
     }
 }
