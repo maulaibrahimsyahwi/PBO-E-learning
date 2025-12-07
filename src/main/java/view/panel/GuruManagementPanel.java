@@ -59,23 +59,28 @@ public class GuruManagementPanel extends JPanel {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10)); 
         
         JButton btnAdd = new JButton("Tambah Guru");
+        JButton btnResetPass = new JButton("Reset Password");
         JButton btnDelete = new JButton("Hapus"); 
         
         Dimension btnSize = new Dimension(120, 35);
         btnAdd.setPreferredSize(btnSize);
+        btnResetPass.setPreferredSize(new Dimension(140, 35));
         btnDelete.setPreferredSize(btnSize);
+        
+        btnResetPass.setBackground(new Color(255, 200, 100));
         btnDelete.setBackground(new Color(255, 150, 150)); 
 
         btnPanel.add(btnAdd);
+        btnPanel.add(btnResetPass);
         btnPanel.add(btnDelete);
         
-        addListeners(btnAdd, btnDelete);
+        addListeners(btnAdd, btnResetPass, btnDelete);
 
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
     }
     
-    private void addListeners(JButton btnAdd, JButton btnDelete) {
+    private void addListeners(JButton btnAdd, JButton btnResetPass, JButton btnDelete) {
         btnAdd.addActionListener(e -> {
             JTextField txtUser = new JTextField();
             JTextField txtPass = new JTextField();
@@ -96,6 +101,24 @@ public class GuruManagementPanel extends JPanel {
                                   txtNama.getText(), txtEmail.getText(), txtNip.getText(), txtSpes.getText());
                 userRepo.addUser(g);
                 refreshTable();
+            }
+        });
+
+        btnResetPass.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih guru yang akan di-reset passwordnya!");
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(row);
+            String id = (String) model.getValueAt(modelRow, 0);
+            String nama = (String) model.getValueAt(modelRow, 2);
+
+            String newPass = JOptionPane.showInputDialog(this, "Masukkan Password Baru untuk " + nama + ":");
+            if (newPass != null && !newPass.isBlank()) {
+                String passHash = SecurityUtil.hashPassword(newPass);
+                userRepo.updatePassword(id, passHash);
+                JOptionPane.showMessageDialog(this, "Password berhasil diubah!");
             }
         });
 

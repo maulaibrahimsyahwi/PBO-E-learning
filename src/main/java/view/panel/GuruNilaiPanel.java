@@ -164,7 +164,6 @@ public class GuruNilaiPanel extends JPanel {
         }
         selectedJawab.setSiswa(fullSiswa);
 
-        // Cari Nilai Lama (Untuk fitur Edit)
         final Tugas tCek = finalTugas;
         final Ujian uCek = finalUjian;
 

@@ -50,7 +50,7 @@ public class MapelManagementPanel extends JPanel {
     private void setupLayout() {
         JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        searchPanel.add(new JLabel(" Cari Mapel: "), BorderLayout.WEST);
+        searchPanel.add(new JLabel("Cari"), BorderLayout.WEST);
         JTextField txtSearch = new JTextField();
         searchPanel.add(txtSearch, BorderLayout.CENTER);
         add(searchPanel, BorderLayout.NORTH);
@@ -179,10 +179,10 @@ public class MapelManagementPanel extends JPanel {
 
             panelAssign.add(guruPanel);
             panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
-            panelAssign.add(new JLabel("Pilih Mapel (Ctrl+Klik untuk multi-pilih):"));
+            panelAssign.add(new JLabel("Pilih Mapel"));
             panelAssign.add(scrollMapel);
             panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
-            panelAssign.add(new JLabel("Pilih Kelas (Ctrl+Klik untuk multi-pilih):"));
+            panelAssign.add(new JLabel("Pilih Kelas"));
             panelAssign.add(scrollKelas);
 
             int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar (Multi-Select)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);

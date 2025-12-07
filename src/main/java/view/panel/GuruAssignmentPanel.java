@@ -77,7 +77,7 @@ public class GuruAssignmentPanel extends JPanel {
 
         JPanel searchPanel = new JPanel(new BorderLayout(10, 10));
         searchPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        searchPanel.add(new JLabel(" Cari Guru: "), BorderLayout.WEST);
+        searchPanel.add(new JLabel("Cari"), BorderLayout.WEST);
         JTextField txtSearch = new JTextField();
         searchPanel.add(txtSearch, BorderLayout.CENTER);
         add(searchPanel, BorderLayout.NORTH);

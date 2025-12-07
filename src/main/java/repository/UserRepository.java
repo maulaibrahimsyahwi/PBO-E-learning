@@ -63,7 +63,6 @@ public class UserRepository {
         }
     }
 
-    // --- BARU: Method Update Guru ---
     public void updateGuru(Guru g) {
         String sql = "UPDATE users SET username = ?, nama_lengkap = ?, email = ?, nip = ?, spesialisasi = ? WHERE id_user = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -76,10 +75,21 @@ public class UserRepository {
             stmt.setString(6, g.getIdUser());
             stmt.executeUpdate();
             
-            saveGuruRelations(g); // Update juga relasi mapel & kelas
+            saveGuruRelations(g);
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    // -------------------------------
+
+    public void updatePassword(String idUser, String newPassword) {
+        String sql = "UPDATE users SET password = ? WHERE id_user = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, newPassword);
+            stmt.setString(2, idUser);
+            stmt.executeUpdate();
+        } catch (SQLException e) { 
+            e.printStackTrace(); 
+        }
+    }
 
     public void deleteUser(String idUser) {
         try (Connection conn = DatabaseConnection.getConnection()) {

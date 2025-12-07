@@ -43,7 +43,6 @@ public class SiswaNilaiPanel extends JPanel {
             String sumber = "Unknown";
             
             if (n.getTugas() != null) {
-                // Cari nama Tugas dari repo
                 Optional<Tugas> tOpt = tugasRepo.getAll().stream()
                     .filter(t -> t.getIdTugas().equals(n.getTugas().getIdTugas()))
                     .findFirst();
@@ -51,7 +50,6 @@ public class SiswaNilaiPanel extends JPanel {
                     sumber = "Tugas: " + tOpt.get().getJudul();
                 }
             } else if (n.getUjian() != null) {
-                // Cari nama Ujian dari repo
                 Optional<Ujian> uOpt = ujianRepo.getAll().stream()
                     .filter(u -> u.getIdUjian().equals(n.getUjian().getIdUjian()))
                     .findFirst();

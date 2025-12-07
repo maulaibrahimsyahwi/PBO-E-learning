@@ -66,28 +66,33 @@ public class SiswaManagementPanel extends JPanel {
 
         JButton btnAdd = new JButton("Tambah");
         JButton btnEdit = new JButton("Edit Data"); 
+        JButton btnResetPass = new JButton("Reset Password");
         JButton btnAssign = new JButton("Assign ke Kelas");
         JButton btnDelete = new JButton("Hapus"); 
         
         Dimension btnSize = new Dimension(130, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
+        btnResetPass.setPreferredSize(new Dimension(140, 35));
         btnAssign.setPreferredSize(btnSize);
         btnDelete.setPreferredSize(btnSize);
+        
+        btnResetPass.setBackground(new Color(255, 200, 100));
         btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
+        btnPanel.add(btnResetPass);
         btnPanel.add(btnAssign);
         btnPanel.add(btnDelete);
 
-        addListeners(btnAdd, btnEdit, btnAssign, btnDelete);
+        addListeners(btnAdd, btnEdit, btnResetPass, btnAssign, btnDelete);
 
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
     }
     
-    private void addListeners(JButton btnAdd, JButton btnEdit, JButton btnAssign, JButton btnDelete) {
+    private void addListeners(JButton btnAdd, JButton btnEdit, JButton btnResetPass, JButton btnAssign, JButton btnDelete) {
         btnAdd.addActionListener(e -> {
             JTextField txtUser = new JTextField();
             JTextField txtPass = new JTextField();
@@ -145,6 +150,24 @@ public class SiswaManagementPanel extends JPanel {
             }
         });
 
+        btnResetPass.addActionListener(e -> {
+            int row = table.getSelectedRow();
+            if (row == -1) {
+                JOptionPane.showMessageDialog(this, "Pilih siswa yang akan di-reset passwordnya!");
+                return;
+            }
+            int modelRow = table.convertRowIndexToModel(row);
+            String id = (String) model.getValueAt(modelRow, 0);
+            String nama = (String) model.getValueAt(modelRow, 2);
+
+            String newPass = JOptionPane.showInputDialog(this, "Masukkan Password Baru untuk " + nama + ":");
+            if (newPass != null && !newPass.isBlank()) {
+                String passHash = SecurityUtil.hashPassword(newPass);
+                userRepo.updatePassword(id, passHash);
+                JOptionPane.showMessageDialog(this, "Password berhasil diubah!");
+            }
+        });
+
         btnDelete.addActionListener(e -> {
             int row = table.getSelectedRow();
             if (row == -1) {
@@ -163,7 +186,6 @@ public class SiswaManagementPanel extends JPanel {
         });
 
         btnAssign.addActionListener(e -> {
-            // 1. Setup Siswa List (Multi-Select - JList)
             DefaultListModel<Siswa> siswaListModel = new DefaultListModel<>();
             for (Siswa s : userRepo.getAllSiswa()) siswaListModel.addElement(s);
             JList<Siswa> listSiswa = new JList<>(siswaListModel);
@@ -172,12 +194,10 @@ public class SiswaManagementPanel extends JPanel {
             JScrollPane scrollSiswa = new JScrollPane(listSiswa);
             scrollSiswa.setPreferredSize(new Dimension(350, 200));
 
-            // 2. Setup Kelas Dropdown (Single Select - JComboBox)
             JComboBox<Kelas> comboKelas = new JComboBox<>();
             for(Kelas k : kelasRepo.getAll()) comboKelas.addItem(k);
             comboKelas.setRenderer(new KelasListRenderer());
 
-            // 3. Combine components in a dialog panel (BoxLayout for vertical alignment)
             JPanel panelAssign = new JPanel();
             panelAssign.setLayout(new BoxLayout(panelAssign, BoxLayout.Y_AXIS));
             panelAssign.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
