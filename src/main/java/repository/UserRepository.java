@@ -170,6 +170,27 @@ public class UserRepository {
         return list;
     }
 
+    public List<Siswa> getSiswaByKelas(String idKelas) {
+        List<Siswa> list = new ArrayList<>();
+        String sql = "SELECT u.*, k.nama_kelas, k.tingkat FROM users u LEFT JOIN kelas k ON u.id_kelas = k.id_kelas WHERE u.role = 'SISWA' AND u.id_kelas = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, idKelas);
+            ResultSet rs = stmt.executeQuery();
+            while (rs.next()) {
+                Siswa s = new Siswa(rs.getString("id_user"), rs.getString("username"), rs.getString("password"),
+                                    rs.getString("nama_lengkap"), rs.getString("email"), rs.getString("nis"), rs.getString("angkatan"));
+                String klsId = rs.getString("id_kelas");
+                if (klsId != null) {
+                    Kelas k = new Kelas(klsId, rs.getString("nama_kelas"), rs.getString("tingkat"));
+                    s.setKelas(k);
+                }
+                list.add(s);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return list;
+    }
+
     public List<User> getAll() {
         List<User> list = new ArrayList<>();
         try (Connection conn = DatabaseConnection.getConnection();

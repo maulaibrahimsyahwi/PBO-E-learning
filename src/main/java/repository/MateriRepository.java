@@ -1,22 +1,34 @@
 package repository;
 
 import config.DatabaseConnection;
-import model.*;
+import model.Kelas;
+import model.MataPelajaran;
+import model.Materi;
+
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.StandardCopyOption;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class MateriRepository {
 
+    private static final String STORAGE_DIR = "data/storage/materi/";
+
+    public MateriRepository() {
+        File dir = new File(STORAGE_DIR);
+        if (!dir.exists()) {
+            dir.mkdirs();
+        }
+    }
+
     public void addMateri(Materi m, File fileAsli) {
-        String sql = "INSERT INTO materi (id_materi, judul, deskripsi, file_materi, id_guru, id_kelas, id_mapel, data_file) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO materi (id_materi, judul, deskripsi, file_materi, id_guru, id_kelas, id_mapel) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
+            
             stmt.setString(1, m.getIdMateri());
             stmt.setString(2, m.getJudul());
             stmt.setString(3, m.getDeskripsi());
@@ -26,20 +38,26 @@ public class MateriRepository {
             stmt.setString(7, m.getMapel().getIdMapel());
             
             if (fileAsli != null) {
+                File destFile = new File(STORAGE_DIR + m.getFileMateri());
                 try {
-                    FileInputStream fis = new FileInputStream(fileAsli);
-                    stmt.setBinaryStream(8, fis, (int) fileAsli.length());
-                } catch (FileNotFoundException e) {
-                    stmt.setNull(8, Types.BLOB);
+                    Files.copy(fileAsli.toPath(), destFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    return; 
                 }
-            } else {
-                stmt.setNull(8, Types.BLOB);
             }
+            
             stmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
     public void deleteMateri(String idMateri) {
+        String filename = getFilenameById(idMateri);
+        if (filename != null) {
+            File f = new File(STORAGE_DIR + filename);
+            if (f.exists()) f.delete();
+        }
+
         String sql = "DELETE FROM materi WHERE id_materi = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -48,37 +66,35 @@ public class MateriRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    // --- BARU: Method Download File dari Database ---
     public boolean downloadFile(String idMateri, File destination) {
-        String sql = "SELECT data_file FROM materi WHERE id_materi = ?";
+        String filename = getFilenameById(idMateri);
+        if (filename == null) return false;
+
+        File sourceFile = new File(STORAGE_DIR + filename);
+        if (!sourceFile.exists()) return false;
+
+        try {
+            destination.getParentFile().mkdirs();
+            Files.copy(sourceFile.toPath(), destination.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    private String getFilenameById(String idMateri) {
+        String sql = "SELECT file_materi FROM materi WHERE id_materi = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, idMateri);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
-                try (InputStream is = rs.getBinaryStream("data_file")) {
-                    if (is == null) return false; // Tidak ada file di DB
-                    
-                    // Buat folder jika belum ada
-                    destination.getParentFile().mkdirs();
-                    
-                    try (FileOutputStream fos = new FileOutputStream(destination)) {
-                        byte[] buffer = new byte[4096];
-                        int bytesRead;
-                        while ((bytesRead = is.read(buffer)) != -1) {
-                            fos.write(buffer, 0, bytesRead);
-                        }
-                    }
-                    return true;
-                } catch (Exception e) {
-                    e.printStackTrace();
-                    return false;
-                }
+                return rs.getString("file_materi");
             }
         } catch (SQLException e) { e.printStackTrace(); }
-        return false;
+        return null;
     }
-    // ------------------------------------------------
 
     public List<Materi> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         List<Materi> list = new ArrayList<>();
@@ -100,7 +116,6 @@ public class MateriRepository {
     
     public List<Materi> getByKelas(Kelas kelas) {
         List<Materi> list = new ArrayList<>();
-        // Menggunakan JOIN agar objek Mapel terisi (Mencegah NullPointerException)
         String sql = "SELECT m.*, mp.nama_mapel, mp.deskripsi AS mp_desk, mp.tingkat " + 
                      "FROM materi m " +
                      "JOIN mapel mp ON m.id_mapel = mp.id_mapel " +

@@ -40,6 +40,14 @@ public class SiswaAbsensiPanel extends JPanel {
             return;
         }
         
+        LocalTime now = LocalTime.now();
+        if (now.isBefore(LocalTime.of(7, 0)) || now.isAfter(LocalTime.of(15, 0))) {
+            btn.setEnabled(false);
+            btn.setText("Absensi Tutup (07.00-15.00)");
+            btn.setBackground(Color.LIGHT_GRAY);
+            return;
+        }
+        
         boolean done = absensiRepo.sudahAbsen(siswa, LocalDate.now());
         if(done) {
             btn.setEnabled(false);

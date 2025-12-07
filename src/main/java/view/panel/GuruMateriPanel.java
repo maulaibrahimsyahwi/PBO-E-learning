@@ -78,9 +78,16 @@ public class GuruMateriPanel extends JPanel {
             if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 try {
                     File fileAsli = fileChooser.getSelectedFile();
-                    String namaFile = fileAsli.getName();
+                    String idMateri = IdUtil.generate();
                     
-                    Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), namaFile);
+                    String originalName = fileAsli.getName();
+                    String extension = "";
+                    int i = originalName.lastIndexOf('.');
+                    if (i > 0) extension = originalName.substring(i);
+                    
+                    String uniqueFileName = idMateri + "_" + System.currentTimeMillis() + extension;
+                    
+                    Materi mat = new Materi(idMateri, txtJudul.getText(), txtDesk.getText(), uniqueFileName);
                     mat.setGuru(guru); 
                     mat.setKelas(kelas); 
                     mat.setMapel(mapel);
@@ -88,7 +95,7 @@ public class GuruMateriPanel extends JPanel {
                     materiRepo.addMateri(mat, fileAsli); 
                     
                     refreshTable();
-                    JOptionPane.showMessageDialog(this, "Berhasil upload ke Database!");
+                    JOptionPane.showMessageDialog(this, "Berhasil upload file!");
                     
                 } catch (Exception ex) { 
                     JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); 
