@@ -32,6 +32,7 @@ public class UjianProgressRepository {
                     rs.getInt("current_index"),
                     rs.getInt("sisa_waktu"),
                     rs.getInt("violation_count"),
+                    rs.getString("waktu_mulai"),
                     rs.getString("jawaban_sementara")
                 );
             }
@@ -64,7 +65,7 @@ public class UjianProgressRepository {
     }
 
     private void insert(UjianProgress p) {
-        String sql = "INSERT INTO ujian_progress VALUES (?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO ujian_progress (id_progress, id_siswa, id_ujian, current_index, sisa_waktu, jawaban_sementara, violation_count, waktu_mulai) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, p.getIdProgress());
@@ -74,6 +75,7 @@ public class UjianProgressRepository {
             stmt.setInt(5, p.getSisaWaktu());
             stmt.setString(6, p.getJawabanString());
             stmt.setInt(7, p.getViolationCount());
+            stmt.setString(8, p.getWaktuMulai());
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();

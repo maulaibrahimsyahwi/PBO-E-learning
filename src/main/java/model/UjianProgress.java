@@ -1,5 +1,6 @@
 package model;
 
+import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -8,17 +9,19 @@ public class UjianProgress {
     private String idSiswa;
     private String idUjian;
     private int currentIndex;
-    private int sisaWaktu;
+    private int sisaWaktu; 
     private int violationCount;
+    private String waktuMulai; 
     private Map<Integer, String> jawabanSementara;
 
-    public UjianProgress(String idProgress, String idSiswa, String idUjian, int currentIndex, int sisaWaktu, int violationCount, String jawabanStr) {
+    public UjianProgress(String idProgress, String idSiswa, String idUjian, int currentIndex, int sisaWaktu, int violationCount, String waktuMulai, String jawabanStr) {
         this.idProgress = idProgress;
         this.idSiswa = idSiswa;
         this.idUjian = idUjian;
         this.currentIndex = currentIndex;
         this.sisaWaktu = sisaWaktu;
         this.violationCount = violationCount;
+        this.waktuMulai = waktuMulai;
         this.jawabanSementara = parseJawaban(jawabanStr);
     }
 
@@ -29,6 +32,7 @@ public class UjianProgress {
         this.currentIndex = 0;
         this.sisaWaktu = durasiAwal;
         this.violationCount = 0;
+        this.waktuMulai = LocalDateTime.now().toString();
         this.jawabanSementara = new HashMap<>();
     }
 
@@ -38,6 +42,7 @@ public class UjianProgress {
     public int getCurrentIndex() { return currentIndex; }
     public int getSisaWaktu() { return sisaWaktu; }
     public int getViolationCount() { return violationCount; }
+    public String getWaktuMulai() { return waktuMulai; }
     public Map<Integer, String> getJawabanSementara() { return jawabanSementara; }
 
     public void setCurrentIndex(int currentIndex) { this.currentIndex = currentIndex; }

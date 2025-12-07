@@ -5,6 +5,7 @@ import model.Kelas;
 import model.MataPelajaran;
 import model.Materi;
 import repository.MateriRepository;
+import service.FileService;
 import utils.IdUtil;
 
 import javax.swing.*;
@@ -18,6 +19,7 @@ public class GuruMateriPanel extends JPanel {
     private final Kelas kelas;
     private final MataPelajaran mapel;
     private final MateriRepository materiRepo;
+    private final FileService fileService; 
     private final DefaultTableModel model;
     private final JTable table;
     
@@ -26,15 +28,17 @@ public class GuruMateriPanel extends JPanel {
         this.kelas = k;
         this.mapel = m;
         this.materiRepo = mr;
+        this.fileService = new FileService();
         
         setLayout(new BorderLayout());
         
-        model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0);
+        model = new DefaultTableModel(new String[]{"ID", "Judul", "File"}, 0) {
+            public boolean isCellEditable(int row, int col) { return false; }
+        };
         table = new JTable(model);
         
         table.getColumnModel().getColumn(0).setMinWidth(0);
         table.getColumnModel().getColumn(0).setMaxWidth(0);
-        table.getColumnModel().getColumn(0).setWidth(0);
         
         refreshTable();
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -43,14 +47,9 @@ public class GuruMateriPanel extends JPanel {
     
     private JPanel createButtonPanel() {
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         
-        JButton btnAdd = new JButton("Tambah Materi (Upload)");
+        JButton btnAdd = new JButton("Tambah Materi");
         JButton btnDelete = new JButton("Hapus");
-        
-        Dimension btnSize = new Dimension(180, 35);
-        btnAdd.setPreferredSize(btnSize);
-        btnDelete.setPreferredSize(new Dimension(100, 35));
         btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
@@ -74,31 +73,35 @@ public class GuruMateriPanel extends JPanel {
         Object[] message = { "Judul Materi:", txtJudul, "Deskripsi:", txtDesk };
 
         if (JOptionPane.showConfirmDialog(this, message, "Tambah Materi", JOptionPane.OK_CANCEL_OPTION) == JOptionPane.OK_OPTION) {
+            if (txtJudul.getText().isBlank()) {
+                JOptionPane.showMessageDialog(this, "Judul tidak boleh kosong!", "Error", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
             JFileChooser fileChooser = new JFileChooser();
             if (fileChooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
                 try {
                     File fileAsli = fileChooser.getSelectedFile();
-                    String idMateri = IdUtil.generate();
                     
-                    String originalName = fileAsli.getName();
-                    String extension = "";
-                    int i = originalName.lastIndexOf('.');
-                    if (i > 0) extension = originalName.substring(i);
+                    String ext = "";
+                    int i = fileAsli.getName().lastIndexOf('.');
+                    if (i > 0) ext = fileAsli.getName().substring(i);
+                    String newName = IdUtil.generate() + "_" + System.currentTimeMillis() + ext;
                     
-                    String uniqueFileName = idMateri + "_" + System.currentTimeMillis() + extension;
+                    String savedFileName = fileService.uploadFile(fileAsli, newName);
                     
-                    Materi mat = new Materi(idMateri, txtJudul.getText(), txtDesk.getText(), uniqueFileName);
+                    Materi mat = new Materi(IdUtil.generate(), txtJudul.getText(), txtDesk.getText(), savedFileName);
                     mat.setGuru(guru); 
                     mat.setKelas(kelas); 
                     mat.setMapel(mapel);
                     
-                    materiRepo.addMateri(mat, fileAsli); 
+                    materiRepo.addMateri(mat, null); 
                     
                     refreshTable();
                     JOptionPane.showMessageDialog(this, "Berhasil upload file!");
                     
                 } catch (Exception ex) { 
-                    JOptionPane.showMessageDialog(this, "Gagal upload: " + ex.getMessage()); 
+                    JOptionPane.showMessageDialog(this, "Gagal: " + ex.getMessage(), "Error", JOptionPane.ERROR_MESSAGE); 
                 }
             }
         }
@@ -106,16 +109,13 @@ public class GuruMateriPanel extends JPanel {
     
     private void hapusMateri() {
         int row = table.getSelectedRow();
-        if (row == -1) {
-            JOptionPane.showMessageDialog(this, "Pilih materi yang akan dihapus!");
-            return;
-        }
-        int modelRow = table.convertRowIndexToModel(row);
-        String id = (String) model.getValueAt(modelRow, 0);
-        String judul = (String) model.getValueAt(modelRow, 1);
+        if (row == -1) return;
         
-        int confirm = JOptionPane.showConfirmDialog(this, "Hapus materi '" + judul + "'?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
-        if (confirm == JOptionPane.YES_OPTION) {
+        String id = (String) model.getValueAt(table.convertRowIndexToModel(row), 0);
+        String filename = (String) model.getValueAt(table.convertRowIndexToModel(row), 2);
+        
+        if (JOptionPane.showConfirmDialog(this, "Hapus materi?", "Konfirmasi", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+            fileService.deleteFile(filename);
             materiRepo.deleteMateri(id);
             refreshTable();
         }
