@@ -13,6 +13,7 @@ import view.panel.SiswaTugasUjianPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,7 +36,6 @@ public class SiswaUjianDialog extends JDialog {
     public SiswaUjianDialog(JFrame parent, Siswa s, Ujian u, SoalRepository sr, NilaiRepository nr, JawabanRepository jr, SiswaTugasUjianPanel p) {
         super(parent, u.getTipeUjian() + ": " + u.getNamaUjian(), true);
         
-        // 1. Initialize all primary final fields
         this.siswa = s;
         this.ujian = u;
         this.soalRepo = sr;
@@ -43,10 +43,8 @@ public class SiswaUjianDialog extends JDialog {
         this.jawabanRepo = jr;
         this.parentPanel = p;
         
-        // 2. Initialize secondary final fields
         this.soalList = soalRepo.getByUjian(u.getIdUjian());
 
-        // 3. Initialize the final Runnable (must be initialized before any return)
         this.submitAction = () -> {
             int score = UjianEvaluationService.hitungNilai(soalList, inputComponents);
             
@@ -67,7 +65,7 @@ public class SiswaUjianDialog extends JDialog {
             return;
         }
 
-        setSize(800, 600);
+        setSize(900, 700);
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         
@@ -189,13 +187,47 @@ public class SiswaUjianDialog extends JDialog {
         JPanel pSoal = new JPanel(new BorderLayout(10, 10));
         pSoal.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+
+        if (s.getGambar() != null && !s.getGambar().isBlank()) {
+            File imgFile = new File("data/storage/soal_images/" + s.getGambar());
+            if (imgFile.exists()) {
+                ImageIcon originalIcon = new ImageIcon(imgFile.getAbsolutePath());
+                Image img = originalIcon.getImage();
+                
+                int maxWidth = 600;
+                int maxHeight = 300;
+                int newWidth = img.getWidth(null);
+                int newHeight = img.getHeight(null);
+
+                if (newWidth > maxWidth) {
+                    newHeight = (newHeight * maxWidth) / newWidth;
+                    newWidth = maxWidth;
+                }
+                if (newHeight > maxHeight) {
+                    newWidth = (newWidth * maxHeight) / newHeight;
+                    newHeight = maxHeight;
+                }
+
+                Image scaledImg = img.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
+                JLabel lblImg = new JLabel(new ImageIcon(scaledImg));
+                lblImg.setAlignmentX(Component.LEFT_ALIGNMENT);
+                contentPanel.add(lblImg);
+                contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+            }
+        }
+
         JTextArea txtTanya = new JTextArea("No " + (index + 1) + ".\n" + s.getPertanyaan());
         txtTanya.setWrapStyleWord(true); 
         txtTanya.setLineWrap(true);
         txtTanya.setEditable(false); 
         txtTanya.setFont(new Font("SansSerif", Font.BOLD, 16));
         txtTanya.setBackground(new Color(240, 240, 240));
-        pSoal.add(new JScrollPane(txtTanya), BorderLayout.NORTH);
+        txtTanya.setAlignmentX(Component.LEFT_ALIGNMENT);
+        contentPanel.add(txtTanya);
+
+        pSoal.add(new JScrollPane(contentPanel), BorderLayout.CENTER);
 
         JPanel pJawab = new JPanel();
         
@@ -220,7 +252,7 @@ public class SiswaUjianDialog extends JDialog {
             }
             inputComponents.add(bg);
         }
-        pSoal.add(pJawab, BorderLayout.CENTER);
+        pSoal.add(pJawab, BorderLayout.SOUTH);
         return pSoal;
     }
 }

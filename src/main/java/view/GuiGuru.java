@@ -128,7 +128,8 @@ public class GuiGuru extends JFrame {
     private void showProfil() {
         String newPass = JOptionPane.showInputDialog("Ganti Password (Kosongkan jika batal):");
         if(newPass != null && !newPass.isBlank()) {
-            guru.setPassword(newPass);
+            String hashed = utils.SecurityUtil.hashPassword(newPass);
+            guru.setPassword(hashed);
             context.getUserRepo().updateGuru(guru);
             JOptionPane.showMessageDialog(this, "Password berhasil diubah.");
         }

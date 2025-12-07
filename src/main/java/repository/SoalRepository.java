@@ -9,7 +9,7 @@ import java.util.List;
 public class SoalRepository {
 
     public void addSoal(Soal s) {
-        String sql = "INSERT INTO soal VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO soal (id_soal, id_ujian, tipe_soal, pertanyaan, pil_a, pil_b, pil_c, pil_d, kunci_jawaban, gambar) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
             stmt.setString(1, s.getIdSoal());
@@ -21,6 +21,7 @@ public class SoalRepository {
             stmt.setString(7, s.getPilC());
             stmt.setString(8, s.getPilD());
             stmt.setString(9, s.getKunciJawaban());
+            stmt.setString(10, s.getGambar());
             stmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
@@ -33,8 +34,18 @@ public class SoalRepository {
             stmt.setString(1, idUjian);
             ResultSet rs = stmt.executeQuery();
             while(rs.next()) {
-                list.add(new Soal(rs.getString(1), rs.getString(2), rs.getString(3), rs.getString(4),
-                        rs.getString(5), rs.getString(6), rs.getString(7), rs.getString(8), rs.getString(9)));
+                list.add(new Soal(
+                    rs.getString("id_soal"), 
+                    rs.getString("id_ujian"), 
+                    rs.getString("tipe_soal"), 
+                    rs.getString("pertanyaan"),
+                    rs.getString("pil_a"), 
+                    rs.getString("pil_b"), 
+                    rs.getString("pil_c"), 
+                    rs.getString("pil_d"), 
+                    rs.getString("kunci_jawaban"),
+                    rs.getString("gambar")
+                ));
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return list;

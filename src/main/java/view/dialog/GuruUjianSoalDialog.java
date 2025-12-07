@@ -13,6 +13,8 @@ import view.panel.GuruUjianPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
+import java.nio.file.Files;
 
 public class GuruUjianSoalDialog extends JDialog {
     
@@ -22,6 +24,7 @@ public class GuruUjianSoalDialog extends JDialog {
     private final UjianRepository ujianRepo;
     private final SoalRepository soalRepo;
     private final GuruUjianPanel parentPanel;
+    private File selectedImageFile;
 
     public GuruUjianSoalDialog(JFrame parent, Guru g, Kelas k, MataPelajaran m, UjianRepository ur, SoalRepository sr, GuruUjianPanel p) {
         super(parent, "Buat Ujian Baru", true);
@@ -103,7 +106,7 @@ public class GuruUjianSoalDialog extends JDialog {
 
     private void kelolaSoal(Ujian u) {
         JDialog d = new JDialog(this, "Input Soal (" + u.getTipeUjian() + ")", true);
-        d.setSize(600, 600);
+        d.setSize(600, 700);
         d.setLayout(new BorderLayout(10, 10));
         d.setLocationRelativeTo(this);
 
@@ -143,7 +146,23 @@ public class GuruUjianSoalDialog extends JDialog {
             cl.show(panelKunci, "ESSAY");
         }
 
+        JLabel lblPreview = new JLabel("Tidak ada gambar");
+        JButton btnUpload = new JButton("Upload Gambar");
+        btnUpload.addActionListener(e -> {
+            JFileChooser fc = new JFileChooser();
+            if (fc.showOpenDialog(d) == JFileChooser.APPROVE_OPTION) {
+                selectedImageFile = fc.getSelectedFile();
+                lblPreview.setText(selectedImageFile.getName());
+            }
+        });
+
         inputPanel.add(new JLabel("Tipe Soal:")); inputPanel.add(comboJenisSoal);
+        inputPanel.add(new JLabel("Gambar (Opsional):")); 
+        JPanel pImage = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        pImage.add(btnUpload);
+        pImage.add(lblPreview);
+        inputPanel.add(pImage);
+
         inputPanel.add(new JLabel("Pertanyaan:")); inputPanel.add(txtTanya);
         inputPanel.add(new JLabel("Opsi A:")); inputPanel.add(txtA);
         inputPanel.add(new JLabel("Opsi B:")); inputPanel.add(txtB);
@@ -154,7 +173,7 @@ public class GuruUjianSoalDialog extends JDialog {
         JButton btnAdd = new JButton("Simpan Soal");
         JLabel lblInfo = new JLabel("Soal tersimpan: " + soalRepo.getByUjian(u.getIdUjian()).size() + " / " + u.getMaxSoal());
         
-        btnAdd.addActionListener(e -> simpanSoal(u, d, lblInfo, comboJenisSoal, comboKunciPG, txtKunciEssay, txtTanya, txtA, txtB, txtC, txtD));
+        btnAdd.addActionListener(e -> simpanSoal(u, d, lblInfo, lblPreview, comboJenisSoal, comboKunciPG, txtKunciEssay, txtTanya, txtA, txtB, txtC, txtD));
 
         d.add(inputPanel, BorderLayout.CENTER);
         
@@ -165,7 +184,7 @@ public class GuruUjianSoalDialog extends JDialog {
         d.setVisible(true);
     }
     
-    private void simpanSoal(Ujian u, JDialog d, JLabel lblInfo, JComboBox<String> comboJenisSoal, JComboBox<String> comboKunciPG, JTextField txtKunciEssay, JTextField txtTanya, JTextField txtA, JTextField txtB, JTextField txtC, JTextField txtD) {
+    private void simpanSoal(Ujian u, JDialog d, JLabel lblInfo, JLabel lblPreview, JComboBox<String> comboJenisSoal, JComboBox<String> comboKunciPG, JTextField txtKunciEssay, JTextField txtTanya, JTextField txtA, JTextField txtB, JTextField txtC, JTextField txtD) {
         int currentCount = soalRepo.getByUjian(u.getIdUjian()).size();
         if (currentCount >= u.getMaxSoal()) {
             JOptionPane.showMessageDialog(d, "Maksimal soal tercapai!");
@@ -175,13 +194,33 @@ public class GuruUjianSoalDialog extends JDialog {
         
         String tipe = (String) comboJenisSoal.getSelectedItem();
         String kunci = tipe.equals("PG") ? (String) comboKunciPG.getSelectedItem() : txtKunciEssay.getText();
+        String namaGambar = null;
+
+        if (selectedImageFile != null) {
+            try {
+                File folder = new File("data/storage/soal_images/");
+                if (!folder.exists()) folder.mkdirs();
+                
+                String ext = "";
+                int i = selectedImageFile.getName().lastIndexOf('.');
+                if (i > 0) ext = selectedImageFile.getName().substring(i);
+                
+                namaGambar = IdUtil.generate() + ext;
+                Files.copy(selectedImageFile.toPath(), new File(folder, namaGambar).toPath());
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        }
         
         Soal s = new Soal(IdUtil.generate(), u.getIdUjian(), tipe,
                           txtTanya.getText(), txtA.getText(), txtB.getText(), txtC.getText(), txtD.getText(), 
-                          kunci);
+                          kunci, namaGambar);
         soalRepo.addSoal(s);
         
         txtTanya.setText(""); txtA.setText(""); txtB.setText(""); txtC.setText(""); txtD.setText(""); txtKunciEssay.setText("");
+        selectedImageFile = null;
+        lblPreview.setText("Tidak ada gambar");
+        
         lblInfo.setText("Soal tersimpan: " + (currentCount + 1) + " / " + u.getMaxSoal());
         JOptionPane.showMessageDialog(d, "Soal tersimpan!");
     }

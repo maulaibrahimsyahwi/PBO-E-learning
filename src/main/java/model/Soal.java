@@ -3,24 +3,24 @@ package model;
 public class Soal {
     private String idSoal;
     private String idUjian;
-    private String tipeSoal; // "PG" atau "ESSAY"
+    private String tipeSoal;
     private String pertanyaan;
     private String pilA, pilB, pilC, pilD;
     private String kunciJawaban;
+    private String gambar;
 
-    // Constructor Update
-    public Soal(String id, String idUjian, String tipe, String t, String a, String b, String c, String d, String k) {
+    public Soal(String id, String idUjian, String tipe, String t, String a, String b, String c, String d, String k, String img) {
         this.idSoal = id;
         this.idUjian = idUjian;
         this.tipeSoal = tipe;
         this.pertanyaan = t;
         this.pilA = a; this.pilB = b; this.pilC = c; this.pilD = d;
         this.kunciJawaban = k;
+        this.gambar = img;
     }
 
-    // Constructor Lama (Backward Compatibility) - Default ke PG
     public Soal(String id, String idUjian, String t, String a, String b, String c, String d, String k) {
-        this(id, idUjian, "PG", t, a, b, c, d, k);
+        this(id, idUjian, "PG", t, a, b, c, d, k, null);
     }
 
     public String getIdSoal() { return idSoal; }
@@ -32,4 +32,5 @@ public class Soal {
     public String getPilC() { return pilC; }
     public String getPilD() { return pilD; }
     public String getKunciJawaban() { return kunciJawaban; }
+    public String getGambar() { return gambar; }
 }

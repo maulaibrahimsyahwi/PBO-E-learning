@@ -26,7 +26,6 @@ public class GuiSiswa extends JFrame {
         this.siswa = s;
         this.context = context;
 
-        // Logika refresh data kelas siswa
         if (this.siswa.getKelas() != null) {
             Kelas kRefresh = context.getKelasRepo().findById(this.siswa.getKelas().getIdKelas());
             if (kRefresh != null) {
@@ -47,7 +46,6 @@ public class GuiSiswa extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        // Menggunakan repo dari context
         materiPanel = new SiswaMateriPanel(this, siswa, context.getMateriRepo());
         tugasPanel = new SiswaTugasUjianPanel(this, siswa, context.getTugasRepo(), context.getUjianRepo(), 
                                               context.getJawabanRepo(), context.getNilaiRepo(), context.getSoalRepo());
@@ -79,7 +77,6 @@ public class GuiSiswa extends JFrame {
         btnLogout.setBackground(new Color(255, 100, 100));
         btnLogout.setForeground(Color.WHITE);
         
-        // Perbaikan: Logout memanggil GuiLogin dengan context
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin keluar?", "Logout", JOptionPane.YES_NO_OPTION);
             if(confirm == JOptionPane.YES_OPTION){
@@ -148,8 +145,9 @@ public class GuiSiswa extends JFrame {
     private void showProfil() {
         String newPass = JOptionPane.showInputDialog("Password Baru:");
         if(newPass != null && !newPass.isBlank()) {
-            siswa.setPassword(newPass);
-            context.getUserRepo().updateSiswa(siswa); // Update menggunakan userRepo yang tepat
+            String hashed = utils.SecurityUtil.hashPassword(newPass);
+            siswa.setPassword(hashed);
+            context.getUserRepo().updateSiswa(siswa); 
             JOptionPane.showMessageDialog(this, "Password diubah.");
         }
     }

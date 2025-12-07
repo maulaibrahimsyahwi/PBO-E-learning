@@ -15,12 +15,7 @@ public class AuthService {
         User user = userRepo.findByUsername(username);
         
         if (user != null) {
-            String inputHash = SecurityUtil.hashPassword(password);
-            if (user.getPassword().equals(inputHash)) {
-                return user;
-            }
-            
-            if (user.getPassword().equals(password)) {
+            if (SecurityUtil.checkPassword(password, user.getPassword())) {
                 return user;
             }
         }
