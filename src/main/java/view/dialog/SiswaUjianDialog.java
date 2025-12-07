@@ -1,255 +1,334 @@
 package view.dialog;
 
-import model.Jawaban;
-import model.Nilai;
-import model.Siswa;
-import model.Ujian;
-import repository.JawabanRepository;
-import repository.NilaiRepository;
-import repository.SoalRepository;
+import model.*;
+import repository.*;
 import service.UjianEvaluationService;
 import utils.IdUtil;
+import utils.UjianHelper;
 import view.panel.SiswaTugasUjianPanel;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowFocusListener;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SiswaUjianDialog extends JDialog {
-    
+
     private final Siswa siswa;
     private final Ujian ujian;
     private final SoalRepository soalRepo;
     private final NilaiRepository nilaiRepo;
     private final JawabanRepository jawabanRepo;
-    private final SiswaTugasUjianPanel parentPanel; 
-    
+    private final UjianProgressRepository progressRepo;
+    private final SiswaTugasUjianPanel parentPanel;
+
     private List<Object> inputComponents;
-    private final List<model.Soal> soalList;
-    private final int[] currentSoalIndex = {0};
-    private final int[] timeLeft = {0}; 
+    private List<Soal> soalList;
+    private UjianProgress currentProgress;
+    
+    private int currentSoalIndex = 0;
+    private int timeLeft = 0;
     private Timer timer;
-    private final Runnable submitAction;
+    private boolean isSubmitted = false;
+    
+    private final int MAX_VIOLATIONS = 3;
 
     public SiswaUjianDialog(JFrame parent, Siswa s, Ujian u, SoalRepository sr, NilaiRepository nr, JawabanRepository jr, SiswaTugasUjianPanel p) {
         super(parent, u.getTipeUjian() + ": " + u.getNamaUjian(), true);
-        
         this.siswa = s;
         this.ujian = u;
         this.soalRepo = sr;
         this.nilaiRepo = nr;
         this.jawabanRepo = jr;
         this.parentPanel = p;
-        
+        this.progressRepo = new UjianProgressRepository();
+
         this.soalList = soalRepo.getByUjian(u.getIdUjian());
-
-        this.submitAction = () -> {
-            int score = UjianEvaluationService.hitungNilai(soalList, inputComponents);
-            
-            Nilai n = new Nilai(IdUtil.generate(), siswa, ujian, score, "Selesai");
-            nilaiRepo.addNilai(n);
-            siswa.tambahNilai(n);
-            
-            Jawaban j = new Jawaban(IdUtil.generate(), siswa, ujian, "Digital (Skor: "+score+")");
-            jawabanRepo.addJawaban(j, null);
-
-            dispose();
-            JOptionPane.showMessageDialog(getParent(), "Ujian Selesai! Nilai Anda: " + score);
-            parentPanel.refreshTable();
-        };
-
         if (soalList.isEmpty()) {
-            JOptionPane.showMessageDialog(parent, "Soal belum tersedia untuk ujian ini.");
+            JOptionPane.showMessageDialog(parent, "Soal tidak tersedia.");
             return;
         }
 
-        setSize(900, 700);
-        setLocationRelativeTo(parent);
-        setLayout(new BorderLayout());
-        
-        inputComponents = new ArrayList<>();
-        
+        loadOrInitProgress();
         initUI();
+        initSecurity();
         
-        setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
-        addWindowListener(new java.awt.event.WindowAdapter() {
-            @Override
-            public void windowClosing(java.awt.event.WindowEvent windowEvent) {
+        setSize(1000, 750);
+        setLocationRelativeTo(parent);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                saveProgress();
                 int confirm = JOptionPane.showConfirmDialog(SiswaUjianDialog.this, 
-                    "Jika keluar sekarang, jawaban akan dikumpulkan apa adanya. Yakin?", "Konfirmasi", JOptionPane.YES_NO_OPTION);
+                    "Keluar akan menyimpan progress tapi waktu terus berjalan di server (jika online). Yakin?", 
+                    "Pause Ujian", JOptionPane.YES_NO_OPTION);
                 if (confirm == JOptionPane.YES_OPTION) {
                     if (timer != null) timer.stop();
-                    submitAction.run();
+                    dispose();
                 }
             }
         });
         
-        if (!soalList.isEmpty()) {
-            setVisible(true);
+        setVisible(true);
+    }
+
+    private void loadOrInitProgress() {
+        currentProgress = progressRepo.getProgress(siswa.getIdUser(), ujian.getIdUjian());
+        
+        if (currentProgress == null) {
+            int duration = "KUIS".equals(ujian.getTipeUjian()) ? ujian.getWaktuPerSoal() : ujian.getDurasiTotal() * 60;
+            currentProgress = new UjianProgress(IdUtil.generate(), siswa.getIdUser(), ujian.getIdUjian(), duration);
+            
+            soalList = UjianHelper.randomizeSoal(soalList, ujian.getMaxSoal());
+            soalList = soalList.stream().map(UjianHelper::randomizeOptions).collect(Collectors.toList());
+            
+            progressRepo.saveOrUpdate(currentProgress);
+        } else {
+            this.currentSoalIndex = currentProgress.getCurrentIndex();
+            this.timeLeft = currentProgress.getSisaWaktu();
+            
+            if (this.currentSoalIndex >= soalList.size()) this.currentSoalIndex = 0;
+        }
+        
+        this.timeLeft = currentProgress.getSisaWaktu();
+        if ("KUIS".equals(ujian.getTipeUjian())) {
+             // Logic khusus Kuis per soal
         }
     }
-    
+
     private void initUI() {
+        setLayout(new BorderLayout());
+        inputComponents = new ArrayList<>();
+
         CardLayout cardLayout = new CardLayout();
         JPanel cardPanel = new JPanel(cardLayout);
-        
-        JLabel lblTimer = new JLabel("Waktu: -");
-        lblTimer.setFont(new Font("Arial", Font.BOLD, 14));
-        lblTimer.setForeground(Color.RED);
-        
-        JButton btnFinish = new JButton("Selesai & Kumpulkan");
-        btnFinish.setBackground(new Color(50, 200, 50));
-        btnFinish.setForeground(Color.WHITE);
-        btnFinish.setVisible(false);
-        btnFinish.addActionListener(e -> submitAction.run());
-
-        JButton btnNext = new JButton("Selanjutnya >");
-        btnNext.addActionListener(e -> nextSoal(cardLayout, cardPanel, btnNext, btnFinish));
 
         for (int i = 0; i < soalList.size(); i++) {
-            model.Soal s = soalList.get(i);
-            JPanel pSoal = createSoalPanel(s, i);
-            cardPanel.add(pSoal, "SOAL_" + i);
+            cardPanel.add(createSoalPanel(soalList.get(i), i), "SOAL_" + i);
         }
 
-        JPanel navPanel = new JPanel(new FlowLayout());
-        navPanel.add(btnNext);
-        navPanel.add(btnFinish);
-
         JPanel topBar = new JPanel(new BorderLayout());
-        JLabel lblTitle = new JLabel(" " + ujian.getNamaUjian() + " (" + ujian.getTipeUjian() + ")");
-        lblTitle.setFont(new Font("Arial", Font.BOLD, 14));
-        topBar.add(lblTitle, BorderLayout.WEST);
+        JLabel lblTimer = new JLabel("Waktu: --:--");
+        lblTimer.setFont(new Font("Arial", Font.BOLD, 16));
+        lblTimer.setForeground(Color.RED);
+        topBar.add(new JLabel(" " + ujian.getNamaUjian()), BorderLayout.WEST);
         topBar.add(lblTimer, BorderLayout.EAST);
         topBar.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-        
+
+        JButton btnNext = new JButton("Selanjutnya");
+        JButton btnPrev = new JButton("Sebelumnya");
+        JButton btnSubmit = new JButton("Selesai");
+        btnSubmit.setBackground(new Color(50, 200, 50));
+        btnSubmit.setForeground(Color.WHITE);
+        btnSubmit.setVisible(false);
+
+        JPanel navPanel = new JPanel(new FlowLayout());
+        navPanel.add(btnPrev);
+        navPanel.add(btnNext);
+        navPanel.add(btnSubmit);
+
         add(topBar, BorderLayout.NORTH);
         add(cardPanel, BorderLayout.CENTER);
         add(navPanel, BorderLayout.SOUTH);
-        
-        initTimerAndListeners(lblTimer, btnNext, btnFinish, cardLayout, cardPanel);
-    }
-    
-    private void nextSoal(CardLayout cl, JPanel cardPanel, JButton btnNext, JButton btnFinish) {
-        if (currentSoalIndex[0] < soalList.size() - 1) {
-            currentSoalIndex[0]++;
-            cl.show(cardPanel, "SOAL_" + currentSoalIndex[0]);
-            
-            if ("KUIS".equals(ujian.getTipeUjian())) {
-                timeLeft[0] = ujian.getWaktuPerSoal(); 
-            }
-            
-            if (currentSoalIndex[0] == soalList.size() - 1) {
-                btnNext.setVisible(false);
-                btnFinish.setVisible(true);
-            }
-        }
-    }
-    
-    private void initTimerAndListeners(JLabel lblTimer, JButton btnNext, JButton btnFinish, CardLayout cl, JPanel cardPanel) {
-        if ("KUIS".equals(ujian.getTipeUjian())) {
-            timeLeft[0] = ujian.getWaktuPerSoal();
-            timer = new Timer(1000, e -> {
-                timeLeft[0]--;
-                lblTimer.setText("Sisa Waktu Soal: " + timeLeft[0] + " detik");
-                if (timeLeft[0] <= 0) {
-                    if (currentSoalIndex[0] < soalList.size() - 1) {
-                        nextSoal(cl, cardPanel, btnNext, btnFinish);
-                        timeLeft[0] = ujian.getWaktuPerSoal();
-                    } else { 
-                        if (timer != null) timer.stop();
-                        JOptionPane.showMessageDialog(this, "Waktu Habis!");
-                        submitAction.run(); 
+
+        cardLayout.show(cardPanel, "SOAL_" + currentSoalIndex);
+        updateNavButtons(btnPrev, btnNext, btnSubmit);
+
+        // Restore Answers
+        Map<Integer, String> savedAnswers = currentProgress.getJawabanSementara();
+        for (int i = 0; i < inputComponents.size(); i++) {
+            if (savedAnswers.containsKey(i)) {
+                String ans = savedAnswers.get(i);
+                Object comp = inputComponents.get(i);
+                if (comp instanceof JTextArea area) {
+                    area.setText(ans);
+                } else if (comp instanceof ButtonGroup bg) {
+                    java.util.Enumeration<AbstractButton> buttons = bg.getElements();
+                    while(buttons.hasMoreElements()){
+                        AbstractButton b = buttons.nextElement();
+                        if(b.getActionCommand().equals(ans)) {
+                            b.setSelected(true);
+                            break;
+                        }
                     }
                 }
-            });
-        } else {
-            timeLeft[0] = ujian.getDurasiTotal() * 60;
-            timer = new Timer(1000, e -> {
-                timeLeft[0]--;
-                long min = timeLeft[0] / 60;
-                long sec = timeLeft[0] % 60;
-                lblTimer.setText(String.format("Sisa Waktu: %02d:%02d", min, sec));
-                
-                if (timeLeft[0] <= 0) {
-                    if (timer != null) timer.stop();
-                    JOptionPane.showMessageDialog(this, "Waktu Ujian Habis! Jawaban otomatis dikumpulkan.");
-                    submitAction.run();
-                }
-            });
+            }
         }
-        if (timer != null) timer.start();
+
+        // Timer Logic
+        timer = new Timer(1000, e -> {
+            timeLeft--;
+            currentProgress.setSisaWaktu(timeLeft);
+            
+            long min = timeLeft / 60;
+            long sec = timeLeft % 60;
+            lblTimer.setText(String.format("%02d:%02d", min, sec));
+
+            if (timeLeft % 30 == 0) saveProgress(); // Auto save interval
+
+            if (timeLeft <= 0) {
+                timer.stop();
+                JOptionPane.showMessageDialog(this, "Waktu Habis!");
+                submitUjian();
+            }
+        });
+        timer.start();
+
+        btnNext.addActionListener(e -> {
+            captureAnswer(currentSoalIndex);
+            if (currentSoalIndex < soalList.size() - 1) {
+                currentSoalIndex++;
+                cardLayout.show(cardPanel, "SOAL_" + currentSoalIndex);
+                updateNavButtons(btnPrev, btnNext, btnSubmit);
+                currentProgress.setCurrentIndex(currentSoalIndex);
+            }
+        });
+
+        btnPrev.addActionListener(e -> {
+            captureAnswer(currentSoalIndex);
+            if (currentSoalIndex > 0) {
+                currentSoalIndex--;
+                cardLayout.show(cardPanel, "SOAL_" + currentSoalIndex);
+                updateNavButtons(btnPrev, btnNext, btnSubmit);
+                currentProgress.setCurrentIndex(currentSoalIndex);
+            }
+        });
+
+        btnSubmit.addActionListener(e -> {
+            captureAnswer(currentSoalIndex);
+            int cfm = JOptionPane.showConfirmDialog(this, "Yakin ingin mengumpulkan?", "Submit", JOptionPane.YES_NO_OPTION);
+            if(cfm == JOptionPane.YES_OPTION) submitUjian();
+        });
     }
-    
-    private JPanel createSoalPanel(model.Soal s, int index) {
+
+    private void initSecurity() {
+        this.addWindowFocusListener(new WindowFocusListener() {
+            @Override
+            public void windowGainedFocus(WindowEvent e) {}
+
+            @Override
+            public void windowLostFocus(WindowEvent e) {
+                if (isSubmitted || !isDisplayable()) return;
+                
+                int v = currentProgress.getViolationCount() + 1;
+                currentProgress.setViolationCount(v);
+                progressRepo.saveOrUpdate(currentProgress);
+                
+                if (v >= MAX_VIOLATIONS) {
+                    timer.stop();
+                    JOptionPane.showMessageDialog(SiswaUjianDialog.this, 
+                        "Terdeteksi kecurangan (pindah window) melebihi batas!\nUjian otomatis dikumpulkan.", 
+                        "Pelanggaran", JOptionPane.ERROR_MESSAGE);
+                    submitUjian();
+                } else {
+                    JOptionPane.showMessageDialog(SiswaUjianDialog.this, 
+                        "Peringatan! Jangan pindah aplikasi.\nSisa toleransi: " + (MAX_VIOLATIONS - v), 
+                        "Warning", JOptionPane.WARNING_MESSAGE);
+                }
+            }
+        });
+    }
+
+    private void captureAnswer(int index) {
+        Object comp = inputComponents.get(index);
+        String ans = "";
+        if (comp instanceof JTextArea area) {
+            ans = area.getText();
+        } else if (comp instanceof ButtonGroup bg) {
+            if (bg.getSelection() != null) {
+                ans = bg.getSelection().getActionCommand();
+            }
+        }
+        if (!ans.isEmpty()) {
+            currentProgress.addJawaban(index, ans);
+        }
+    }
+
+    private void saveProgress() {
+        captureAnswer(currentSoalIndex);
+        progressRepo.saveOrUpdate(currentProgress);
+    }
+
+    private void submitUjian() {
+        isSubmitted = true;
+        if (timer != null) timer.stop();
+        saveProgress();
+
+        int score = UjianEvaluationService.hitungNilai(soalList, inputComponents);
+        String ket = (currentProgress.getViolationCount() >= MAX_VIOLATIONS) ? "Diskualifikasi/Auto-Submit" : "Selesai";
+        
+        Nilai n = new Nilai(IdUtil.generate(), siswa, ujian, score, ket);
+        nilaiRepo.addNilai(n);
+        
+        Jawaban j = new Jawaban(IdUtil.generate(), siswa, ujian, "Digital (Skor: " + score + ")");
+        jawabanRepo.addJawaban(j, null);
+        
+        progressRepo.deleteProgress(siswa.getIdUser(), ujian.getIdUjian());
+        
+        dispose();
+        JOptionPane.showMessageDialog(getParent(), "Ujian Selesai. Nilai: " + score);
+        parentPanel.refreshTable();
+    }
+
+    private void updateNavButtons(JButton prev, JButton next, JButton submit) {
+        prev.setEnabled(currentSoalIndex > 0);
+        next.setVisible(currentSoalIndex < soalList.size() - 1);
+        submit.setVisible(currentSoalIndex == soalList.size() - 1);
+    }
+
+    private JPanel createSoalPanel(Soal s, int index) {
         JPanel pSoal = new JPanel(new BorderLayout(10, 10));
         pSoal.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        JPanel content = new JPanel();
+        content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
 
         if (s.getGambar() != null && !s.getGambar().isBlank()) {
             File imgFile = new File("data/storage/soal_images/" + s.getGambar());
             if (imgFile.exists()) {
-                ImageIcon originalIcon = new ImageIcon(imgFile.getAbsolutePath());
-                Image img = originalIcon.getImage();
-                
-                int maxWidth = 600;
-                int maxHeight = 300;
-                int newWidth = img.getWidth(null);
-                int newHeight = img.getHeight(null);
-
-                if (newWidth > maxWidth) {
-                    newHeight = (newHeight * maxWidth) / newWidth;
-                    newWidth = maxWidth;
-                }
-                if (newHeight > maxHeight) {
-                    newWidth = (newWidth * maxHeight) / newHeight;
-                    newHeight = maxHeight;
-                }
-
-                Image scaledImg = img.getScaledInstance(newWidth, newHeight, Image.SCALE_SMOOTH);
-                JLabel lblImg = new JLabel(new ImageIcon(scaledImg));
+                ImageIcon icon = new ImageIcon(new ImageIcon(imgFile.getAbsolutePath()).getImage().getScaledInstance(400, 300, Image.SCALE_SMOOTH));
+                JLabel lblImg = new JLabel(icon);
                 lblImg.setAlignmentX(Component.LEFT_ALIGNMENT);
-                contentPanel.add(lblImg);
-                contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+                content.add(lblImg);
             }
         }
 
-        JTextArea txtTanya = new JTextArea("No " + (index + 1) + ".\n" + s.getPertanyaan());
-        txtTanya.setWrapStyleWord(true); 
+        JTextArea txtTanya = new JTextArea("No " + (index + 1) + ". " + s.getPertanyaan());
         txtTanya.setLineWrap(true);
-        txtTanya.setEditable(false); 
-        txtTanya.setFont(new Font("SansSerif", Font.BOLD, 16));
-        txtTanya.setBackground(new Color(240, 240, 240));
-        txtTanya.setAlignmentX(Component.LEFT_ALIGNMENT);
-        contentPanel.add(txtTanya);
+        txtTanya.setWrapStyleWord(true);
+        txtTanya.setEditable(false);
+        txtTanya.setFont(new Font("SansSerif", Font.PLAIN, 18));
+        txtTanya.setBackground(getBackground());
+        content.add(txtTanya);
 
-        pSoal.add(new JScrollPane(contentPanel), BorderLayout.CENTER);
+        pSoal.add(new JScrollPane(content), BorderLayout.CENTER);
 
-        JPanel pJawab = new JPanel();
-        
+        JPanel pJawab = new JPanel(new FlowLayout(FlowLayout.LEFT));
         if ("ESSAY".equals(s.getTipeSoal())) {
-            JTextArea txtJawab = new JTextArea(10, 20);
-            pJawab.setLayout(new BorderLayout());
-            pJawab.add(new JLabel("Jawaban Anda:"), BorderLayout.NORTH);
-            pJawab.add(new JScrollPane(txtJawab), BorderLayout.CENTER);
-            inputComponents.add(txtJawab);
+            JTextArea area = new JTextArea(5, 40);
+            pJawab.add(new JScrollPane(area));
+            inputComponents.add(area);
         } else {
-            pJawab.setLayout(new GridLayout(4, 1, 5, 5));
+            JPanel pGanda = new JPanel(new GridLayout(4, 1));
             ButtonGroup bg = new ButtonGroup();
-            String[] ops = {s.getPilA(), s.getPilB(), s.getPilC(), s.getPilD()};
-            String[] keys = {"A", "B", "C", "D"};
+            String[] labels = {"A. " + s.getPilA(), "B. " + s.getPilB(), "C. " + s.getPilC(), "D. " + s.getPilD()};
+            String[] vals = {"A", "B", "C", "D"};
             
-            for(int k=0; k<4; k++) {
-                JRadioButton rb = new JRadioButton(keys[k] + ". " + ops[k]);
-                rb.setActionCommand(keys[k]);
-                rb.setFont(new Font("SansSerif", Font.PLAIN, 14));
-                bg.add(rb); 
-                pJawab.add(rb);
+            for (int k = 0; k < 4; k++) {
+                JRadioButton rb = new JRadioButton(labels[k]);
+                rb.setActionCommand(vals[k]);
+                rb.setFont(new Font("SansSerif", Font.PLAIN, 16));
+                bg.add(rb);
+                pGanda.add(rb);
             }
+            pJawab.add(pGanda);
             inputComponents.add(bg);
         }
         pSoal.add(pJawab, BorderLayout.SOUTH);
