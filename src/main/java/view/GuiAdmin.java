@@ -1,42 +1,15 @@
-// File: src/main/java/view/GuiAdmin.java
-
 package view;
 
-import repository.*;
+import context.AppContext;
 import view.panel.*;
-
 import javax.swing.*;
 import java.awt.*;
 
 public class GuiAdmin extends JFrame {
-    private UserRepository userRepo;
-    private KelasRepository kelasRepo;
-    private MapelRepository mapelRepo;
-    private MateriRepository materiRepo;
-    private TugasRepository tugasRepo;
-    private UjianRepository ujianRepo;
-    private JawabanRepository jawabanRepo;
-    private NilaiRepository nilaiRepo;
-    private ForumRepository forumRepo;
-    private AbsensiRepository absensiRepo;
-    private SoalRepository soalRepo;
+    private final AppContext context;
 
-    public GuiAdmin(UserRepository userRepo, KelasRepository kelasRepo, MapelRepository mapelRepo,
-                    MateriRepository materiRepo, TugasRepository tugasRepo, UjianRepository ujianRepo,
-                    JawabanRepository jawabanRepo, NilaiRepository nilaiRepo, ForumRepository forumRepo,
-                    AbsensiRepository absensiRepo, SoalRepository soalRepo) {
-        
-        this.userRepo = userRepo;
-        this.kelasRepo = kelasRepo;
-        this.mapelRepo = mapelRepo;
-        this.materiRepo = materiRepo;
-        this.tugasRepo = tugasRepo;
-        this.ujianRepo = ujianRepo;
-        this.jawabanRepo = jawabanRepo;
-        this.nilaiRepo = nilaiRepo;
-        this.forumRepo = forumRepo;
-        this.absensiRepo = absensiRepo;
-        this.soalRepo = soalRepo;
+    public GuiAdmin(AppContext context) {
+        this.context = context;
 
         setTitle("Dashboard Admin");
         setSize(1000, 700); 
@@ -51,10 +24,11 @@ public class GuiAdmin extends JFrame {
         JButton btnLogout = new JButton("Logout");
         btnLogout.setBackground(new Color(255, 100, 100)); 
         btnLogout.setForeground(Color.WHITE);
+        
+        // Perbaikan: Logout sekarang memanggil GuiLogin dengan context
         btnLogout.addActionListener(e -> {
             dispose();
-            new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, ujianRepo, 
-                         jawabanRepo, nilaiRepo, forumRepo, absensiRepo, soalRepo).setVisible(true);
+            new GuiLogin(context).setVisible(true);
         });
         buttonPanel.add(btnLogout);
         
@@ -62,14 +36,15 @@ public class GuiAdmin extends JFrame {
         add(topPanel, BorderLayout.NORTH);
         
         JTabbedPane tabbedPane = new JTabbedPane();
-        
         tabbedPane.putClientProperty("JTabbedPane.tabType", "card");
-        tabbedPane.addTab("Dashboard", new AdminDashboardPanel(userRepo, kelasRepo, mapelRepo));
-        tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(userRepo));
-        tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(userRepo, kelasRepo));
-        tabbedPane.addTab("Kelola Kelas", new KelasManagementPanel(kelasRepo, mapelRepo));
-        tabbedPane.addTab("Kelola Mapel", new MapelManagementPanel(mapelRepo, kelasRepo, userRepo));
-        tabbedPane.addTab("Assignment Guru", new GuruAssignmentPanel(userRepo, mapelRepo, kelasRepo));
+
+        // Mengambil repo dari context untuk panel-panel yang belum direfactor
+        tabbedPane.addTab("Dashboard", new AdminDashboardPanel(context.getUserRepo(), context.getKelasRepo(), context.getMapelRepo()));
+        tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(context.getUserRepo()));
+        tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(context.getUserRepo(), context.getKelasRepo()));
+        tabbedPane.addTab("Kelola Kelas", new KelasManagementPanel(context.getKelasRepo(), context.getMapelRepo()));
+        tabbedPane.addTab("Kelola Mapel", new MapelManagementPanel(context.getMapelRepo(), context.getKelasRepo(), context.getUserRepo()));
+        tabbedPane.addTab("Assignment Guru", new GuruAssignmentPanel(context.getUserRepo(), context.getMapelRepo(), context.getKelasRepo()));
 
         add(tabbedPane, BorderLayout.CENTER);
     }

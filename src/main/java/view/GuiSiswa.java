@@ -1,7 +1,7 @@
 package view;
 
+import context.AppContext;
 import model.*;
-import repository.*;
 import view.component.ForumPanel;
 import view.panel.SiswaAbsensiPanel;
 import view.panel.SiswaMateriPanel;
@@ -13,19 +13,8 @@ import java.awt.*;
 import java.util.List;
 
 public class GuiSiswa extends JFrame {
-    private Siswa siswa;
-    private MateriRepository materiRepo;
-    private TugasRepository tugasRepo;
-    private UjianRepository ujianRepo;
-    private JawabanRepository jawabanRepo;
-    private NilaiRepository nilaiRepo;
-    private ForumRepository forumRepo;
-    private UserRepository userRepo;
-    private AbsensiRepository absensiRepo;
-    private SoalRepository soalRepo;
-    
-    private KelasRepository kelasRepo;
-    private MapelRepository mapelRepo;
+    private final Siswa siswa;
+    private final AppContext context;
 
     private SiswaTugasUjianPanel tugasPanel;
     private SiswaMateriPanel materiPanel;
@@ -33,29 +22,16 @@ public class GuiSiswa extends JFrame {
     
     private JLabel lblNotifikasiTugas;
 
-    public GuiSiswa(Siswa s, MateriRepository mr, TugasRepository tr, UjianRepository ur,
-                    JawabanRepository jr, NilaiRepository nr, ForumRepository fr, UserRepository uRepo,
-                    AbsensiRepository absensiRepo, SoalRepository soalRepo,
-                    KelasRepository kelasRepo, MapelRepository mapelRepo) {
-        
+    public GuiSiswa(Siswa s, AppContext context) {
         this.siswa = s;
-        this.materiRepo = mr;
-        this.tugasRepo = tr;
-        this.ujianRepo = ur;
-        this.jawabanRepo = jr;
-        this.nilaiRepo = nr;
-        this.forumRepo = fr;
-        this.userRepo = uRepo;
-        this.absensiRepo = absensiRepo;
-        this.soalRepo = soalRepo;
-        this.kelasRepo = kelasRepo;
-        this.mapelRepo = mapelRepo;
+        this.context = context;
 
+        // Logika refresh data kelas siswa
         if (this.siswa.getKelas() != null) {
-            Kelas kRefresh = kelasRepo.findById(this.siswa.getKelas().getIdKelas());
+            Kelas kRefresh = context.getKelasRepo().findById(this.siswa.getKelas().getIdKelas());
             if (kRefresh != null) {
                 if (kRefresh.getDaftarMapel().isEmpty()) {
-                    List<MataPelajaran> allMapel = mapelRepo.getAll();
+                    List<MataPelajaran> allMapel = context.getMapelRepo().getAll();
                     for (MataPelajaran mp : allMapel) {
                         if (mp.getTingkat().equals(kRefresh.getTingkat()) || mp.getTingkat().equals("-")) {
                             kRefresh.tambahMapel(mp);
@@ -71,14 +47,15 @@ public class GuiSiswa extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 
-        materiPanel = new SiswaMateriPanel(this, siswa, materiRepo);
-        tugasPanel = new SiswaTugasUjianPanel(this, siswa, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, soalRepo);
-        // Perbaikan: Meneruskan TugasRepo dan UjianRepo
-        nilaiPanel = new SiswaNilaiPanel(siswa, nilaiRepo, tugasRepo, ujianRepo); 
+        // Menggunakan repo dari context
+        materiPanel = new SiswaMateriPanel(this, siswa, context.getMateriRepo());
+        tugasPanel = new SiswaTugasUjianPanel(this, siswa, context.getTugasRepo(), context.getUjianRepo(), 
+                                              context.getJawabanRepo(), context.getNilaiRepo(), context.getSoalRepo());
+        nilaiPanel = new SiswaNilaiPanel(siswa, context.getNilaiRepo(), context.getTugasRepo(), context.getUjianRepo());
         
         JTabbedPane tabs = new JTabbedPane();
         tabs.putClientProperty("JTabbedPane.tabType", "card");
-        tabs.addTab("Absensi", new SiswaAbsensiPanel(siswa, absensiRepo));
+        tabs.addTab("Absensi", new SiswaAbsensiPanel(siswa, context.getAbsensiRepo()));
         tabs.addTab("Materi", materiPanel);
         tabs.addTab("Tugas & Ujian", tugasPanel);
         tabs.addTab("Nilai", nilaiPanel);
@@ -101,13 +78,13 @@ public class GuiSiswa extends JFrame {
         JButton btnLogout = new JButton("Logout");
         btnLogout.setBackground(new Color(255, 100, 100));
         btnLogout.setForeground(Color.WHITE);
+        
+        // Perbaikan: Logout memanggil GuiLogin dengan context
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin keluar?", "Logout", JOptionPane.YES_NO_OPTION);
             if(confirm == JOptionPane.YES_OPTION){
                 this.dispose();
-                new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, 
-                             ujianRepo, jawabanRepo, nilaiRepo, forumRepo, 
-                             absensiRepo, soalRepo).setVisible(true);
+                new GuiLogin(context).setVisible(true);
             }
         });
         
@@ -122,8 +99,8 @@ public class GuiSiswa extends JFrame {
     private void cekNotifikasi(JPanel container) {
         if(siswa.getKelas() == null) return;
         
-        long count = tugasRepo.getByKelas(siswa.getKelas()).stream()
-            .filter(t -> !jawabanRepo.findByTugas(t.getIdTugas()).stream()
+        long count = context.getTugasRepo().getByKelas(siswa.getKelas()).stream()
+            .filter(t -> !context.getJawabanRepo().findByTugas(t.getIdTugas()).stream()
                 .anyMatch(j -> j.getSiswa().getIdUser().equals(siswa.getIdUser())))
             .count();
         
@@ -155,7 +132,7 @@ public class GuiSiswa extends JFrame {
             JTabbedPane forumTabs = new JTabbedPane();
             forumTabs.putClientProperty("JTabbedPane.tabType", "card");
             for (MataPelajaran m : siswa.getKelas().getDaftarMapel()) {
-                forumTabs.addTab(m.getNamaMapel(), new ForumPanel(siswa, siswa.getKelas(), m, forumRepo));
+                forumTabs.addTab(m.getNamaMapel(), new ForumPanel(siswa, siswa.getKelas(), m, context.getForumRepo()));
             }
             panel.add(forumTabs, BorderLayout.CENTER);
         } else {
@@ -172,7 +149,7 @@ public class GuiSiswa extends JFrame {
         String newPass = JOptionPane.showInputDialog("Password Baru:");
         if(newPass != null && !newPass.isBlank()) {
             siswa.setPassword(newPass);
-            userRepo.saveToFile();
+            context.getUserRepo().updateSiswa(siswa); // Update menggunakan userRepo yang tepat
             JOptionPane.showMessageDialog(this, "Password diubah.");
         }
     }

@@ -1,7 +1,7 @@
 package view;
 
+import context.AppContext;
 import model.*;
-import repository.*;
 import view.component.ForumPanel;
 import view.panel.GuruMateriPanel;
 import view.panel.GuruNilaiPanel;
@@ -12,39 +12,16 @@ import javax.swing.*;
 import java.awt.*;
 
 public class GuiGuru extends JFrame {
-    private Guru guru;
-    private MateriRepository materiRepo;
-    private TugasRepository tugasRepo;
-    private UjianRepository ujianRepo;
-    private JawabanRepository jawabanRepo;
-    private NilaiRepository nilaiRepo;
-    private ForumRepository forumRepo;
-    private UserRepository userRepo;
-    private SoalRepository soalRepo;
-    private KelasRepository kelasRepo;
-    private MapelRepository mapelRepo;
-    private AbsensiRepository absensiRepo;
+    private final Guru guru;
+    private final AppContext context;
 
     private JComboBox<Kelas> comboKelas;
     private JComboBox<MataPelajaran> comboMapel;
     private JTabbedPane tabbedContent;
 
-    public GuiGuru(Guru guru, MateriRepository mr, TugasRepository tr, UjianRepository ur,
-                   JawabanRepository jr, NilaiRepository nr, KelasRepository kr, 
-                   MapelRepository mapelRepo, ForumRepository fr, UserRepository uRepo,
-                   SoalRepository soalRepo, AbsensiRepository absensiRepo) {
+    public GuiGuru(Guru guru, AppContext context) {
         this.guru = guru;
-        this.materiRepo = mr;
-        this.tugasRepo = tr;
-        this.ujianRepo = ur;
-        this.jawabanRepo = jr;
-        this.nilaiRepo = nr;
-        this.kelasRepo = kr;
-        this.mapelRepo = mapelRepo;
-        this.forumRepo = fr;
-        this.userRepo = uRepo;
-        this.soalRepo = soalRepo;
-        this.absensiRepo = absensiRepo;
+        this.context = context;
 
         setTitle("Dashboard Guru - " + guru.getNamaLengkap());
         setSize(1000, 700); 
@@ -93,13 +70,13 @@ public class GuiGuru extends JFrame {
         JButton btnLogout = new JButton("Logout");
         btnLogout.setBackground(new Color(255, 100, 100));
         btnLogout.setForeground(Color.WHITE);
+        
+        // Perbaikan: Logout memanggil GuiLogin dengan context
         btnLogout.addActionListener(e -> {
             int confirm = JOptionPane.showConfirmDialog(this, "Yakin ingin keluar?", "Logout", JOptionPane.YES_NO_OPTION);
             if(confirm == JOptionPane.YES_OPTION) {
                 dispose();
-                new GuiLogin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, 
-                             ujianRepo, jawabanRepo, nilaiRepo, forumRepo, 
-                             absensiRepo, soalRepo).setVisible(true);
+                new GuiLogin(context).setVisible(true);
             }
         });
         buttonPanel.add(btnLogout);
@@ -126,16 +103,17 @@ public class GuiGuru extends JFrame {
             return;
         }
 
-        GuruUjianPanel ujianPanel = new GuruUjianPanel(this, guru, k, m, ujianRepo, soalRepo);
-        GuruMateriPanel materiPanel = new GuruMateriPanel(guru, k, m, materiRepo);
-        GuruTugasPanel tugasPanel = new GuruTugasPanel(guru, k, m, tugasRepo, ujianPanel);
-        GuruNilaiPanel nilaiPanel = new GuruNilaiPanel(k, m, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, userRepo);
+        // Menggunakan repo dari context untuk diserahkan ke panel
+        GuruUjianPanel ujianPanel = new GuruUjianPanel(this, guru, k, m, context.getUjianRepo(), context.getSoalRepo());
+        GuruMateriPanel materiPanel = new GuruMateriPanel(guru, k, m, context.getMateriRepo());
+        GuruTugasPanel tugasPanel = new GuruTugasPanel(guru, k, m, context.getTugasRepo(), ujianPanel);
+        GuruNilaiPanel nilaiPanel = new GuruNilaiPanel(k, m, context.getTugasRepo(), context.getUjianRepo(), context.getJawabanRepo(), context.getNilaiRepo(), context.getUserRepo());
         
         tabbedContent.addTab("Materi", materiPanel);
         tabbedContent.addTab("Tugas", tugasPanel);
         tabbedContent.addTab("Ujian & Kuis", ujianPanel);
         tabbedContent.addTab("Penilaian", nilaiPanel);
-        tabbedContent.addTab("Forum", createForumPanel(k, m));
+        tabbedContent.addTab("Forum", new ForumPanel(guru, k, m, context.getForumRepo()));
         
         tabbedContent.addChangeListener(e -> {
             if (tabbedContent.getSelectedComponent() == ujianPanel) ujianPanel.refreshTable();
@@ -145,15 +123,11 @@ public class GuiGuru extends JFrame {
         });
     }
 
-    private JPanel createForumPanel(Kelas k, MataPelajaran m) {
-        return new ForumPanel(guru, k, m, forumRepo);
-    }
-
     private void showProfil() {
         String newPass = JOptionPane.showInputDialog("Ganti Password (Kosongkan jika batal):");
         if(newPass != null && !newPass.isBlank()) {
             guru.setPassword(newPass);
-            userRepo.saveToFile();
+            context.getUserRepo().updateGuru(guru); // Update user repo call
             JOptionPane.showMessageDialog(this, "Password berhasil diubah.");
         }
     }

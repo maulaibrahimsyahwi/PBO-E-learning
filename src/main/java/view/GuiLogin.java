@@ -1,43 +1,21 @@
 package view;
 
+import context.AppContext;
 import model.*;
-import repository.*;
-import utils.SecurityUtil; 
+import service.AuthService;
 import javax.swing.*;
 import java.awt.*;
 
 public class GuiLogin extends JFrame {
-    private UserRepository userRepo;
-    private KelasRepository kelasRepo;
-    private MapelRepository mapelRepo;
-    private MateriRepository materiRepo;
-    private TugasRepository tugasRepo;
-    private UjianRepository ujianRepo;
-    private JawabanRepository jawabanRepo;
-    private NilaiRepository nilaiRepo;
-    private ForumRepository forumRepo;
-    private AbsensiRepository absensiRepo;
-    private SoalRepository soalRepo;
+    private final AppContext context;
+    private final AuthService authService;
 
     private JTextField txtUsername;
     private JPasswordField txtPassword;
 
-    public GuiLogin(UserRepository userRepo, KelasRepository kelasRepo, MapelRepository mapelRepo,
-                    MateriRepository materiRepo, TugasRepository tugasRepo, UjianRepository ujianRepo,
-                    JawabanRepository jawabanRepo, NilaiRepository nilaiRepo, ForumRepository forumRepo,
-                    AbsensiRepository absensiRepo, SoalRepository soalRepo) {
-        
-        this.userRepo = userRepo;
-        this.kelasRepo = kelasRepo;
-        this.mapelRepo = mapelRepo;
-        this.materiRepo = materiRepo;
-        this.tugasRepo = tugasRepo;
-        this.ujianRepo = ujianRepo;
-        this.jawabanRepo = jawabanRepo;
-        this.nilaiRepo = nilaiRepo;
-        this.forumRepo = forumRepo;
-        this.absensiRepo = absensiRepo;
-        this.soalRepo = soalRepo;
+    public GuiLogin(AppContext context) {
+        this.context = context;
+        this.authService = context.getAuthService();
 
         setTitle("Login LMS SMK Nusantara");
         setSize(400, 280);
@@ -73,29 +51,19 @@ public class GuiLogin extends JFrame {
         String username = txtUsername.getText();
         String password = new String(txtPassword.getPassword());
 
-        User user = userRepo.findByUsername(username);
-        
-        boolean isPassValid = false;
-        if (user != null) {
-             if (user.getPassword().length() > 20) { // Asumsi hash panjang
-                 isPassValid = user.getPassword().equals(SecurityUtil.hashPassword(password));
-             } else {
-                 isPassValid = user.getPassword().equals(password);
-             }
-        }
+        User user = authService.login(username, password);
 
-        if (user != null && isPassValid) {
+        if (user != null) {
             this.dispose();
             if (user instanceof Admin) {
-                new GuiAdmin(userRepo, kelasRepo, mapelRepo, materiRepo, tugasRepo, 
-                             ujianRepo, jawabanRepo, nilaiRepo, forumRepo, 
-                             absensiRepo, soalRepo).setVisible(true);
+                // Perbaikan: Memanggil GuiAdmin hanya dengan context
+                new GuiAdmin(context).setVisible(true);
             } else if (user instanceof Guru) {
-                new GuiGuru((Guru) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
-                            kelasRepo, mapelRepo, forumRepo, userRepo, soalRepo, absensiRepo).setVisible(true);
+                // Perbaikan: Memanggil GuiGuru dengan User dan context
+                new GuiGuru((Guru) user, context).setVisible(true);
             } else if (user instanceof Siswa) {
-                new GuiSiswa((Siswa) user, materiRepo, tugasRepo, ujianRepo, jawabanRepo, nilaiRepo, 
-                             forumRepo, userRepo, absensiRepo, soalRepo, kelasRepo, mapelRepo).setVisible(true);
+                // Perbaikan: Memanggil GuiSiswa dengan User dan context
+                new GuiSiswa((Siswa) user, context).setVisible(true);
             }
         } else {
             JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
