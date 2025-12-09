@@ -3,6 +3,9 @@ package view.dialog;
 import model.*;
 import repository.*;
 import service.UjianService;
+import service.AutoSaveService;
+import utils.LoggerUtil;
+import utils.LoadingUtil;
 import view.panel.SiswaTugasUjianPanel;
 
 import javax.swing.*;
@@ -26,6 +29,8 @@ public class SiswaUjianDialog extends JDialog {
     
     private int currentSoalIndex = 0;
     private Timer timer;
+    private AutoSaveService autoSaveService;
+    private JLabel lblAutoSave;
     
     private final int MAX_VIOLATIONS = 3;
     private boolean isConfirming = false; 
@@ -69,6 +74,7 @@ public class SiswaUjianDialog extends JDialog {
 
                     if (cfm == JOptionPane.YES_OPTION) {
                         if (timer != null) timer.stop();
+                        if (autoSaveService != null) autoSaveService.stop();
                         dispose();
                     }
                 }
@@ -77,7 +83,7 @@ public class SiswaUjianDialog extends JDialog {
             setVisible(true);
         } catch (Exception e) {
             JOptionPane.showMessageDialog(parent, "Terjadi kesalahan sistem: " + e.getMessage());
-            e.printStackTrace();
+            LoggerUtil.logError("SiswaUjianDialog", "constructor", "Error initializing dialog", e);
         }
     }
 
@@ -96,7 +102,17 @@ public class SiswaUjianDialog extends JDialog {
         JLabel lblTimer = new JLabel("--:--");
         lblTimer.setFont(new Font("Arial", Font.BOLD, 16));
         lblTimer.setForeground(Color.RED);
-        topBar.add(new JLabel(" " + ujian.getNamaUjian()), BorderLayout.WEST);
+        
+        lblAutoSave = new JLabel("Auto-save: Memulai...");
+        lblAutoSave.setFont(new Font("Arial", Font.PLAIN, 12));
+        lblAutoSave.setForeground(new Color(0, 120, 0));
+        
+        JPanel topLeftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+        topLeftPanel.add(new JLabel(" " + ujian.getNamaUjian()));
+        topLeftPanel.add(Box.createHorizontalStrut(20));
+        topLeftPanel.add(lblAutoSave);
+        
+        topBar.add(topLeftPanel, BorderLayout.WEST);
         topBar.add(lblTimer, BorderLayout.EAST);
         topBar.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
 
@@ -120,12 +136,27 @@ public class SiswaUjianDialog extends JDialog {
         restoreAnswers();
         updateNavState(btnPrev, btnNext, btnSubmit);
 
+        autoSaveService = new AutoSaveService(
+            new UjianProgressRepository(),
+            () -> {
+                saveCurrentAnswer();
+                return currentProgress;
+            },
+            lblAutoSave,
+            30
+        );
+        
+        autoSaveService.start();
+        LoggerUtil.logInfo("SiswaUjianDialog", "initUI", 
+            "Auto-save started for siswa: " + siswa.getIdUser());
+
         timer = new Timer(1000, e -> {
             int sisa = currentProgress.getSisaWaktu() - 1;
             currentProgress.setSisaWaktu(sisa);
             
             if (sisa <= 0) {
                 timer.stop();
+                autoSaveService.stop();
                 JOptionPane.showMessageDialog(this, "Waktu Habis!");
                 submit();
             } else {
@@ -138,6 +169,8 @@ public class SiswaUjianDialog extends JDialog {
 
         btnNext.addActionListener(e -> {
             saveCurrentAnswer();
+            autoSaveService.saveNow();
+            
             if (currentSoalIndex < soalList.size() - 1) {
                 currentSoalIndex++;
                 cardLayout.show(cardPanel, "SOAL_" + currentSoalIndex);
@@ -148,6 +181,8 @@ public class SiswaUjianDialog extends JDialog {
 
         btnPrev.addActionListener(e -> {
             saveCurrentAnswer();
+            autoSaveService.saveNow();
+            
             if (currentSoalIndex > 0) {
                 currentSoalIndex--;
                 cardLayout.show(cardPanel, "SOAL_" + currentSoalIndex);
@@ -164,6 +199,7 @@ public class SiswaUjianDialog extends JDialog {
             isConfirming = false;
 
             if (result == JOptionPane.YES_OPTION) {
+                autoSaveService.stop();
                 submit();
             }
         });
@@ -184,6 +220,7 @@ public class SiswaUjianDialog extends JDialog {
                 
                 if (v >= MAX_VIOLATIONS) {
                     timer.stop();
+                    autoSaveService.stop();
                     JOptionPane.showMessageDialog(SiswaUjianDialog.this, 
                         "Terdeteksi kecurangan (pindah window) melebihi batas!\nUjian otomatis dikumpulkan.", 
                         "Pelanggaran", JOptionPane.ERROR_MESSAGE);
@@ -225,11 +262,35 @@ public class SiswaUjianDialog extends JDialog {
     }
 
     private void submit() {
-        if (timer != null) timer.stop();
-        ujianService.submitUjian(siswa, ujian, soalList, inputComponents);
-        dispose();
-        JOptionPane.showMessageDialog(getParent(), "Ujian selesai dikumpulkan.");
-        parentPanel.refreshTable();
+        try {
+            if (timer != null) timer.stop();
+            if (autoSaveService != null) autoSaveService.stop();
+            
+            Window parentWindow = SwingUtilities.getWindowAncestor(parentPanel);
+            
+            LoadingUtil.executeWithLoading(parentWindow, "Mengumpulkan Ujian", "Memproses jawaban...", () -> {
+                ujianService.submitUjian(siswa, ujian, soalList, inputComponents);
+                
+                LoggerUtil.logAudit(siswa.getUsername(), "SUBMIT_UJIAN", 
+                    "Submitted ujian: " + ujian.getIdUjian());
+            });
+            
+            dispose();
+            
+            JOptionPane.showMessageDialog(parentWindow, 
+                "Ujian berhasil dikumpulkan!", 
+                "Sukses", 
+                JOptionPane.INFORMATION_MESSAGE);
+            
+            parentPanel.refreshTable();
+            
+        } catch (Exception e) {
+            LoggerUtil.logError("SiswaUjianDialog", "submit", "Error submitting ujian", e);
+            JOptionPane.showMessageDialog(this, 
+                "Terjadi kesalahan saat mengumpulkan ujian!\nDetail: " + e.getMessage(), 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+        }
     }
 
     private void updateNavState(JButton prev, JButton next, JButton submit) {
@@ -283,5 +344,21 @@ public class SiswaUjianDialog extends JDialog {
         }
         p.add(pJawab, BorderLayout.SOUTH);
         return p;
+    }
+    
+    @Override
+    public void dispose() {
+        if (autoSaveService != null) {
+            autoSaveService.stop();
+            autoSaveService.dispose();
+            LoggerUtil.logInfo("SiswaUjianDialog", "dispose", 
+                "Auto-save stopped and disposed");
+        }
+        
+        if (timer != null) {
+            timer.stop();
+        }
+        
+        super.dispose();
     }
 }

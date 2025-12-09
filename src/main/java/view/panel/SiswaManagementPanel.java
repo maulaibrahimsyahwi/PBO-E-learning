@@ -6,6 +6,9 @@ import repository.KelasRepository;
 import repository.UserRepository;
 import utils.IdUtil;
 import utils.SecurityUtil;
+import utils.ValidationUtil;
+import utils.LoadingUtil;
+import utils.LoggerUtil;
 import view.renderer.KelasListRenderer;
 import view.renderer.SiswaAssignmentRenderer;
 
@@ -108,11 +111,40 @@ public class SiswaManagementPanel extends JPanel {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                String passHash = SecurityUtil.hashPassword(txtPass.getText());
-                Siswa s = new Siswa(IdUtil.generate(), txtUser.getText(), passHash, 
-                                    txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngkatan.getText());
-                userRepo.addUser(s);
-                refreshTable();
+                try {
+                    String username = ValidationUtil.validateUsername(txtUser.getText(), this);
+                    if (username == null) return;
+                    
+                    String password = ValidationUtil.validatePassword(txtPass.getText(), this);
+                    if (password == null) return;
+                    
+                    String nama = ValidationUtil.validateName(txtNama.getText(), this);
+                    if (nama == null) return;
+                    
+                    String email = ValidationUtil.validateEmail(txtEmail.getText(), this);
+                    if (email == null) return;
+                    
+                    String nis = ValidationUtil.validateNIS(txtNis.getText(), this);
+                    if (nis == null) return;
+                    
+                    String angkatan = ValidationUtil.validateNotEmpty(txtAngkatan.getText(), "Angkatan", this);
+                    if (angkatan == null) return;
+                    
+                    LoadingUtil.executeWithLoading(this, "Menyimpan Data", "Menyimpan data siswa...", () -> {
+                        String passHash = SecurityUtil.hashPassword(password);
+                        Siswa s = new Siswa(IdUtil.generate(), username, passHash, 
+                                            nama, email, nis, angkatan);
+                        userRepo.addUser(s);
+                        
+                        LoggerUtil.logAudit("admin", "CREATE_SISWA", "Created siswa: " + s.getIdUser());
+                    });
+                    
+                    refreshTable();
+                    ValidationUtil.showSuccess(this, "Siswa berhasil ditambahkan!");
+                    
+                } catch (Exception ex) {
+                    LoggerUtil.handleDatabaseError("SiswaManagementPanel", "addSiswa", ex, this);
+                }
             }
         });
 
@@ -143,10 +175,35 @@ public class SiswaManagementPanel extends JPanel {
 
             int opt = JOptionPane.showConfirmDialog(this, message, "Edit Siswa", JOptionPane.OK_CANCEL_OPTION);
             if (opt == JOptionPane.OK_OPTION) {
-                Siswa sBaru = new Siswa(id, txtUser.getText(), "", txtNama.getText(), txtEmail.getText(), txtNis.getText(), txtAngk.getText());
-                userRepo.updateSiswa(sBaru);
-                refreshTable();
-                JOptionPane.showMessageDialog(this, "Data Siswa berhasil diupdate!");
+                try {
+                    String username = ValidationUtil.validateUsername(txtUser.getText(), this);
+                    if (username == null) return;
+                    
+                    String namaVal = ValidationUtil.validateName(txtNama.getText(), this);
+                    if (namaVal == null) return;
+                    
+                    String nisVal = ValidationUtil.validateNIS(txtNis.getText(), this);
+                    if (nisVal == null) return;
+                    
+                    String angkVal = ValidationUtil.validateNotEmpty(txtAngk.getText(), "Angkatan", this);
+                    if (angkVal == null) return;
+                    
+                    String emailVal = ValidationUtil.validateEmail(txtEmail.getText(), this);
+                    if (emailVal == null) return;
+                    
+                    LoadingUtil.executeWithLoading(this, "Menyimpan Perubahan", "Mengupdate data siswa...", () -> {
+                        Siswa sBaru = new Siswa(id, username, "", namaVal, emailVal, nisVal, angkVal);
+                        userRepo.updateSiswa(sBaru);
+                        
+                        LoggerUtil.logAudit("admin", "UPDATE_SISWA", "Updated siswa: " + id);
+                    });
+                    
+                    refreshTable();
+                    ValidationUtil.showSuccess(this, "Data Siswa berhasil diupdate!");
+                    
+                } catch (Exception ex) {
+                    LoggerUtil.handleDatabaseError("SiswaManagementPanel", "editSiswa", ex, this);
+                }
             }
         });
 
@@ -161,10 +218,22 @@ public class SiswaManagementPanel extends JPanel {
             String nama = (String) model.getValueAt(modelRow, 2);
 
             String newPass = JOptionPane.showInputDialog(this, "Masukkan Password Baru untuk " + nama + ":");
-            if (newPass != null && !newPass.isBlank()) {
-                String passHash = SecurityUtil.hashPassword(newPass);
-                userRepo.updatePassword(id, passHash);
-                JOptionPane.showMessageDialog(this, "Password berhasil diubah!");
+            
+            String validatedPass = ValidationUtil.validatePassword(newPass, this);
+            if (validatedPass == null) return;
+            
+            try {
+                LoadingUtil.executeWithLoading(this, "Reset Password", "Mengubah password...", () -> {
+                    String passHash = SecurityUtil.hashPassword(validatedPass);
+                    userRepo.updatePassword(id, passHash);
+                    
+                    LoggerUtil.logAudit("admin", "RESET_PASSWORD", "Reset password for siswa ID: " + id);
+                });
+                
+                ValidationUtil.showSuccess(this, "Password berhasil diubah!");
+                
+            } catch (Exception ex) {
+                LoggerUtil.handleDatabaseError("SiswaManagementPanel", "resetPassword", ex, this);
             }
         });
 
@@ -178,10 +247,22 @@ public class SiswaManagementPanel extends JPanel {
             String id = (String) model.getValueAt(modelRow, 0);
             String nama = (String) model.getValueAt(modelRow, 2);
 
-            int confirm = JOptionPane.showConfirmDialog(this, "Hapus siswa " + nama + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                userRepo.deleteUser(id);
+            if (!ValidationUtil.confirmAction(this, "Hapus siswa " + nama + "?")) {
+                return;
+            }
+            
+            try {
+                LoadingUtil.executeWithLoading(this, "Menghapus Data", "Menghapus siswa...", () -> {
+                    userRepo.deleteUser(id);
+                    
+                    LoggerUtil.logAudit("admin", "DELETE_SISWA", "Deleted siswa ID: " + id);
+                });
+                
                 refreshTable();
+                ValidationUtil.showSuccess(this, "Siswa berhasil dihapus!");
+                
+            } catch (Exception ex) {
+                LoggerUtil.handleDatabaseError("SiswaManagementPanel", "deleteSiswa", ex, this);
             }
         });
 
@@ -219,15 +300,27 @@ public class SiswaManagementPanel extends JPanel {
                 List<Siswa> selectedSiswa = listSiswa.getSelectedValuesList();
                 
                 if (k != null && !selectedSiswa.isEmpty()) {
-                    int count = 0;
-                    for (Siswa s : selectedSiswa) {
-                        s.setKelas(k);
-                        userRepo.updateSiswa(s); 
-                        count++;
+                    try {
+                        LoadingUtil.executeWithLoading(this, "Assign Siswa", "Mengassign siswa ke kelas...", () -> {
+                            int count = 0;
+                            for (Siswa s : selectedSiswa) {
+                                s.setKelas(k);
+                                userRepo.updateSiswa(s); 
+                                count++;
+                            }
+                            
+                            LoggerUtil.logAudit("admin", "ASSIGN_SISWA", 
+                                "Assigned " + count + " siswa to kelas: " + k.getIdKelas());
+                            
+                            return count;
+                        });
+                        
+                        refreshTable();
+                        ValidationUtil.showSuccess(this, "Berhasil assign " + selectedSiswa.size() + " Siswa ke kelas " + k.getNamaKelas());
+                        
+                    } catch (Exception ex) {
+                        LoggerUtil.handleDatabaseError("SiswaManagementPanel", "assignSiswa", ex, this);
                     }
-                    
-                    refreshTable();
-                    JOptionPane.showMessageDialog(this, "Berhasil assign " + count + " Siswa ke kelas " + k.getNamaKelas());
                 } else if (k == null) {
                     JOptionPane.showMessageDialog(this, "Pilih Kelas Tujuan.");
                 } else {

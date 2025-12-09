@@ -5,6 +5,9 @@ import model.User;
 import repository.UserRepository;
 import utils.IdUtil;
 import utils.SecurityUtil;
+import utils.ValidationUtil;
+import utils.LoadingUtil;
+import utils.LoggerUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -96,11 +99,40 @@ public class GuruManagementPanel extends JPanel {
 
             int option = JOptionPane.showConfirmDialog(this, message, "Tambah Guru", JOptionPane.OK_CANCEL_OPTION);
             if (option == JOptionPane.OK_OPTION) {
-                String passHash = SecurityUtil.hashPassword(txtPass.getText());
-                Guru g = new Guru(IdUtil.generate(), txtUser.getText(), passHash, 
-                                  txtNama.getText(), txtEmail.getText(), txtNip.getText(), txtSpes.getText());
-                userRepo.addUser(g);
-                refreshTable();
+                try {
+                    String username = ValidationUtil.validateUsername(txtUser.getText(), this);
+                    if (username == null) return;
+                    
+                    String password = ValidationUtil.validatePassword(txtPass.getText(), this);
+                    if (password == null) return;
+                    
+                    String nama = ValidationUtil.validateName(txtNama.getText(), this);
+                    if (nama == null) return;
+                    
+                    String email = ValidationUtil.validateEmail(txtEmail.getText(), this);
+                    if (email == null) return;
+                    
+                    String nip = ValidationUtil.validateNIP(txtNip.getText(), this);
+                    if (nip == null) return;
+                    
+                    String spesialisasi = ValidationUtil.validateNotEmpty(txtSpes.getText(), "Spesialisasi", this);
+                    if (spesialisasi == null) return;
+                    
+                    LoadingUtil.executeWithLoading(this, "Menyimpan Data", "Menyimpan data guru...", () -> {
+                        String passHash = SecurityUtil.hashPassword(password);
+                        Guru g = new Guru(IdUtil.generate(), username, passHash, 
+                                          nama, email, nip, spesialisasi);
+                        userRepo.addUser(g);
+                        
+                        LoggerUtil.logAudit("admin", "CREATE_GURU", "Created guru: " + g.getIdUser());
+                    });
+                    
+                    refreshTable();
+                    ValidationUtil.showSuccess(this, "Guru berhasil ditambahkan!");
+                    
+                } catch (Exception ex) {
+                    LoggerUtil.handleDatabaseError("GuruManagementPanel", "addGuru", ex, this);
+                }
             }
         });
 
@@ -115,10 +147,22 @@ public class GuruManagementPanel extends JPanel {
             String nama = (String) model.getValueAt(modelRow, 2);
 
             String newPass = JOptionPane.showInputDialog(this, "Masukkan Password Baru untuk " + nama + ":");
-            if (newPass != null && !newPass.isBlank()) {
-                String passHash = SecurityUtil.hashPassword(newPass);
-                userRepo.updatePassword(id, passHash);
-                JOptionPane.showMessageDialog(this, "Password berhasil diubah!");
+            
+            String validatedPass = ValidationUtil.validatePassword(newPass, this);
+            if (validatedPass == null) return;
+            
+            try {
+                LoadingUtil.executeWithLoading(this, "Reset Password", "Mengubah password...", () -> {
+                    String passHash = SecurityUtil.hashPassword(validatedPass);
+                    userRepo.updatePassword(id, passHash);
+                    
+                    LoggerUtil.logAudit("admin", "RESET_PASSWORD", "Reset password for guru ID: " + id);
+                });
+                
+                ValidationUtil.showSuccess(this, "Password berhasil diubah!");
+                
+            } catch (Exception ex) {
+                LoggerUtil.handleDatabaseError("GuruManagementPanel", "resetPassword", ex, this);
             }
         });
 
@@ -132,10 +176,22 @@ public class GuruManagementPanel extends JPanel {
             String id = (String) model.getValueAt(modelRow, 0);
             String nama = (String) model.getValueAt(modelRow, 2);
             
-            int confirm = JOptionPane.showConfirmDialog(this, "Hapus guru " + nama + "?", "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
-            if (confirm == JOptionPane.YES_OPTION) {
-                userRepo.deleteUser(id);
+            if (!ValidationUtil.confirmAction(this, "Hapus guru " + nama + "?")) {
+                return;
+            }
+            
+            try {
+                LoadingUtil.executeWithLoading(this, "Menghapus Data", "Menghapus guru...", () -> {
+                    userRepo.deleteUser(id);
+                    
+                    LoggerUtil.logAudit("admin", "DELETE_GURU", "Deleted guru ID: " + id);
+                });
+                
                 refreshTable();
+                ValidationUtil.showSuccess(this, "Guru berhasil dihapus!");
+                
+            } catch (Exception ex) {
+                LoggerUtil.handleDatabaseError("GuruManagementPanel", "deleteGuru", ex, this);
             }
         });
     }

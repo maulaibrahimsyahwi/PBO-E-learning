@@ -3,6 +3,7 @@ package view;
 import context.AppContext;
 import model.*;
 import service.AuthService;
+import utils.LoggerUtil;
 import javax.swing.*;
 import java.awt.*;
 
@@ -45,6 +46,8 @@ public class GuiLogin extends JFrame {
         add(mainPanel);
 
         btnLogin.addActionListener(e -> prosesLogin());
+        
+        txtPassword.addActionListener(e -> prosesLogin());
     }
 
     private void prosesLogin() {
@@ -54,18 +57,20 @@ public class GuiLogin extends JFrame {
         User user = authService.login(username, password);
 
         if (user != null) {
+            LoggerUtil.logLogin(username, true);
+            LoggerUtil.logAudit(username, "LOGIN", "User logged in successfully as " + user.getClass().getSimpleName());
+            
             this.dispose();
             if (user instanceof Admin) {
-                // Perbaikan: Memanggil GuiAdmin hanya dengan context
                 new GuiAdmin(context).setVisible(true);
             } else if (user instanceof Guru) {
-                // Perbaikan: Memanggil GuiGuru dengan User dan context
                 new GuiGuru((Guru) user, context).setVisible(true);
             } else if (user instanceof Siswa) {
-                // Perbaikan: Memanggil GuiSiswa dengan User dan context
                 new GuiSiswa((Siswa) user, context).setVisible(true);
             }
         } else {
+            LoggerUtil.logLogin(username, false);
+            LoggerUtil.logWarning("GuiLogin", "prosesLogin", "Failed login attempt for username: " + username);
             JOptionPane.showMessageDialog(this, "Username atau Password salah!", "Login Gagal", JOptionPane.ERROR_MESSAGE);
         }
     }
