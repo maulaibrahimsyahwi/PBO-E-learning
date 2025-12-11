@@ -1,0 +1,9 @@
+2025-12-10 00:08:11 [INFO] [AutoSaveService.start] Auto-save started with interval: 30s
+2025-12-10 00:08:11 [INFO] [SiswaUjianDialog.initUI] Auto-save started for siswa: 1RVJ4
+2025-12-10 00:08:15 [INFO] [AutoSaveService.performAutoSave] Auto-saved progress for siswa: 1RVJ4, ujian: Z0FY4
+2025-12-10 00:08:21 [INFO] [AutoSaveService.stop] Auto-save stopped
+2025-12-10 00:10:17 [INFO] [AutoSaveService.start] Auto-save started with interval: 30s
+2025-12-10 00:10:17 [INFO] [SiswaUjianDialog.initUI] Auto-save started for siswa: 1RVJ4
+2025-12-10 00:10:22 [INFO] [AutoSaveService.stop] Auto-save stopped
+2025-12-10 00:10:29 [INFO] [AutoSaveService.dispose] Auto-save service disposed
+2025-12-10 00:10:29 [INFO] [SiswaUjianDialog.dispose] Auto-save stopped and disposed

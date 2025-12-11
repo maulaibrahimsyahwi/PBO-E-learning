@@ -92,17 +92,41 @@ public class UserRepository {
     }
 
     public void deleteUser(String idUser) {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            try (PreparedStatement ps1 = conn.prepareStatement("DELETE FROM guru_mapel WHERE id_guru = ?");
-                 PreparedStatement ps2 = conn.prepareStatement("DELETE FROM guru_kelas WHERE id_guru = ?")) {
-                ps1.setString(1, idUser); ps1.executeUpdate();
-                ps2.setString(1, idUser); ps2.executeUpdate();
+        Connection conn = null;
+        try {
+            conn = DatabaseConnection.getConnection();
+            conn.setAutoCommit(false);
+
+            Statement stmt = conn.createStatement();
+
+            stmt.executeUpdate("DELETE FROM guru_mapel WHERE id_guru = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM guru_kelas WHERE id_guru = '" + idUser + "'");
+
+            stmt.executeUpdate("DELETE FROM materi WHERE id_guru = '" + idUser + "'");
+
+            stmt.executeUpdate("DELETE FROM nilai WHERE id_tugas IN (SELECT id_tugas FROM tugas WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM jawaban WHERE id_tugas IN (SELECT id_tugas FROM tugas WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM tugas WHERE id_guru = '" + idUser + "'");
+
+            stmt.executeUpdate("DELETE FROM nilai WHERE id_ujian IN (SELECT id_ujian FROM ujian WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM jawaban WHERE id_ujian IN (SELECT id_ujian FROM ujian WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM ujian_progress WHERE id_ujian IN (SELECT id_ujian FROM ujian WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM soal WHERE id_ujian IN (SELECT id_ujian FROM ujian WHERE id_guru = '" + idUser + "')");
+            stmt.executeUpdate("DELETE FROM ujian WHERE id_guru = '" + idUser + "'");
+
+            stmt.executeUpdate("DELETE FROM users WHERE id_user = '" + idUser + "'");
+
+            conn.commit();
+        } catch (SQLException e) {
+            if (conn != null) {
+                try { conn.rollback(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
-            try (PreparedStatement ps3 = conn.prepareStatement("DELETE FROM users WHERE id_user = ?")) {
-                ps3.setString(1, idUser);
-                ps3.executeUpdate();
+            e.printStackTrace();
+        } finally {
+            if (conn != null) {
+                try { conn.setAutoCommit(true); conn.close(); } catch (SQLException ex) { ex.printStackTrace(); }
             }
-        } catch (SQLException e) { e.printStackTrace(); }
+        }
     }
 
     public void saveToFile() {}

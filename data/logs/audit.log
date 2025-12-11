@@ -1,0 +1,114 @@
+2025-12-09 23:57:38 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-09 23:57:38 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-10 00:07:01 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 00:07:01 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-10 00:08:04 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 00:08:04 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-10 00:08:23 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:26 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:27 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:29 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:29 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:30 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:30 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:30 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:31 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:31 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:35 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:36 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:36 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:37 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:08:37 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: Z0FY4
+2025-12-10 00:09:08 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 00:09:08 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-10 00:10:02 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 00:10:02 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-10 00:10:22 [INFO] [USER: maula] [ACTION: SUBMIT_UJIAN] Submitted ujian: QAZ18
+2025-12-10 20:18:17 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 20:18:17 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-10 20:18:35 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 20:18:35 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-10 20:42:38 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-10 20:42:38 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-11 18:31:23 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 18:31:23 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 18:35:51 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 18:35:51 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 18:38:36 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 18:38:36 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-11 19:17:09 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:17:09 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 19:43:00 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:43:00 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 19:43:20 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:43:20 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 19:46:30 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:46:30 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 19:48:08 [INFO] [USER: admin] [ACTION: RESET_PASSWORD] Reset password for guru ID: TDTAT
+2025-12-11 19:48:15 [INFO] [USER: admin] [ACTION: RESET_PASSWORD] Reset password for guru ID: TDTAT
+2025-12-11 19:48:22 [INFO] [USER: djuanda] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:48:22 [INFO] [USER: djuanda] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 19:48:29 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:48:29 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 19:51:06 [INFO] [USER: admin] [ACTION: ASSIGN_SISWA] Assigned 1 siswa to kelas: 39Z8X
+2025-12-11 19:58:58 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 19:58:58 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 20:02:34 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 20:02:34 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 20:05:28 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 20:05:28 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-11 20:15:58 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 20:15:58 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:02:47 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:02:47 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:02:59 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:02:59 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:10:29 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:10:29 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:16:32 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:16:32 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:17:19 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: FAILED
+2025-12-11 21:17:22 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:17:22 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:18:33 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:18:33 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:18:48 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:18:48 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:18:57 [INFO] [USER: admin] [ACTION: DELETE_GURU] Deleted guru ID: VMJNB
+2025-12-11 21:19:04 [INFO] [USER: admin] [ACTION: DELETE_GURU] Deleted guru ID: VMJNB
+2025-12-11 21:19:29 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:19:29 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:19:48 [INFO] [USER: admin] [ACTION: DELETE_GURU] Deleted guru ID: VMJNB
+2025-12-11 21:23:32 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:23:32 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:23:40 [INFO] [USER: admin] [ACTION: DELETE_GURU] Deleted guru ID: VMJNB
+2025-12-11 21:24:40 [INFO] [USER: admin] [ACTION: CREATE_GURU] Created guru: IPLYK
+2025-12-11 21:24:59 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: FAILED
+2025-12-11 21:25:02 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:25:02 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:25:18 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:25:18 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-11 21:25:40 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:25:40 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:26:01 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: FAILED
+2025-12-11 21:26:04 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:26:04 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 21:27:02 [INFO] [USER: maula] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:27:02 [INFO] [USER: maula] [ACTION: LOGIN] User logged in successfully as Siswa
+2025-12-11 21:43:35 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:43:35 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 21:48:05 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 21:48:05 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 22:16:30 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:16:30 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 22:17:12 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:17:12 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 22:17:20 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:17:20 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 22:18:23 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:18:23 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
+2025-12-11 22:18:46 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: FAILED
+2025-12-11 22:18:51 [INFO] [USER: akmal] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:18:51 [INFO] [USER: akmal] [ACTION: LOGIN] User logged in successfully as Guru
+2025-12-11 22:19:05 [INFO] [USER: admin] [ACTION: LOGIN] Login attempt: SUCCESS
+2025-12-11 22:19:05 [INFO] [USER: admin] [ACTION: LOGIN] User logged in successfully as Admin
