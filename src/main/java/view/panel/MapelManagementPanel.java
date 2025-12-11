@@ -2,15 +2,10 @@ package view.panel;
 
 import model.Kelas;
 import model.MataPelajaran;
-import model.User;
-import model.Guru;
 import repository.KelasRepository;
 import repository.MapelRepository;
 import repository.UserRepository;
 import utils.IdUtil;
-import view.renderer.GuruListRenderer;
-import view.renderer.KelasListRenderer;
-import view.renderer.MapelAssignmentRenderer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -18,7 +13,6 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
-import java.util.List;
 
 public class MapelManagementPanel extends JPanel {
     private MapelRepository mapelRepo;
@@ -71,28 +65,26 @@ public class MapelManagementPanel extends JPanel {
         
         JButton btnAdd = new JButton("Tambah Mapel");
         JButton btnEdit = new JButton("Edit Mapel");
-        JButton btnAssign = new JButton("Assign Guru");
+        // Tombol Assign Guru dihapus dari sini
         JButton btnDelete = new JButton("Hapus"); 
         
         Dimension btnSize = new Dimension(120, 35);
         btnAdd.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
-        btnAssign.setPreferredSize(btnSize);
         btnDelete.setPreferredSize(btnSize);
         btnDelete.setBackground(new Color(255, 150, 150));
         
         btnPanel.add(btnAdd);
         btnPanel.add(btnEdit);
-        btnPanel.add(btnAssign);
         btnPanel.add(btnDelete);
 
-        addListeners(btnAdd, btnEdit, btnAssign, btnDelete);
+        addListeners(btnAdd, btnEdit, btnDelete);
 
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
     }
     
-    private void addListeners(JButton btnAdd, JButton btnEdit, JButton btnAssign, JButton btnDelete) {
+    private void addListeners(JButton btnAdd, JButton btnEdit, JButton btnDelete) {
         btnAdd.addActionListener(e -> {
             JTextField txtNama = new JTextField();
             JTextField txtDesk = new JTextField();
@@ -103,6 +95,7 @@ public class MapelManagementPanel extends JPanel {
                 MataPelajaran m = new MataPelajaran(IdUtil.generate(), txtNama.getText(), txtDesk.getText(), txtTingkat.getText());
                 mapelRepo.addMapel(m);
                 
+                // Distribusi otomatis ke kelas yang tingkatnya sama
                 int count = 0;
                 for (Kelas k : kelasRepo.getAll()) {
                     if (k.getTingkat().equals(m.getTingkat())) {
@@ -138,90 +131,6 @@ public class MapelManagementPanel extends JPanel {
                 mapelRepo.updateMapel(mBaru);
                 refreshTable();
                 JOptionPane.showMessageDialog(this, "Mapel berhasil diupdate!");
-            }
-        });
-
-        btnAssign.addActionListener(e -> {
-            // 1. Setup Guru Dropdown (Single Select - JComboBox)
-            JComboBox<User> comboGuru = new JComboBox<>();
-            for(User u : userRepo.getAll()) {
-                if(u instanceof Guru) comboGuru.addItem(u);
-            }
-            comboGuru.setRenderer(new GuruListRenderer());
-            
-            // 2. Setup Mapel List (Multi-Select - JList)
-            DefaultListModel<MataPelajaran> mapelListModel = new DefaultListModel<>();
-            for(MataPelajaran m : mapelRepo.getAll()) mapelListModel.addElement(m);
-            JList<MataPelajaran> listMapel = new JList<>(mapelListModel);
-            listMapel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            listMapel.setCellRenderer(new MapelAssignmentRenderer());
-            JScrollPane scrollMapel = new JScrollPane(listMapel);
-            scrollMapel.setPreferredSize(new Dimension(300, 150));
-
-            // 3. Setup Kelas List (Multi-Select - JList)
-            DefaultListModel<Kelas> kelasListModel = new DefaultListModel<>();
-            for(Kelas k : kelasRepo.getAll()) kelasListModel.addElement(k);
-            JList<Kelas> listKelas = new JList<>(kelasListModel);
-            listKelas.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-            listKelas.setCellRenderer(new KelasListRenderer());
-            JScrollPane scrollKelas = new JScrollPane(listKelas);
-            scrollKelas.setPreferredSize(new Dimension(300, 150));
-
-            // 4. Combine components in a dialog panel 
-            JPanel panelAssign = new JPanel();
-            panelAssign.setLayout(new BoxLayout(panelAssign, BoxLayout.Y_AXIS));
-            panelAssign.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
-
-            JPanel guruPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-            guruPanel.add(new JLabel("Pilih Guru:"));
-            guruPanel.add(comboGuru);
-            guruPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
-
-            panelAssign.add(guruPanel);
-            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
-            panelAssign.add(new JLabel("Pilih Mapel"));
-            panelAssign.add(scrollMapel);
-            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
-            panelAssign.add(new JLabel("Pilih Kelas"));
-            panelAssign.add(scrollKelas);
-
-            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar (Multi-Select)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
-            
-            if (result == JOptionPane.OK_OPTION) {
-                Guru g = (Guru) comboGuru.getSelectedItem();
-                List<MataPelajaran> selectedMapel = listMapel.getSelectedValuesList();
-                List<Kelas> selectedKelas = listKelas.getSelectedValuesList();
-                
-                if (g != null && !selectedMapel.isEmpty() && !selectedKelas.isEmpty()) {
-                    
-                    int mapelCount = 0;
-                    int kelasCount = 0;
-                    
-                    for (MataPelajaran m : selectedMapel) {
-                        g.tambahMapel(m);
-                        mapelCount++;
-                    }
-
-                    for (Kelas k : selectedKelas) {
-                        g.tambahKelas(k);
-                        kelasCount++;
-                        
-                        for (MataPelajaran m : selectedMapel) {
-                            kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
-                        }
-                    }
-                    
-                    userRepo.updateGuru(g); 
-                    
-                    JOptionPane.showMessageDialog(this, 
-                        "Sukses assign Guru " + g.getNamaLengkap() + "\n" +
-                        "Mengajar " + mapelCount + " Mapel di " + kelasCount + " Kelas."
-                    );
-                } else if (g == null) {
-                    JOptionPane.showMessageDialog(this, "Pilih Guru yang akan di-assign.");
-                } else {
-                    JOptionPane.showMessageDialog(this, "Pilih minimal 1 Mapel dan 1 Kelas.");
-                }
             }
         });
 

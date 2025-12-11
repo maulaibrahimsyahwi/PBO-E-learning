@@ -1,11 +1,16 @@
 package view.panel;
 
 import model.Guru;
+import model.Kelas;
+import model.MataPelajaran;
 import model.User;
 import repository.KelasRepository;
 import repository.MapelRepository;
 import repository.UserRepository;
 import view.dialog.EditGuruAssignmentDialog;
+import view.renderer.GuruListRenderer;
+import view.renderer.KelasListRenderer;
+import view.renderer.MapelAssignmentRenderer;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -13,6 +18,8 @@ import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableRowSorter;
 import java.awt.*;
+import java.util.Comparator;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class GuruAssignmentPanel extends JPanel {
@@ -97,27 +104,153 @@ public class GuruAssignmentPanel extends JPanel {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JButton btnRefresh = new JButton("Refresh");
+        JButton btnAssign = new JButton("Assign Guru"); // Tombol Baru (Pindahan)
         JButton btnEdit = new JButton("Edit Assignment");
         JButton btnHapusAssignment = new JButton("Hapus Assignment");
 
         Dimension btnSize = new Dimension(150, 35);
         btnRefresh.setPreferredSize(new Dimension(100, 35));
+        btnAssign.setPreferredSize(btnSize);
         btnEdit.setPreferredSize(btnSize);
         btnHapusAssignment.setPreferredSize(btnSize);
         btnHapusAssignment.setBackground(new Color(255, 150, 150));
 
         btnPanel.add(btnRefresh);
+        btnPanel.add(btnAssign); // Ditambahkan di sebelah kiri Edit
         btnPanel.add(btnEdit);
         btnPanel.add(btnHapusAssignment);
 
-        addListeners(btnRefresh, btnEdit, btnHapusAssignment);
+        addListeners(btnRefresh, btnAssign, btnEdit, btnHapusAssignment);
 
         add(new JScrollPane(table), BorderLayout.CENTER);
         add(btnPanel, BorderLayout.SOUTH);
     }
     
-    private void addListeners(JButton btnRefresh, JButton btnEdit, JButton btnHapusAssignment) {
+    private void addListeners(JButton btnRefresh, JButton btnAssign, JButton btnEdit, JButton btnHapusAssignment) {
         btnRefresh.addActionListener(e -> refreshTable());
+
+        // --- Logika Pindahan dari MapelManagementPanel ---
+        btnAssign.addActionListener(e -> {
+            JComboBox<User> comboGuru = new JComboBox<>();
+            for(User u : userRepo.getAll()) {
+                if(u instanceof Guru) comboGuru.addItem(u);
+            }
+            comboGuru.setRenderer(new GuruListRenderer());
+            
+            DefaultListModel<MataPelajaran> mapelListModel = new DefaultListModel<>();
+            List<MataPelajaran> allMapel = mapelRepo.getAll();
+            allMapel.sort(Comparator.comparing(MataPelajaran::getTingkat)
+                    .thenComparing(MataPelajaran::getNamaMapel));
+            
+            for(MataPelajaran m : allMapel) mapelListModel.addElement(m);
+            
+            JList<MataPelajaran> listMapel = new JList<>(mapelListModel);
+            listMapel.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            listMapel.setCellRenderer(new MapelAssignmentRenderer());
+            JScrollPane scrollMapel = new JScrollPane(listMapel);
+            scrollMapel.setPreferredSize(new Dimension(300, 150));
+
+            DefaultListModel<Kelas> kelasListModel = new DefaultListModel<>();
+            List<Kelas> allKelas = kelasRepo.getAll();
+            allKelas.sort(Comparator.comparing(Kelas::getTingkat)
+                    .thenComparing(Kelas::getNamaKelas));
+            
+            for(Kelas k : allKelas) kelasListModel.addElement(k);
+            
+            JList<Kelas> listKelas = new JList<>(kelasListModel);
+            listKelas.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+            listKelas.setCellRenderer(new KelasListRenderer());
+            JScrollPane scrollKelas = new JScrollPane(listKelas);
+            scrollKelas.setPreferredSize(new Dimension(300, 150));
+
+            JPanel panelAssign = new JPanel();
+            panelAssign.setLayout(new BoxLayout(panelAssign, BoxLayout.Y_AXIS));
+            panelAssign.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+            JPanel guruPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+            guruPanel.add(new JLabel("Pilih Guru:"));
+            guruPanel.add(comboGuru);
+            guruPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+            panelAssign.add(guruPanel);
+            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
+            panelAssign.add(new JLabel("Pilih Mapel (Sorted by Tingkat)"));
+            panelAssign.add(scrollMapel);
+            panelAssign.add(Box.createRigidArea(new Dimension(0, 10)));
+            panelAssign.add(new JLabel("Pilih Kelas (Sorted by Tingkat)"));
+            panelAssign.add(scrollKelas);
+
+            int result = JOptionPane.showConfirmDialog(this, panelAssign, "Assign Guru Mengajar (Multi-Select)", JOptionPane.OK_CANCEL_OPTION, JOptionPane.PLAIN_MESSAGE);
+            
+            if (result == JOptionPane.OK_OPTION) {
+                Guru g = (Guru) comboGuru.getSelectedItem();
+                List<MataPelajaran> selectedMapel = listMapel.getSelectedValuesList();
+                List<Kelas> selectedKelas = listKelas.getSelectedValuesList();
+                
+                if (g != null && !selectedMapel.isEmpty() && !selectedKelas.isEmpty()) {
+                    
+                    // --- VALIDASI TINGKAT ---
+                    StringBuilder mismatchWarning = new StringBuilder();
+                    boolean hasMismatch = false;
+
+                    for (MataPelajaran m : selectedMapel) {
+                        for (Kelas k : selectedKelas) {
+                            if (!m.getTingkat().equals(k.getTingkat()) && !m.getTingkat().equals("-")) {
+                                hasMismatch = true;
+                                mismatchWarning.append("• ")
+                                    .append(m.getNamaMapel()).append(" (Tingkat ").append(m.getTingkat()).append(")")
+                                    .append(" ➜ ")
+                                    .append(k.getNamaKelas()).append(" (Tingkat ").append(k.getTingkat()).append(")")
+                                    .append("\n");
+                            }
+                        }
+                    }
+
+                    if (hasMismatch) {
+                        String msg = "PERINGATAN: Terdapat ketidakcocokan Tingkat antara Mapel dan Kelas yang dipilih:\n\n" +
+                                     mismatchWarning.toString() +
+                                     "\nApakah Anda yakin ingin tetap melanjutkan assignment ini?";
+                        
+                        int confirmMismatch = JOptionPane.showConfirmDialog(this, msg, "Peringatan Mismatch Tingkat", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
+                        
+                        if (confirmMismatch != JOptionPane.YES_OPTION) {
+                            return; 
+                        }
+                    }
+                    // -----------------------
+
+                    int mapelCount = 0;
+                    int kelasCount = 0;
+                    
+                    for (MataPelajaran m : selectedMapel) {
+                        g.tambahMapel(m);
+                        mapelCount++;
+                    }
+
+                    for (Kelas k : selectedKelas) {
+                        g.tambahKelas(k);
+                        kelasCount++;
+                        
+                        for (MataPelajaran m : selectedMapel) {
+                            kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
+                        }
+                    }
+                    
+                    userRepo.updateGuru(g); 
+                    refreshTable(); // Refresh tabel assignment
+                    
+                    JOptionPane.showMessageDialog(this, 
+                        "Sukses assign Guru " + g.getNamaLengkap() + "\n" +
+                        "Mengajar " + mapelCount + " Mapel di " + kelasCount + " Kelas."
+                    );
+                } else if (g == null) {
+                    JOptionPane.showMessageDialog(this, "Pilih Guru yang akan di-assign.");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Pilih minimal 1 Mapel dan 1 Kelas.");
+                }
+            }
+        });
+        // ---------------------------------------------
 
         btnEdit.addActionListener(e -> {
             int row = table.getSelectedRow();

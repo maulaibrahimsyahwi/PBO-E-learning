@@ -3,6 +3,7 @@ package view.dialog;
 import model.Guru;
 import model.Kelas;
 import model.MataPelajaran;
+import model.User;
 import repository.KelasRepository;
 import repository.MapelRepository;
 import repository.UserRepository;
@@ -125,6 +126,11 @@ public class EditGuruAssignmentDialog extends JDialog {
     }
     
     private void saveAssignment() {
+        // 1. Simpan Data Lama (Snapshot) untuk perbandingan
+        List<MataPelajaran> oldMapels = new ArrayList<>(guru.getMapelDiampu());
+        List<Kelas> oldKelasList = new ArrayList<>(guru.getDaftarKelas());
+
+        // 2. Update Object Guru dengan Pilihan Baru
         guru.getMapelDiampu().clear();
         guru.getDaftarKelas().clear();
         
@@ -137,14 +143,47 @@ public class EditGuruAssignmentDialog extends JDialog {
         
         for (Kelas k : selectedKelas) {
             guru.tambahKelas(k);
+            // Tambahkan relasi baru ke kelas_mapel
             for (MataPelajaran m : selectedMapel) {
                 kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
             }
         }
         
         userRepo.updateGuru(guru);
+
+        // 3. LOGIKA MEMBERSIHKAN DATA LAMA (CLEANUP)
+        // Cek kombinasi (Kelas, Mapel) yang dulu ada, tapi sekarang tidak dipilih lagi
+        for (Kelas oldK : oldKelasList) {
+            for (MataPelajaran oldM : oldMapels) {
+                // Cek apakah kombinasi ini masih ada di pilihan baru
+                boolean stillAssigned = guru.getDaftarKelas().contains(oldK) && 
+                                        guru.getMapelDiampu().contains(oldM);
+                
+                // Jika sudah tidak di-assign ke guru ini
+                if (!stillAssigned) {
+                    // Cek apakah ada guru LAIN yang mengajar mapel ini di kelas ini
+                    // agar tidak menghapus mapel milik guru lain
+                    boolean taughtByOther = false;
+                    for (User u : userRepo.getAll()) {
+                        if (u instanceof Guru && !u.getIdUser().equals(guru.getIdUser())) {
+                            Guru other = (Guru) u;
+                            if (other.getDaftarKelas().contains(oldK) && 
+                                other.getMapelDiampu().contains(oldM)) {
+                                taughtByOther = true;
+                                break;
+                            }
+                        }
+                    }
+                    
+                    // Jika tidak ada guru lain, hapus dari kelas_mapel agar hilang dari siswa
+                    if (!taughtByOther) {
+                        kelasRepo.removeMapelFromKelas(oldK.getIdKelas(), oldM.getIdMapel());
+                    }
+                }
+            }
+        }
         
-        // Memaksa refresh pada parent panel
+        // Refresh GUI
         if (getParent() instanceof JFrame) {
             JFrame parentFrame = (JFrame) getParent();
             for (Component comp : parentFrame.getContentPane().getComponents()) {

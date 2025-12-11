@@ -114,6 +114,13 @@ public class UserRepository {
             stmt.executeUpdate("DELETE FROM soal WHERE id_ujian IN (SELECT id_ujian FROM ujian WHERE id_guru = '" + idUser + "')");
             stmt.executeUpdate("DELETE FROM ujian WHERE id_guru = '" + idUser + "'");
 
+            stmt.executeUpdate("DELETE FROM absensi WHERE id_siswa = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM nilai WHERE id_siswa = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM jawaban WHERE id_siswa = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM ujian_progress WHERE id_siswa = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM forum_reply WHERE id_user = '" + idUser + "'");
+            stmt.executeUpdate("DELETE FROM forum_thread WHERE id_user = '" + idUser + "'");
+
             stmt.executeUpdate("DELETE FROM users WHERE id_user = '" + idUser + "'");
 
             conn.commit();

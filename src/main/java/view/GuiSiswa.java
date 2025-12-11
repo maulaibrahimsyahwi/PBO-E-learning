@@ -20,28 +20,31 @@ public class GuiSiswa extends JFrame {
     private SiswaMateriPanel materiPanel;
     private SiswaNilaiPanel nilaiPanel;
     
+    // Perbaikan: Jadikan topPanel sebagai field class agar bisa diakses method lain
+    private JPanel topPanel;
     private JLabel lblNotifikasiTugas;
 
     public GuiSiswa(Siswa s, AppContext context) {
         this.siswa = s;
         this.context = context;
 
+        // 1. Refresh data kelas terbaru dari database
         if (this.siswa.getKelas() != null) {
             Kelas kRefresh = context.getKelasRepo().findById(this.siswa.getKelas().getIdKelas());
             if (kRefresh != null) {
-                if (kRefresh.getDaftarMapel().isEmpty()) {
-                    List<MataPelajaran> allMapel = context.getMapelRepo().getAll();
-                    for (MataPelajaran mp : allMapel) {
-                        if (mp.getTingkat().equals(kRefresh.getTingkat()) || mp.getTingkat().equals("-")) {
-                            kRefresh.tambahMapel(mp);
-                        }
-                    }
-                }
                 this.siswa.setKelas(kRefresh);
             }
         }
 
-        setTitle("Dashboard Siswa - " + s.getNamaLengkap());
+        // 2. Siapkan teks informasi kelas untuk Judul Window
+        String infoKelas = "Belum Masuk Kelas";
+        if (this.siswa.getKelas() != null) {
+            infoKelas = "Kelas " + this.siswa.getKelas().getNamaKelas();
+        }
+
+        // 3. Update Title dengan Nama Siswa DAN Kelas
+        setTitle("Dashboard Siswa - " + s.getNamaLengkap() + " [" + infoKelas + "]");
+        
         setSize(950, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -67,7 +70,8 @@ public class GuiSiswa extends JFrame {
         
         add(tabs, BorderLayout.CENTER);
 
-        JPanel topPanel = new JPanel(new BorderLayout());
+        // Perbaikan: Inisialisasi field topPanel (jangan buat variabel lokal baru)
+        topPanel = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
         JButton btnProfil = new JButton("Profil");
@@ -153,8 +157,8 @@ public class GuiSiswa extends JFrame {
     }
     
     public void refreshNotification() {
-        JPanel topPanel = (JPanel) getContentPane().getComponent(0);
-        if (topPanel.getLayout() instanceof BorderLayout) {
+        // Perbaikan: Gunakan field topPanel langsung, jangan ambil dari getComponent(0)
+        if (topPanel != null) {
             cekNotifikasi(topPanel);
         }
     }

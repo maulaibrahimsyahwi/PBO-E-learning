@@ -31,7 +31,6 @@ public class KelasRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    // --- BARU: Method Delete Kelas ---
     public void deleteKelas(String idKelas) {
         try (Connection conn = DatabaseConnection.getConnection()) {
             // Hapus relasi di kelas_mapel dulu
@@ -46,7 +45,18 @@ public class KelasRepository {
             }
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    // --------------------------------
+
+    // --- METHOD BARU UNTUK HAPUS MAPEL DARI KELAS ---
+    public void removeMapelFromKelas(String idKelas, String idMapel) {
+        String sql = "DELETE FROM kelas_mapel WHERE id_kelas = ? AND id_mapel = ?";
+        try (Connection conn = DatabaseConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(sql)) {
+            stmt.setString(1, idKelas);
+            stmt.setString(2, idMapel);
+            stmt.executeUpdate();
+        } catch (SQLException e) { e.printStackTrace(); }
+    }
+    // ------------------------------------------------
 
     public List<Kelas> getAll() {
         List<Kelas> list = new ArrayList<>();
@@ -63,7 +73,7 @@ public class KelasRepository {
 
     public Kelas findById(String id) {
         try (Connection conn = DatabaseConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM kelas WHERE id_kelas = ?")) {
+             PreparedStatement stmt = conn.prepareStatement(sqlById(id))) {
             stmt.setString(1, id);
             ResultSet rs = stmt.executeQuery();
             if (rs.next()) {
@@ -73,6 +83,10 @@ public class KelasRepository {
             }
         } catch (SQLException e) { e.printStackTrace(); }
         return null;
+    }
+    
+    private String sqlById(String id) {
+        return "SELECT * FROM kelas WHERE id_kelas = ?";
     }
 
     private void loadMapelKelas(Kelas k) {

@@ -43,7 +43,8 @@ public class SiswaTugasUjianPanel extends JPanel {
         
         setLayout(new BorderLayout());
         
-        String[] cols = {"ID", "Tipe", "Mapel", "Judul", "Tanggal/Deadline", "Status"};
+        // 1. Tambahkan kolom "Deskripsi"
+        String[] cols = {"ID", "Tipe", "Mapel", "Judul", "Deskripsi", "Tanggal/Deadline", "Status"};
         tugasModel = new DefaultTableModel(cols, 0) {
             public boolean isCellEditable(int row, int column) { return false; }
         };
@@ -52,6 +53,9 @@ public class SiswaTugasUjianPanel extends JPanel {
         table.getColumnModel().getColumn(0).setMinWidth(0);
         table.getColumnModel().getColumn(0).setMaxWidth(0);
         table.getColumnModel().getColumn(0).setWidth(0);
+        
+        // Atur lebar kolom deskripsi agar lebih nyaman dibaca
+        table.getColumnModel().getColumn(4).setPreferredWidth(200);
         
         refreshTable();
         add(new JScrollPane(table), BorderLayout.CENTER);
@@ -92,7 +96,17 @@ public class SiswaTugasUjianPanel extends JPanel {
                 }
             }
             String namaMapel = (t.getMapel() != null) ? t.getMapel().getNamaMapel() : "-";
-            tugasModel.addRow(new Object[]{t.getIdTugas(), "Tugas", namaMapel, t.getJudul(), t.getDeadline(), status});
+            
+            // 2. Isi kolom Deskripsi dengan t.getDeskripsi()
+            tugasModel.addRow(new Object[]{
+                t.getIdTugas(), 
+                "Tugas", 
+                namaMapel, 
+                t.getJudul(), 
+                t.getDeskripsi(), 
+                t.getDeadline(), 
+                status
+            });
         }
 
         for(Ujian u : ujianRepo.getByKelas(siswa.getKelas())) {
@@ -111,7 +125,21 @@ public class SiswaTugasUjianPanel extends JPanel {
                 }
             }
             String namaMapel = (u.getMapel() != null) ? u.getMapel().getNamaMapel() : "-";
-            tugasModel.addRow(new Object[]{u.getIdUjian(), "Ujian", namaMapel, u.getNamaUjian(), u.getTanggal(), status});
+            
+            // 3. Buat Deskripsi untuk Ujian (Informasi Durasi/Waktu)
+            String deskripsiUjian = u.getTipeUjian().equals("KUIS") ? 
+                                    "Timer: " + u.getWaktuPerSoal() + " dtk/soal" : 
+                                    "Durasi: " + u.getDurasiTotal() + " menit";
+            
+            tugasModel.addRow(new Object[]{
+                u.getIdUjian(), 
+                "Ujian", 
+                namaMapel, 
+                u.getNamaUjian(), 
+                deskripsiUjian, 
+                u.getTanggal(), 
+                status
+            });
         }
     }
     
@@ -125,7 +153,10 @@ public class SiswaTugasUjianPanel extends JPanel {
         int modelRow = table.convertRowIndexToModel(row);
         String id = (String) tugasModel.getValueAt(modelRow, 0);
         String tipe = (String) tugasModel.getValueAt(modelRow, 1);
-        String status = (String) tugasModel.getValueAt(modelRow, 5);
+        
+        // 4. Update index pengambilan Status (karena ada kolom baru)
+        // Kolom: 0=ID, 1=Tipe, 2=Mapel, 3=Judul, 4=Deskripsi, 5=Tanggal, 6=Status
+        String status = (String) tugasModel.getValueAt(modelRow, 6);
 
         if (!status.equals("Belum Dikerjakan")) {
             JOptionPane.showMessageDialog(parentFrame, "Anda sudah mengerjakan/mengumpulkan ini!\nStatus: " + status, 
