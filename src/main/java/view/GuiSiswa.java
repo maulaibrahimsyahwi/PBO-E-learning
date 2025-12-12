@@ -10,8 +10,6 @@ import view.panel.SiswaTugasUjianPanel;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
-
 public class GuiSiswa extends JFrame {
     private final Siswa siswa;
     private final AppContext context;
