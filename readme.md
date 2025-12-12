@@ -27,8 +27,8 @@ This application **must use a MySQL database**. Without the database, the applic
     Ensure the settings in `src/main/java/config/DatabaseConnection.java` match your MySQL configuration:
     ```java
     config.setJdbcUrl("jdbc:mysql://localhost:3306/pbo_elearning");
-    config.setUsername("root");
-    config.setPassword("");
+    config.setUsername("root"); // change according to your database username
+    config.setPassword(""); // change according to your database password
     ```
 
 ## 🚀 How to Run
