@@ -10,7 +10,6 @@ public class Siswa extends User {
 
     // Relasi objek ke Kelas
     private Kelas kelas;
-    // ID Kelas untuk referensi database
     private String idKelas;
 
     private List<Nilai> daftarNilai = new ArrayList<>();

@@ -5,7 +5,7 @@ import java.time.format.DateTimeFormatter;
 
 public class ForumReply {
     private String idReply;
-    private String idThread; // Foreign Key ke Thread
+    private String idThread;
     private User penjawab;
     private String isiReply;
     private String waktu;
@@ -19,7 +19,6 @@ public class ForumReply {
         this.waktu = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"));
     }
 
-    // Constructor Load DB
     public ForumReply(String idReply, String idThread, User penjawab, String isi, String waktu) {
         this.idReply = idReply;
         this.idThread = idThread;

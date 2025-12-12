@@ -65,7 +65,6 @@ public class MapelManagementPanel extends JPanel {
         
         JButton btnAdd = new JButton("Tambah Mapel");
         JButton btnEdit = new JButton("Edit Mapel");
-        // Tombol Assign Guru dihapus dari sini
         JButton btnDelete = new JButton("Hapus"); 
         
         Dimension btnSize = new Dimension(120, 35);
@@ -95,7 +94,6 @@ public class MapelManagementPanel extends JPanel {
                 MataPelajaran m = new MataPelajaran(IdUtil.generate(), txtNama.getText(), txtDesk.getText(), txtTingkat.getText());
                 mapelRepo.addMapel(m);
                 
-                // Distribusi otomatis ke kelas yang tingkatnya sama
                 int count = 0;
                 for (Kelas k : kelasRepo.getAll()) {
                     if (k.getTingkat().equals(m.getTingkat())) {

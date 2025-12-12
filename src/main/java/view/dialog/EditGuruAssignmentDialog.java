@@ -48,7 +48,6 @@ public class EditGuruAssignmentDialog extends JDialog {
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Panel Mapel
         JPanel mapelPanel = new JPanel(new BorderLayout());
         mapelPanel.add(new JLabel("Mata Pelajaran yang Diajar:"), BorderLayout.NORTH);
         
@@ -64,7 +63,6 @@ public class EditGuruAssignmentDialog extends JDialog {
         scrollMapel.setPreferredSize(new Dimension(400, 120));
         mapelPanel.add(scrollMapel, BorderLayout.CENTER);
         
-        // Panel Kelas
         JPanel kelasPanel = new JPanel(new BorderLayout());
         kelasPanel.add(new JLabel("Kelas yang Diajar:"), BorderLayout.NORTH);
         
@@ -84,7 +82,6 @@ public class EditGuruAssignmentDialog extends JDialog {
         contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
         contentPanel.add(kelasPanel);
         
-        // Button Panel
         JPanel btnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton btnSimpan = new JButton("Simpan Perubahan");
         JButton btnBatal = new JButton("Batal");
@@ -100,7 +97,6 @@ public class EditGuruAssignmentDialog extends JDialog {
     }
     
     private void loadInitialSelection() {
-        // Pre-select mapel
         List<Integer> selectedMapelIndices = new ArrayList<>();
         DefaultListModel<MataPelajaran> mapelModel = (DefaultListModel<MataPelajaran>) listMapel.getModel();
         for (int i = 0; i < mapelModel.size(); i++) {
@@ -112,7 +108,6 @@ public class EditGuruAssignmentDialog extends JDialog {
         int[] arrMapel = selectedMapelIndices.stream().mapToInt(Integer::intValue).toArray();
         listMapel.setSelectedIndices(arrMapel);
         
-        // Pre-select kelas
         List<Integer> selectedKelasIndices = new ArrayList<>();
         DefaultListModel<Kelas> kelasModel = (DefaultListModel<Kelas>) listKelas.getModel();
         for (int i = 0; i < kelasModel.size(); i++) {
@@ -143,7 +138,6 @@ public class EditGuruAssignmentDialog extends JDialog {
         
         for (Kelas k : selectedKelas) {
             guru.tambahKelas(k);
-            // Tambahkan relasi baru ke kelas_mapel
             for (MataPelajaran m : selectedMapel) {
                 kelasRepo.addMapelToKelas(k.getIdKelas(), m.getIdMapel());
             }
@@ -152,17 +146,11 @@ public class EditGuruAssignmentDialog extends JDialog {
         userRepo.updateGuru(guru);
 
         // 3. LOGIKA MEMBERSIHKAN DATA LAMA (CLEANUP)
-        // Cek kombinasi (Kelas, Mapel) yang dulu ada, tapi sekarang tidak dipilih lagi
         for (Kelas oldK : oldKelasList) {
             for (MataPelajaran oldM : oldMapels) {
-                // Cek apakah kombinasi ini masih ada di pilihan baru
                 boolean stillAssigned = guru.getDaftarKelas().contains(oldK) && 
                                         guru.getMapelDiampu().contains(oldM);
-                
-                // Jika sudah tidak di-assign ke guru ini
                 if (!stillAssigned) {
-                    // Cek apakah ada guru LAIN yang mengajar mapel ini di kelas ini
-                    // agar tidak menghapus mapel milik guru lain
                     boolean taughtByOther = false;
                     for (User u : userRepo.getAll()) {
                         if (u instanceof Guru && !u.getIdUser().equals(guru.getIdUser())) {
@@ -175,7 +163,6 @@ public class EditGuruAssignmentDialog extends JDialog {
                         }
                     }
                     
-                    // Jika tidak ada guru lain, hapus dari kelas_mapel agar hilang dari siswa
                     if (!taughtByOther) {
                         kelasRepo.removeMapelFromKelas(oldK.getIdKelas(), oldM.getIdMapel());
                     }

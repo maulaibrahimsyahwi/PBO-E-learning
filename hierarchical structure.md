@@ -1,13 +1,16 @@
-
 ```
 LMS SMK NUSANTARA
 ├─ data
+│  ├─ logs
+│  │  ├─ application.log
+│  │  ├─ audit.log
+│  │  └─ error.log
 │  ├─ storage
 │  │  └─ materi
 │  └─ uploads
-│     └─ 2 Contoh Kartu Soal Pilihan Ganda.png
 ├─ hierarchical structure.md
 ├─ pom.xml
+├─ readme.md
 ├─ src
 │  └─ main
 │     └─ java
@@ -20,7 +23,8 @@ LMS SMK NUSANTARA
 │        ├─ model
 │        │  ├─ Absensi.java
 │        │  ├─ Admin.java
-│        │  ├─ ForumDiskusi.java
+│        │  ├─ ForumReply.java
+│        │  ├─ ForumThread.java
 │        │  ├─ Guru.java
 │        │  ├─ GuruAssignment.java
 │        │  ├─ Jadwal.java
@@ -34,6 +38,7 @@ LMS SMK NUSANTARA
 │        │  ├─ Soal.java
 │        │  ├─ Tugas.java
 │        │  ├─ Ujian.java
+│        │  ├─ UjianProgress.java
 │        │  └─ User.java
 │        ├─ repository
 │        │  ├─ AbsensiRepository.java
@@ -45,16 +50,24 @@ LMS SMK NUSANTARA
 │        │  ├─ NilaiRepository.java
 │        │  ├─ SoalRepository.java
 │        │  ├─ TugasRepository.java
+│        │  ├─ UjianProgressRepository.java
 │        │  ├─ UjianRepository.java
 │        │  └─ UserRepository.java
 │        ├─ service
 │        │  ├─ AuthService.java
+│        │  ├─ AutoSaveService.java
+│        │  ├─ FileService.java
 │        │  ├─ MapelService.java
-│        │  └─ UjianEvaluationService.java
+│        │  ├─ UjianEvaluationService.java
+│        │  └─ UjianService.java
 │        ├─ utils
 │        │  ├─ DateUtil.java
 │        │  ├─ IdUtil.java
-│        │  └─ SecurityUtil.java
+│        │  ├─ LoadingUtil.java
+│        │  ├─ LoggerUtil.java
+│        │  ├─ SecurityUtil.java
+│        │  ├─ UjianHelper.java
+│        │  └─ ValidationUtil.java
 │        └─ view
 │           ├─ component
 │           │  └─ ForumPanel.java
@@ -98,7 +111,8 @@ LMS SMK NUSANTARA
    │  ├─ model
    │  │  ├─ Absensi.class
    │  │  ├─ Admin.class
-   │  │  ├─ ForumDiskusi.class
+   │  │  ├─ ForumReply.class
+   │  │  ├─ ForumThread.class
    │  │  ├─ Guru.class
    │  │  ├─ GuruAssignment.class
    │  │  ├─ Jadwal.class
@@ -112,6 +126,7 @@ LMS SMK NUSANTARA
    │  │  ├─ Soal.class
    │  │  ├─ Tugas.class
    │  │  ├─ Ujian.class
+   │  │  ├─ UjianProgress.class
    │  │  └─ User.class
    │  ├─ repository
    │  │  ├─ AbsensiRepository.class
@@ -123,16 +138,37 @@ LMS SMK NUSANTARA
    │  │  ├─ NilaiRepository.class
    │  │  ├─ SoalRepository.class
    │  │  ├─ TugasRepository.class
+   │  │  ├─ UjianProgressRepository.class
    │  │  ├─ UjianRepository.class
    │  │  └─ UserRepository.class
    │  ├─ service
    │  │  ├─ AuthService.class
+   │  │  ├─ AutoSaveService$1.class
+   │  │  ├─ AutoSaveService.class
+   │  │  ├─ FileService.class
    │  │  ├─ MapelService.class
-   │  │  └─ UjianEvaluationService.class
+   │  │  ├─ UjianEvaluationService.class
+   │  │  └─ UjianService.class
    │  ├─ utils
    │  │  ├─ DateUtil.class
    │  │  ├─ IdUtil.class
-   │  │  └─ SecurityUtil.class
+   │  │  ├─ LoadingUtil$1.class
+   │  │  ├─ LoadingUtil$2.class
+   │  │  ├─ LoadingUtil$3.class
+   │  │  ├─ LoadingUtil$LoadingCallback.class
+   │  │  ├─ LoadingUtil$LoadingDialog.class
+   │  │  ├─ LoadingUtil$ProgressDialog.class
+   │  │  ├─ LoadingUtil$ProgressTask.class
+   │  │  ├─ LoadingUtil$ProgressUpdater.class
+   │  │  ├─ LoadingUtil$TaskResult.class
+   │  │  ├─ LoadingUtil.class
+   │  │  ├─ LoggerUtil$CustomFormatter.class
+   │  │  ├─ LoggerUtil$PerformanceLogger.class
+   │  │  ├─ LoggerUtil.class
+   │  │  ├─ SecurityUtil.class
+   │  │  ├─ UjianHelper.class
+   │  │  ├─ ValidationUtil$ValidationBuilder.class
+   │  │  └─ ValidationUtil.class
    │  └─ view
    │     ├─ component
    │     │  ├─ ForumPanel$1.class
@@ -141,6 +177,7 @@ LMS SMK NUSANTARA
    │     │  ├─ EditGuruAssignmentDialog.class
    │     │  ├─ GuruUjianSoalDialog.class
    │     │  ├─ SiswaUjianDialog$1.class
+   │     │  ├─ SiswaUjianDialog$2.class
    │     │  └─ SiswaUjianDialog.class
    │     ├─ GuiAdmin.class
    │     ├─ GuiGuru$1.class
@@ -158,6 +195,7 @@ LMS SMK NUSANTARA
    │     │  ├─ GuruManagementPanel$1.class
    │     │  ├─ GuruManagementPanel$2.class
    │     │  ├─ GuruManagementPanel.class
+   │     │  ├─ GuruMateriPanel$1.class
    │     │  ├─ GuruMateriPanel.class
    │     │  ├─ GuruNilaiPanel$1.class
    │     │  ├─ GuruNilaiPanel.class

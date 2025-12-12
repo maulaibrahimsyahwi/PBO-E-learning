@@ -104,7 +104,7 @@ public class GuruAssignmentPanel extends JPanel {
         btnPanel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
 
         JButton btnRefresh = new JButton("Refresh");
-        JButton btnAssign = new JButton("Assign Guru"); // Tombol Baru (Pindahan)
+        JButton btnAssign = new JButton("Assign Guru"); 
         JButton btnEdit = new JButton("Edit Assignment");
         JButton btnHapusAssignment = new JButton("Hapus Assignment");
 
@@ -116,7 +116,7 @@ public class GuruAssignmentPanel extends JPanel {
         btnHapusAssignment.setBackground(new Color(255, 150, 150));
 
         btnPanel.add(btnRefresh);
-        btnPanel.add(btnAssign); // Ditambahkan di sebelah kiri Edit
+        btnPanel.add(btnAssign); 
         btnPanel.add(btnEdit);
         btnPanel.add(btnHapusAssignment);
 
@@ -129,7 +129,6 @@ public class GuruAssignmentPanel extends JPanel {
     private void addListeners(JButton btnRefresh, JButton btnAssign, JButton btnEdit, JButton btnHapusAssignment) {
         btnRefresh.addActionListener(e -> refreshTable());
 
-        // --- Logika Pindahan dari MapelManagementPanel ---
         btnAssign.addActionListener(e -> {
             JComboBox<User> comboGuru = new JComboBox<>();
             for(User u : userRepo.getAll()) {
@@ -189,7 +188,6 @@ public class GuruAssignmentPanel extends JPanel {
                 
                 if (g != null && !selectedMapel.isEmpty() && !selectedKelas.isEmpty()) {
                     
-                    // --- VALIDASI TINGKAT ---
                     StringBuilder mismatchWarning = new StringBuilder();
                     boolean hasMismatch = false;
 
@@ -217,7 +215,6 @@ public class GuruAssignmentPanel extends JPanel {
                             return; 
                         }
                     }
-                    // -----------------------
 
                     int mapelCount = 0;
                     int kelasCount = 0;
@@ -237,7 +234,7 @@ public class GuruAssignmentPanel extends JPanel {
                     }
                     
                     userRepo.updateGuru(g); 
-                    refreshTable(); // Refresh tabel assignment
+                    refreshTable();  
                     
                     JOptionPane.showMessageDialog(this, 
                         "Sukses assign Guru " + g.getNamaLengkap() + "\n" +
@@ -250,7 +247,6 @@ public class GuruAssignmentPanel extends JPanel {
                 }
             }
         });
-        // ---------------------------------------------
 
         btnEdit.addActionListener(e -> {
             int row = table.getSelectedRow();

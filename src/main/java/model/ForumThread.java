@@ -12,7 +12,7 @@ public class ForumThread {
     private Kelas kelas;
     private MataPelajaran mapel;
 
-    // Constructor untuk membuat thread baru (Runtime)
+    // Constructor untuk membuat thread baru
     public ForumThread(String id, User pengirim, String judul, String isi, Kelas k, MataPelajaran m) {
         this.idThread = id;
         this.pengirim = pengirim;

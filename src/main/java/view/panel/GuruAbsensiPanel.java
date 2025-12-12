@@ -45,7 +45,7 @@ public class GuruAbsensiPanel extends JPanel {
 
         btnLoad.addActionListener(e -> loadData());
         
-        loadData(); // Load default today
+        loadData();
     }
 
     public void refreshTable() {

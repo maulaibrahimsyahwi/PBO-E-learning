@@ -26,8 +26,6 @@ public class ForumRepository {
     }
 
     public void deleteThread(String idThread) {
-        // Karena ada Foreign Key ON DELETE CASCADE di DB, reply otomatis terhapus
-        // Jika tidak support cascade, hapus reply dulu manual di sini
         String sql = "DELETE FROM forum_thread WHERE id_thread = ?";
         try (Connection conn = DatabaseConnection.getConnection();
              PreparedStatement stmt = conn.prepareStatement(sql)) {
@@ -92,7 +90,6 @@ public class ForumRepository {
         return list;
     }
     
-    // Hitung jumlah balasan untuk tampilan tabel
     public int countReplies(String idThread) {
         String sql = "SELECT count(*) FROM forum_reply WHERE id_thread = ?";
         try (Connection conn = DatabaseConnection.getConnection();

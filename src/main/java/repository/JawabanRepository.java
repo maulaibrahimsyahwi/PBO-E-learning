@@ -11,7 +11,6 @@ import java.util.List;
 
 public class JawabanRepository {
 
-    // UPDATE: Tambah parameter File
     public void addJawaban(Jawaban j, File fileAsli) {
         String sql = "INSERT INTO jawaban (id_jawaban, id_siswa, id_tugas, id_ujian, file_jawaban, tanggal_submit, data_file) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -24,7 +23,6 @@ public class JawabanRepository {
             stmt.setString(5, j.getFileJawaban());
             stmt.setString(6, j.getTanggalSubmit());
             
-            // --- LOGIKA UPLOAD BLOB ---
             if (fileAsli != null) {
                 try {
                     FileInputStream fis = new FileInputStream(fileAsli);
@@ -35,8 +33,6 @@ public class JawabanRepository {
             } else {
                 stmt.setNull(7, Types.BLOB);
             }
-            // --------------------------
-
             stmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }

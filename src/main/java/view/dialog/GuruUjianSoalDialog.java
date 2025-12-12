@@ -174,11 +174,11 @@ public class GuruUjianSoalDialog extends JDialog {
         JLabel lblInfo = new JLabel("Soal tersimpan: " + soalRepo.getByUjian(u.getIdUjian()).size() + " / " + u.getMaxSoal());
         
         JButton btnAdd = new JButton("Simpan Soal");
-        JButton btnSelesai = new JButton("Selesai / Tutup"); // Tombol baru
+        JButton btnSelesai = new JButton("Selesai / Tutup"); 
         
         btnAdd.addActionListener(e -> simpanSoal(u, d, lblInfo, lblPreview, comboJenisSoal, comboKunciPG, txtKunciEssay, txtTanya, txtA, txtB, txtC, txtD, btnAdd));
         
-        btnSelesai.addActionListener(e -> d.dispose()); // Tutup dialog hanya lewat tombol ini atau X
+        btnSelesai.addActionListener(e -> d.dispose()); 
 
         d.add(inputPanel, BorderLayout.CENTER);
         

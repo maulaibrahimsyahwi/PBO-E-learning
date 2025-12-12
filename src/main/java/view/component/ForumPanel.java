@@ -21,11 +21,10 @@ public class ForumPanel extends JPanel {
     private JTable tableTopic;
     private DefaultTableModel tableModel;
     
-    // Detail Components
     private JLabel lblJudulTopik;
     private JTextArea txtDiskusiArea;
     private JTextField txtReply;
-    private ForumThread currentThread; // Berubah dari ForumDiskusi ke ForumThread
+    private ForumThread currentThread; 
 
     public ForumPanel(User user, Kelas k, MataPelajaran m, ForumRepository repo) {
         this.currentUser = user;
@@ -53,7 +52,6 @@ public class ForumPanel extends JPanel {
             public boolean isCellEditable(int row, int column) { return false; }
         };
         tableTopic = new JTable(tableModel);
-        // Sembunyikan kolom ID
         tableTopic.getColumnModel().getColumn(0).setMinWidth(0);
         tableTopic.getColumnModel().getColumn(0).setMaxWidth(0);
         tableTopic.getColumnModel().getColumn(0).setWidth(0);
@@ -74,7 +72,6 @@ public class ForumPanel extends JPanel {
         }
         btnPanel.add(btnRefresh);
         
-        // Listeners
         btnCreate.addActionListener(e -> actionCreateTopic());
         btnRefresh.addActionListener(e -> loadTopics());
         
@@ -83,7 +80,6 @@ public class ForumPanel extends JPanel {
             if (row != -1) {
                 String idThread = (String) tableModel.getValueAt(row, 0);
                 String judul = (String) tableModel.getValueAt(row, 1);
-                // Kita ambil object lengkap nanti di openTopic
                 openTopic(idThread, judul);
             } else {
                 JOptionPane.showMessageDialog(this, "Pilih topik dulu!");
@@ -148,11 +144,9 @@ public class ForumPanel extends JPanel {
     
     private void loadTopics() {
         tableModel.setRowCount(0);
-        // Mengambil data dari Tabel Header (ForumThread)
         List<ForumThread> threads = forumRepo.getThreadsByKelasMapel(kelas, mapel);
         
         for (ForumThread t : threads) {
-            // Hitung jumlah balasan dari Tabel Detail (ForumReply)
             int replyCount = forumRepo.countReplies(t.getIdThread());
             String sender = (t.getPengirim() != null) ? t.getPengirim().getNamaLengkap() : "Unknown";
             
@@ -167,7 +161,6 @@ public class ForumPanel extends JPanel {
     }
     
     private void openTopic(String idThread, String judul) {
-        // Cari object thread lengkap (bisa dioptimasi dengan caching list, tapi find lagi juga oke)
         this.currentThread = forumRepo.getThreadsByKelasMapel(kelas, mapel).stream()
                 .filter(t -> t.getIdThread().equals(idThread))
                 .findFirst().orElse(null);
@@ -184,11 +177,9 @@ public class ForumPanel extends JPanel {
         if (currentThread == null) return;
         txtDiskusiArea.setText("");
         
-        // Tampilkan Postingan Utama (Header)
         appendHeader(currentThread);
         txtDiskusiArea.append("--------------------------------------------------\n");
         
-        // Tampilkan Balasan (Detail)
         List<ForumReply> replies = forumRepo.getRepliesByThread(currentThread.getIdThread());
         for (ForumReply r : replies) {
             appendReply(r);

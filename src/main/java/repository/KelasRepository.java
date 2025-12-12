@@ -33,12 +33,10 @@ public class KelasRepository {
 
     public void deleteKelas(String idKelas) {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Hapus relasi di kelas_mapel dulu
             try (PreparedStatement psRel = conn.prepareStatement("DELETE FROM kelas_mapel WHERE id_kelas = ?")) {
                 psRel.setString(1, idKelas);
                 psRel.executeUpdate();
             }
-            // Hapus data kelas utama
             try (PreparedStatement psMain = conn.prepareStatement("DELETE FROM kelas WHERE id_kelas = ?")) {
                 psMain.setString(1, idKelas);
                 psMain.executeUpdate();
@@ -46,7 +44,6 @@ public class KelasRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    // --- METHOD BARU UNTUK HAPUS MAPEL DARI KELAS ---
     public void removeMapelFromKelas(String idKelas, String idMapel) {
         String sql = "DELETE FROM kelas_mapel WHERE id_kelas = ? AND id_mapel = ?";
         try (Connection conn = DatabaseConnection.getConnection();
@@ -56,7 +53,6 @@ public class KelasRepository {
             stmt.executeUpdate();
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    // ------------------------------------------------
 
     public List<Kelas> getAll() {
         List<Kelas> list = new ArrayList<>();

@@ -26,23 +26,19 @@ public class UjianRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    // --- FITUR HAPUS UJIAN ---
     public void deleteUjian(String idUjian) {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Hapus data terkait (soal, jawaban, nilai)
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate("DELETE FROM soal WHERE id_ujian = '" + idUjian + "'");
                 st.executeUpdate("DELETE FROM jawaban WHERE id_ujian = '" + idUjian + "'");
                 st.executeUpdate("DELETE FROM nilai WHERE id_ujian = '" + idUjian + "'");
             }
-            // Hapus ujian utama
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM ujian WHERE id_ujian = ?")) {
                 ps.setString(1, idUjian);
                 ps.executeUpdate();
             }
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    // ------------------------
 
     public List<Ujian> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         List<Ujian> list = new ArrayList<>();

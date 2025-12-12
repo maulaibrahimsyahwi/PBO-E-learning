@@ -19,8 +19,6 @@ public class GuiSiswa extends JFrame {
     private SiswaTugasUjianPanel tugasPanel;
     private SiswaMateriPanel materiPanel;
     private SiswaNilaiPanel nilaiPanel;
-    
-    // Perbaikan: Jadikan topPanel sebagai field class agar bisa diakses method lain
     private JPanel topPanel;
     private JLabel lblNotifikasiTugas;
 
@@ -70,7 +68,6 @@ public class GuiSiswa extends JFrame {
         
         add(tabs, BorderLayout.CENTER);
 
-        // Perbaikan: Inisialisasi field topPanel (jangan buat variabel lokal baru)
         topPanel = new JPanel(new BorderLayout());
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
 
@@ -157,7 +154,6 @@ public class GuiSiswa extends JFrame {
     }
     
     public void refreshNotification() {
-        // Perbaikan: Gunakan field topPanel langsung, jangan ambil dari getComponent(0)
         if (topPanel != null) {
             cekNotifikasi(topPanel);
         }

@@ -25,7 +25,6 @@ public class GuiAdmin extends JFrame {
         btnLogout.setBackground(new Color(255, 100, 100)); 
         btnLogout.setForeground(Color.WHITE);
         
-        // Perbaikan: Logout sekarang memanggil GuiLogin dengan context
         btnLogout.addActionListener(e -> {
             dispose();
             new GuiLogin(context).setVisible(true);
@@ -38,7 +37,6 @@ public class GuiAdmin extends JFrame {
         JTabbedPane tabbedPane = new JTabbedPane();
         tabbedPane.putClientProperty("JTabbedPane.tabType", "card");
 
-        // Mengambil repo dari context untuk panel-panel yang belum direfactor
         tabbedPane.addTab("Dashboard", new AdminDashboardPanel(context.getUserRepo(), context.getKelasRepo(), context.getMapelRepo()));
         tabbedPane.addTab("Kelola Guru", new GuruManagementPanel(context.getUserRepo()));
         tabbedPane.addTab("Kelola Siswa", new SiswaManagementPanel(context.getUserRepo(), context.getKelasRepo()));

@@ -125,14 +125,13 @@ public class GuruNilaiPanel extends JPanel {
         Tugas finalTugas = null;
         Ujian finalUjian = null;
 
-        // PERBAIKAN PENTING: Set objek Tugas/Ujian ke Jawaban saat ditemukan agar tidak NullPointerException
         if (tipe.equals("Tugas")) {
             for (Tugas t : tugasRepo.getByMapelAndKelas(mapel, kelas)) {
                 for (Jawaban j : jawabanRepo.findByTugas(t.getIdTugas())) {
                     if (j.getIdJawaban().equals(idJawaban)) {
                         selectedJawab = j;
                         finalTugas = t; 
-                        selectedJawab.setTugas(t); // Mencegah NPE saat getTugas() dipanggil
+                        selectedJawab.setTugas(t); 
                         break;
                     }
                 }
@@ -144,7 +143,7 @@ public class GuruNilaiPanel extends JPanel {
                     if (j.getIdJawaban().equals(idJawaban)) {
                         selectedJawab = j;
                         finalUjian = u;
-                        selectedJawab.setUjian(u); // Mencegah NPE saat getUjian() dipanggil
+                        selectedJawab.setUjian(u); 
                         break;
                     }
                 }
@@ -181,14 +180,12 @@ public class GuruNilaiPanel extends JPanel {
                 int val = Integer.parseInt(input);
                 
                 if (existingNilai.isPresent()) {
-                    // Update Nilai Lama
                     Nilai n = existingNilai.get();
                     n.setNilaiAngka(val);
                     n.setKeterangan("Manual (Edited)");
                     nilaiRepo.updateNilai(n);
                     JOptionPane.showMessageDialog(this, "Nilai berhasil diupdate!");
                 } else {
-                    // Buat Nilai Baru
                     Nilai n = (selectedJawab.getTugas() != null) 
                         ? new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getTugas(), val, "Manual") 
                         : new Nilai(IdUtil.generate(), selectedJawab.getSiswa(), selectedJawab.getUjian(), val, "Manual");

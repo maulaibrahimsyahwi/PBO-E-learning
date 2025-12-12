@@ -23,22 +23,18 @@ public class TugasRepository {
         } catch (SQLException e) { e.printStackTrace(); }
     }
 
-    // --- FITUR HAPUS TUGAS ---
     public void deleteTugas(String idTugas) {
         try (Connection conn = DatabaseConnection.getConnection()) {
-            // Hapus data terkait (jawaban & nilai)
             try (Statement st = conn.createStatement()) {
                 st.executeUpdate("DELETE FROM jawaban WHERE id_tugas = '" + idTugas + "'");
                 st.executeUpdate("DELETE FROM nilai WHERE id_tugas = '" + idTugas + "'");
             }
-            // Hapus tugas utama
             try (PreparedStatement ps = conn.prepareStatement("DELETE FROM tugas WHERE id_tugas = ?")) {
                 ps.setString(1, idTugas);
                 ps.executeUpdate();
             }
         } catch (SQLException e) { e.printStackTrace(); }
     }
-    // ------------------------
 
     public List<Tugas> getByMapelAndKelas(MataPelajaran mapel, Kelas kelas) {
         List<Tugas> list = new ArrayList<>();

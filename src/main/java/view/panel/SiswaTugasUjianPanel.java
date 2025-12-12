@@ -53,8 +53,6 @@ public class SiswaTugasUjianPanel extends JPanel {
         table.getColumnModel().getColumn(0).setMinWidth(0);
         table.getColumnModel().getColumn(0).setMaxWidth(0);
         table.getColumnModel().getColumn(0).setWidth(0);
-        
-        // Atur lebar kolom deskripsi agar lebih nyaman dibaca
         table.getColumnModel().getColumn(4).setPreferredWidth(200);
         
         refreshTable();
@@ -155,7 +153,6 @@ public class SiswaTugasUjianPanel extends JPanel {
         String tipe = (String) tugasModel.getValueAt(modelRow, 1);
         
         // 4. Update index pengambilan Status (karena ada kolom baru)
-        // Kolom: 0=ID, 1=Tipe, 2=Mapel, 3=Judul, 4=Deskripsi, 5=Tanggal, 6=Status
         String status = (String) tugasModel.getValueAt(modelRow, 6);
 
         if (!status.equals("Belum Dikerjakan")) {
